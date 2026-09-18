@@ -481,3 +481,65 @@ Caveats to carry into the writeup:
 8 seeds x 3 arms at 2.5M steps, per-arm tuned HP, rho=0.363, t_max=45.
 Seeds were raised from 5 to 8 because statistical power, not training length,
 was the binding constraint on the earlier result.
+
+## Step 8 RESULT — final ablation, 8 seeds x 2.5M steps, per-arm tuned HP, rho=0.363
+
+```
+arm          n        succ%          hi-sig%          range
+none         8   90.2 +/- 2.6   68.2 +/-  8.4   [52.8, 76.4]
+staleness    8   89.6 +/- 2.7   67.3 +/-  8.7   [51.2, 76.4]
+sigma        8   91.8 +/- 3.4   73.9 +/- 11.4   [54.5, 89.4]
+scripted baseline  92.0          74.8
+
+sigma - none      = +5.7 pts  t=+1.14  p=0.255  d=+0.57
+sigma - staleness = +6.6 pts  t=+1.30  p=0.192  d=+0.65
+ none - staleness = +0.9 pts  t=+0.21  p=0.831  d=+0.11
+sigma - baseline  = -0.9 pts  t=-0.23  p=0.819
+```
+
+### Four conclusions, in order of how well they are supported
+
+1. **PPO now MATCHES the tuned scripted baseline** (73.9 vs 74.8, p=0.82). The
+   earlier 11.7-point deficit is gone once PPO gets the same tuning budget the
+   baselines got. This is the cleanest result in the study and it cuts against
+   the first draft of the finding: the classical-beats-learned gap here was
+   substantially a tuning artefact, exactly the mechanism *Leveling the Playing
+   Field* describes -- only pointed at RL rather than at the classical side.
+
+2. **PerchRL's staleness proxy does NOT replicate.** `staleness` and `none` are
+   indistinguishable (+0.9 pts, p=0.83, d=0.11). A stopwatch carries no usable
+   signal in this task. Since sigma is fixed within an episode here, the
+   staleness channel `exp(-lambda*t_since_fix)` is a deterministic sawtooth
+   uncorrelated with actual error -- so this is arguably a property of the env
+   design, not a refutation of PerchRL. Say so; do not overclaim it.
+
+3. **sigma > none and sigma > staleness directionally, medium effect, NOT
+   significant.** d = 0.57 and 0.65 at n=8. Required seeds for 80% power at
+   alpha=0.05: **~49 per arm vs none, ~37 vs staleness** -- 111-147 runs,
+   9-11 h at current throughput. Eight seeds was never going to settle this.
+   Either commit that compute or report it as a non-significant trend with the
+   effect size and the power calculation attached. Do not report +5.7 points as
+   a result without the p-value.
+
+4. **RETRACTED: the "sigma makes training more reliable" claim.** At 5 seeds on
+   default hyperparameters sigma had ~4x LOWER seed variance (2.4 vs 8.9). At
+   8 seeds with tuned hyperparameters the ordering REVERSES -- sigma has the
+   HIGHEST variance (11.4 vs 8.4 vs 8.7). The earlier variance effect was an
+   artefact of undertuned hyperparameters. It does not survive. Do not use it.
+
+### What this means for the study
+
+The headline that survives is narrow and honest: **at GeoAnchor's real error
+distribution and its measured temporal correlation, a calibrated sigma gives a
+landing policy no advantage that reaches significance at n=8, a hand-written
+rule needs sigma even less (it tunes the sigma term to zero), and a properly
+tuned learned policy exactly matches that rule.** The calibration contribution
+(ENCE, conformal coverage, the autocorrelation measurement) is unaffected by any
+of this and stands on its own.
+
+The single highest-value next experiment is NOT more seeds at rho=0.363. It is
+rho=0.8, where the task is hardest and where holding still stops being a free
+win (hi-sigma peaks at 78.9 there and collapses to 38.0 at rho=1.0). If sigma
+cannot separate the arms at rho=0.8 either, the negative result is solid and
+cheap. If it can, that is the regime to report and the reason to spend the
+150-run budget.
