@@ -440,3 +440,44 @@ hyperparameter sweep below is for.
 Note also that hi-sigma success is non-monotone in rho (57.7 at 0, peaking 78.9
 at 0.8, collapsing to 38.0 at 1.0). Task difficulty is strongly rho-dependent,
 so rho must be reported alongside any success number from this env.
+
+## Step 7 — matched hyperparameter budget for PPO
+
+The scripted baselines were given a 12-candidate tuning sweep while PPO ran on
+hand-written defaults. That is a tuning asymmetry running the *other* way, and
+the same paper that motivates the baselines condemns it. Hyperparameters are now
+flags on `train.py`, and each arm got its own 12-candidate grid
+(lr x ent_coef x net_arch), 600k steps, one seed, scored on held-out eval seeds.
+
+```
+arm         best HP                                  hi-sig @600k   (default HP @2M)
+none        --lr 1e-3 --ent-coef 0.02 --net 256 128      66.3            54.8
+staleness   --lr 3e-4 --ent-coef 0.02 --net 256 128      48.9            56.9
+sigma       --lr 1e-3 --ent-coef 0.02 --net 128 64       70.7            60.0
+```
+
+**The original PPO hyperparameters were badly undertuned.** `none` reached 66.3
+at 600k steps where it had managed 54.8 at 2M on defaults. The earlier
+"scripted baseline beats every learned arm by 11.7 points" conclusion is
+therefore partly retracted: a meaningful part of that gap was the tuning
+asymmetry, not the method. Report the matched-budget comparison, not the first
+one.
+
+Caveats to carry into the writeup:
+
+- These winners are the **max of 12 noisy single-seed runs**, so they are
+  optimistically biased (winner's curse). Only the multi-seed run at fixed HP is
+  an unbiased estimate.
+- The per-arm winners differ in architecture (`none` and `staleness` took
+  256-128, `sigma` took 128-64). That follows from the equal-budget-per-arm
+  protocol, but it does mean the arms now differ in more than the uncertainty
+  channel. State it. The alternative -- one shared HP set chosen on one arm --
+  would advantage whichever arm it was chosen on.
+- `staleness` candidate #1 collapsed to 0.0% success. Training instability at
+  lr=1e-4 / low entropy; it was the worst candidate regardless.
+
+## Step 8 — final ablation (running)
+
+8 seeds x 3 arms at 2.5M steps, per-arm tuned HP, rho=0.363, t_max=45.
+Seeds were raised from 5 to 8 because statistical power, not training length,
+was the binding constraint on the earlier result.

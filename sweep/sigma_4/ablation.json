@@ -1,0 +1,17 @@
+{
+  "steps": 600000,
+  "pool": "sigma_pool.npz",
+  "results": {
+    "sigma": {
+      "n": 300,
+      "success_%": 82.0,
+      "acquired_%": 87.0,
+      "miss_median_m": 2.930656941342686e-06,
+      "miss_p90_m": 21.402758866854455,
+      "t_median_s": 28.39999999999993,
+      "success_low_sigma_%": 100.0,
+      "success_mid_sigma_%": 100.0,
+      "success_high_sigma_%": 41.30434782608695
+    }
+  }
+}
