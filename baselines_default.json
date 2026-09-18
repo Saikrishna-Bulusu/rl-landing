@@ -1,0 +1,60 @@
+{
+  "episodes": 400,
+  "tuned": true,
+  "results": {
+    "dive": {
+      "params": {
+        "h_hold": 28.0,
+        "r_fixed": 18.0,
+        "k_sigma": 1.5,
+        "sweep_frac": 0.75
+      },
+      "n": 400,
+      "success_%": 83.5,
+      "acquired_%": 83.75,
+      "timeout_%": 0.0,
+      "miss_median_m": 4.56312180355558e-06,
+      "miss_p90_m": 22.377822822994354,
+      "t_median_s": 27.399999999999935,
+      "success_low_sigma_%": 100.0,
+      "success_mid_sigma_%": 100.0,
+      "success_high_sigma_%": 48.031496062992126
+    },
+    "fixed_spiral": {
+      "params": {
+        "h_hold": 30,
+        "r_fixed": 8,
+        "k_sigma": 1.5,
+        "sweep_frac": 0.5
+      },
+      "n": 400,
+      "success_%": 96.25,
+      "acquired_%": 97.0,
+      "timeout_%": 3.75,
+      "miss_median_m": 4.675495471632978e-07,
+      "miss_p90_m": 3.5359523781808926e-05,
+      "t_median_s": 29.299999999999926,
+      "success_low_sigma_%": 100.0,
+      "success_mid_sigma_%": 100.0,
+      "success_high_sigma_%": 88.18897637795276
+    },
+    "sigma_spiral": {
+      "params": {
+        "h_hold": 30,
+        "r_fixed": 18.0,
+        "k_sigma": 0.75,
+        "sweep_frac": 0.8
+      },
+      "n": 400,
+      "success_%": 94.0,
+      "acquired_%": 94.0,
+      "timeout_%": 6.0,
+      "miss_median_m": 7.683547523867647e-07,
+      "miss_p90_m": 4.164811872539847e-05,
+      "t_median_s": 29.399999999999928,
+      "success_low_sigma_%": 100.0,
+      "success_mid_sigma_%": 100.0,
+      "success_high_sigma_%": 81.10236220472441
+    }
+  }
+}

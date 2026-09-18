@@ -1,0 +1,63 @@
+{
+  "episodes": 400,
+  "tuned": true,
+  "env": {
+    "t_max": 45.0
+  },
+  "results": {
+    "dive": {
+      "params": {
+        "h_hold": 28.0,
+        "r_fixed": 18.0,
+        "k_sigma": 1.5,
+        "sweep_frac": 0.75
+      },
+      "n": 400,
+      "success_%": 83.5,
+      "acquired_%": 83.75,
+      "timeout_%": 0.0,
+      "miss_median_m": 4.56312180355558e-06,
+      "miss_p90_m": 22.377822822994354,
+      "t_median_s": 27.399999999999935,
+      "success_low_sigma_%": 100.0,
+      "success_mid_sigma_%": 100.0,
+      "success_high_sigma_%": 48.031496062992126
+    },
+    "fixed_spiral": {
+      "params": {
+        "h_hold": 30,
+        "r_fixed": 8,
+        "k_sigma": 1.5,
+        "sweep_frac": 0.8
+      },
+      "n": 400,
+      "success_%": 90.75,
+      "acquired_%": 92.5,
+      "timeout_%": 9.25,
+      "miss_median_m": 9.349246156806622e-07,
+      "miss_p90_m": 9.057692724698626e-05,
+      "t_median_s": 29.399999999999928,
+      "success_low_sigma_%": 100.0,
+      "success_mid_sigma_%": 100.0,
+      "success_high_sigma_%": 70.86614173228347
+    },
+    "sigma_spiral": {
+      "params": {
+        "h_hold": 30,
+        "r_fixed": 18.0,
+        "k_sigma": 0.75,
+        "sweep_frac": 0.8
+      },
+      "n": 400,
+      "success_%": 87.75,
+      "acquired_%": 88.25,
+      "timeout_%": 12.25,
+      "miss_median_m": 1.2987377749640086e-06,
+      "miss_p90_m": 26.010768853240855,
+      "t_median_s": 29.399999999999928,
+      "success_low_sigma_%": 100.0,
+      "success_mid_sigma_%": 100.0,
+      "success_high_sigma_%": 61.417322834645674
+    }
+  }
+}
