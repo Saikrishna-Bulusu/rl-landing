@@ -120,7 +120,7 @@ class ApproachEnv(gym.Env):
         # decoded no matter where the drone is. ~30 m for a 1 m pad at 640 px.
         self.h_detect = self.PAD_SIZE * self.PX / (fov * self.MIN_PX)
 
-        # a[0] vertical velocity, a[1] search radius (0 = commit to the estimate)
+        # a[0] vertical velocity, a[1] how hard to chase the newest fix
         self.action_space = spaces.Box(-1.0, 1.0, (2,), np.float32)
         self.observation_space = spaces.Box(-np.inf, np.inf, (6,), np.float32)
 
@@ -185,7 +185,6 @@ class ApproachEnv(gym.Env):
         self.vxy = np.zeros(2)
         self.tau = float(r.uniform(*self.TAU))
         self.t = 0.0
-        self.phase = r.uniform(0, 2 * np.pi)   # search spiral phase
         self.was_acquired = False
 
         # Pick this episode's conditions: one sigma decile, held for the episode.
@@ -193,6 +192,7 @@ class ApproachEnv(gym.Env):
         self.sigma = float(np.median(self.pool_sigma[self._bin])) * self.sigma_scale
         self._bearing = r.uniform(0, 2 * np.pi)
         self._new_fix()
+        self.target = self._believed_pad()     # the low-passed guidance target
 
         return self._obs(), {}
 
@@ -220,17 +220,29 @@ class ApproachEnv(gym.Env):
     def step(self, action):
         a = np.clip(np.asarray(action, float), -1, 1)
         vz_cmd = a[0] * self.VZ_MAX
-        search_r = (a[1] + 1.0) * 0.5 * 25.0    # 0..25 m
+        chase = (a[1] + 1.0) * 0.5              # 0..1
 
         # --- lateral guidance: a controller, not the policy -----------------
+        #
+        # a[1] is how hard to chase the newest fix. This replaced an expanding
+        # search radius, which measurement showed was inert: sweeping r=0 scored
+        # exactly as well as the best tuned sweep, because the camera footprint
+        # (17.3 m at the ceiling) already dwarfs the disk worth sweeping.
+        #
+        # The real lever is that the believed pad JUMPS. Each fix redraws the
+        # error magnitude, so at high sigma the guidance target moves ~51 m
+        # (p90) between 0.2 s control steps while the aircraft can fly 1.0 m.
+        # Chasing that is chasing noise, and it burns the whole speed budget
+        # thrashing instead of sitting still inside the footprint. Damping the
+        # chase is the decision, and its optimum is sigma-dependent by
+        # construction: snap to the fix when sigma is small, hold station when
+        # it is large.
         if self._acquired():
-            target = self.pad          # marker in view: fly to it, no search
+            target = self.pad          # marker in view: fly to it, trust nothing else
+            self.target = target.copy()
         else:
-            # Believed pad-relative position, offset onto an expanding spiral
-            # whose radius the policy chooses. search_r = 0 means "commit".
-            self.phase += 0.9 * self.DT
-            target = self._believed_pad() + search_r * np.array(
-                [np.cos(self.phase), np.sin(self.phase)])
+            self.target = (1.0 - chase) * self.target + chase * self._believed_pad()
+            target = self.target
 
         # ponytail: plain P controller with a velocity cap. A full PID adds an
         # integral term that only matters for steady-state offset against wind,
@@ -352,7 +364,8 @@ def demo(pool=None):
         e.reset(seed=s)
         sigma0 = e.sigma
         while True:
-            _, _, term, trunc, i = e.step([-1.0, -1.0])   # max descent, no search
+            # max descent, tracking every fix: the sigma-blind strategy
+            _, _, term, trunc, i = e.step([-1.0, 1.0])
             if term or trunc:
                 (hi if sigma0 > 25.0 else lo).append(i["success"])
                 break

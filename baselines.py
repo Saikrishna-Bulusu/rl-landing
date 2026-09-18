@@ -42,8 +42,8 @@ from approach_env import ApproachEnv
 # the marker is in view -- and never for env.pad, which is ground truth.
 
 def dive(obs, env, p):
-    """Maximum descent, straight at the believed position. No search."""
-    return np.array([-1.0, -1.0])
+    """Maximum descent, straight at the believed position. No damping."""
+    return np.array([-1.0, 1.0])   # a[1]=+1 -> chase=1, track the newest fix
 
 
 def _descend_aligned(env):
@@ -61,42 +61,41 @@ def _descend_aligned(env):
     return -align
 
 
-def fixed_spiral(obs, env, p):
+def fixed_chase(obs, env, p):
     """
-    Descend to just under the detection ceiling, then sweep a disk of fixed
-    radius that grows with time. Knows nothing about sigma.
+    Hold just under the detection ceiling, chase the newest fix with a fixed
+    gain. Knows nothing about sigma.
     """
-    return _spiral(env, p, radius_target=p["r_fixed"])
+    return _approach(env, p, chase=p["g_fixed"])
 
 
-def sigma_spiral(obs, env, p):
-    """Same, but the disk is scaled by the calibrated sigma."""
-    return _spiral(env, p, radius_target=p["k_sigma"] * env.sigma)
+def sigma_chase(obs, env, p):
+    """
+    Same, but damp the chase in proportion to sigma. A fix with a 30 m sigma
+    jumps further between updates than the aircraft can fly, so tracking it is
+    tracking noise; a 9 m sigma is worth following.
+    """
+    g = p["g0"] / (1.0 + (env.sigma / p["g_sigma"]) ** 2)
+    return _approach(env, p, chase=float(np.clip(g, 0.02, 1.0)))
 
 
-def _spiral(env, p, radius_target):
-    h_hold = p["h_hold"]
-
+def _approach(env, p, chase):
+    """Shared vertical logic, so the two policies differ ONLY in the gain."""
+    a1 = 2.0 * chase - 1.0                       # chase in [0,1] -> action space
     if env._acquired():
-        return np.array([_descend_aligned(env), -1.0])
-
+        return np.array([_descend_aligned(env), a1])
+    h_hold = p["h_hold"]
     if env.h > h_hold:
-        vz = -1.0                            # still above the search altitude
-        r = 0.0
+        vz = -1.0                                # still above the search altitude
     else:
-        # Hold altitude and sweep. Radius ramps from 0 outward over the search,
-        # so the near field is covered before the far field.
         vz = np.clip((h_hold - env.h) / 5.0, -1.0, 1.0)
-        frac = np.clip(env.t / (env.T_MAX * p["sweep_frac"]), 0.0, 1.0)
-        r = radius_target * frac
-    # action[1] in [-1,1] maps to radius 0..25 m
-    return np.array([vz, np.clip(r / 12.5 - 1.0, -1.0, 1.0)])
+    return np.array([vz, a1])
 
 
-POLICIES = {"dive": dive, "fixed_spiral": fixed_spiral,
-            "sigma_spiral": sigma_spiral}
+POLICIES = {"dive": dive, "fixed_chase": fixed_chase,
+            "sigma_chase": sigma_chase}
 
-DEFAULTS = {"h_hold": 28.0, "r_fixed": 18.0, "k_sigma": 1.5, "sweep_frac": 0.75}
+DEFAULTS = {"h_hold": 28.0, "g_fixed": 1.0, "g0": 1.0, "g_sigma": 15.0}
 
 
 # --- evaluation --------------------------------------------------------------
@@ -147,16 +146,19 @@ def tune(pool, name, episodes, rng, env_kw=None):
     """
     grid = {
         "dive": [{}],
-        # Both grids were re-centred downward after the first real-pool run:
-        # each policy selected the SMALLEST value on offer, which means the
-        # optimum lay outside the grid and the "equal budget" was being spent
-        # on candidates neither policy wanted. Still 12 candidates each.
-        "fixed_spiral": [{"h_hold": h, "r_fixed": r, "sweep_frac": f}
-                         for h in (26, 30) for r in (3, 6, 12)
-                         for f in (0.5, 0.8)],
-        "sigma_spiral": [{"h_hold": h, "k_sigma": k, "sweep_frac": f}
-                         for h in (26, 30) for k in (0.2, 0.4, 0.8)
-                         for f in (0.5, 0.8)],
+        # Equal budget: 12 candidates each, and each policy gets the same two
+        # altitude options plus six settings of its own gain parameterisation.
+        # Check the selected value is not on a grid EDGE -- on the first real
+        # -pool run both spiral policies picked their smallest offered value,
+        # which meant the optimum lay outside the grid and the "equal budget"
+        # was being spent on candidates neither policy wanted.
+        "fixed_chase": [{"h_hold": h, "g_fixed": g}
+                        for h in (26, 30)
+                        for g in (0.05, 0.1, 0.2, 0.4, 0.7, 1.0)],
+        "sigma_chase": [{"h_hold": h, "g0": g, "g_sigma": k}
+                        for h in (26, 30)
+                        for g in (0.4, 1.0)
+                        for k in (8.0, 15.0, 30.0)],
     }[name]   # equal budget: 12 candidates each
 
     seeds = rng.integers(0, 2**31, episodes)
@@ -200,7 +202,7 @@ def main():
                             np.random.default_rng(1), env_kw)
             params[name] = p
             extra = {k: v for k, v in p.items() if k in
-                     ("h_hold", "r_fixed", "k_sigma", "sweep_frac")}
+                     ("h_hold", "g_fixed", "g0", "g_sigma")}
             print(f"  {name:<14} {n:>3} candidates  best {sc:5.1f}%  {extra}")
         print()
 
@@ -225,8 +227,8 @@ def main():
         json.dump({"episodes": a.episodes, "tuned": a.tune, "env": env_kw,
                    "results": results}, fh, indent=2)
     print(f"\nwrote {a.out}")
-    print("\nRead the last three columns. If sigma_spiral only matches "
-          "fixed_spiral\nat high sigma, the uncertainty channel is not "
+    print("\nRead the last three columns. If sigma_chase only matches "
+          "fixed_chase\nat high sigma, the uncertainty channel is not "
           "carrying usable signal and\nthe RL result will not either -- "
           "investigate before training.")
 
