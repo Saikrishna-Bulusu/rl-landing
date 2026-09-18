@@ -624,3 +624,67 @@ NOT SUPPORTED, AND DO NOT CLAIM:
    value depends on assumed ground speed and difficulty is non-monotone in rho.
 3. Only then consider the ~50-seed run, and only for whichever comparison is
    still borderline.
+
+## Step 10 — FAIR TEST at rho=0.707 (HP re-tuned at the same rho). READ THIS ONE.
+
+Sweep re-run at rho=0.707 (36 runs), winners taken per arm, then 8 seeds x 3
+arms at 2.5M steps. Scripted baselines re-tuned at rho=0.707 as well. This is
+the first comparison in the project with NO tuning asymmetry anywhere.
+
+```
+version        overall        hi-sigma        per-seed median
+none          86.7 +/- 0.8   57.0 +/- 2.4         56.9
+staleness     87.0 +/- 3.2   60.3 +/- 7.6         58.1
+sigma         87.9 +/- 3.0   63.2 +/- 8.6         60.6
+hand rule     94.2                81.9
+
+sigma vs none        +6.2  p=0.0504  d=0.98   borderline; fails Bonferroni (0.0167)
+sigma vs staleness   +2.9  p=0.4679  d=0.36   no evidence
+ none vs staleness   -3.3  p=0.2481  d=-0.58  no evidence
+sigma vs hand rule  -18.7  p<0.0001           hand rule wins decisively
+```
+
+### The rho=0.8 result (Step 9) DID NOT REPLICATE
+
+Step 9 reported sigma vs staleness = +10.4, p=0.007, and called the core claim
+supported. At rho=0.707 with matched tuning it is +2.9, p=0.47. **Withdraw the
+Step 9 claim.** Do not put it in front of Nabin.
+
+**Cause is confounded, and that is my error.** Two things changed between Step 9
+and Step 10 at once: rho (0.8 -> 0.707) AND where the hyperparameters were tuned
+(rho=0.363 -> rho=0.707). Cannot attribute the difference. Most likely
+explanation is that the HPs borrowed from rho=0.363 happened to suit the sigma
+arm better than the other two, manufacturing an advantage -- which is the exact
+failure mode this project has now hit THREE times in three different directions.
+
+Also note sigma's mean is carried by two lucky seeds (74.8, 77.2). Mean gap 6.2,
+median gap 3.7. Report medians alongside means for this env; the seed
+distribution is skewed.
+
+### What IS established
+
+1. **A tuned scripted rule beats tuned PPO at the corrected operating point**,
+   63.2 vs 81.9, p<0.0001, with equal 12-candidate budgets on both sides and no
+   asymmetry remaining. This is the cleanest result in the project. Same shape
+   as GeoAnchor finding 1 and MUSE's "empirical covariance is quite
+   competitive".
+2. **A sigma-aware scripted rule tunes itself into the sigma-blind one** at
+   rho = 0, 0.363, 0.707 and 0.8. Four for four. A hand rule cannot use sigma.
+3. **The staleness proxy does not help at any rho tested.** Caveat unchanged:
+   sigma is constant within an episode here, so the channel is structurally
+   uninformative in this env -- an env-design property, not a refutation of
+   PerchRL.
+4. Calibration results (ENCE 0.313, conformal k=1.97 at 90% coverage,
+   per-scene error autocorrelation, and the frame-spacing -> fix-rate
+   rescaling to rho=0.707) are untouched by any of the above.
+
+### The disambiguating experiment, if the sigma question is pursued
+
+Run rho=0.8 with HPs tuned AT rho=0.8 (36 + 24 runs, ~3 h). That changes only
+rho relative to Step 10 and only the HP source relative to Step 9, so whichever
+way it lands, the confound is resolved. Do this BEFORE spending the ~50-seed
+budget on anything.
+
+Standing lesson from this project, stated plainly because it has now happened
+three times: **every single wrong conclusion here came from an unequal
+comparison or an unchecked assumption -- never from a bug in the physics.**
