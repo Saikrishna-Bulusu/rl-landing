@@ -81,8 +81,8 @@ def load(roots, ref="satellite", matcher="XFEAT_LG"):
 
 
 def to_arrays(rows, exclude_scenes=()):
-    """Extract the three things we need: inliers, error, scene."""
-    inl, err, scene = [], [], []
+    """Extract what we need: inliers, error, scene, and the frame ordering."""
+    inl, err, scene, sid = [], [], [], []
     dropped_absurd = 0
     for r in rows:
         sc = r.get("scene_name", "")
@@ -105,8 +105,50 @@ def to_arrays(rows, exclude_scenes=()):
         inl.append(i)
         err.append(e)
         scene.append(sc)
+        sid.append(r.get("sample_id", ""))
     return (np.asarray(inl, float), np.asarray(err, float),
-            np.asarray(scene, object), dropped_absurd)
+            np.asarray(scene, object), np.asarray(sid, object), dropped_absurd)
+
+
+def lag1_rank_corr(err, scene, sid):
+    """
+    Lag-1 RANK autocorrelation of |error| along the frame ordering, pooled over
+    within-scene consecutive pairs.
+
+    Rank rather than Pearson because the error distribution is heavy-tailed --
+    a single 160 m fix would otherwise set the statistic -- and because the
+    replay model that consumes this is a Gaussian copula, whose dependence
+    parameter matches the rank correlation, not the linear one.
+
+    ASSUMPTION WORTH STATING IN THE PAPER: this is the correlation at the
+    DATASET's frame spacing, which is not the env's FIX_DT. Treat rho as a
+    knob with this as its data-grounded default, not as a measured constant.
+    """
+    a, b = [], []
+    for sc in np.unique(scene):
+        m = scene == sc
+        order = np.argsort(sid[m].astype(str))
+        e = err[m][order]
+        if len(e) < 20:
+            continue
+        a.append(e[:-1])
+        b.append(e[1:])
+    if not a:
+        return 0.0, {}
+    per = {}
+    for sc in np.unique(scene):
+        m = scene == sc
+        e = err[m][np.argsort(sid[m].astype(str))]
+        if len(e) < 20:
+            continue
+        per[str(sc)] = float(_spearman(e[:-1], e[1:]))
+    return float(_spearman(np.concatenate(a), np.concatenate(b))), per
+
+
+def _spearman(x, y):
+    rx = np.argsort(np.argsort(x)).astype(float)
+    ry = np.argsort(np.argsort(y)).astype(float)
+    return np.corrcoef(rx, ry)[0, 1]
 
 
 def fit_sigma_bins(inl, err, n_bins=8, q=0.68):
@@ -231,11 +273,12 @@ def main():
         sys.exit(f"no rows: check --ref/--matcher and that {a.roots} has "
                  f"all_results.csv under a *{a.ref}* directory")
 
-    inl, err, scene, n_absurd = to_arrays(rows, set(a.exclude_scene))
+    inl, err, scene, sid, n_absurd = to_arrays(rows, set(a.exclude_scene))
     if len(err) < 50:
         sys.exit(f"only {len(err)} usable fixes -- too few to calibrate")
 
     sigma = loso_sigma(inl, err, scene)
+    rho, rho_per = lag1_rank_corr(err, scene, sid)
     e, table = ence(sigma, err)
     k, cov, n_folds = conformal(sigma, err, scene, a.alpha)
 
@@ -255,17 +298,23 @@ def main():
         print(f"  {t['n']:>5} {t['rmv_m']:>8.2f}m {t['rmse_m']:>8.2f}m   "
               f"{t['median_sigma_m']:>8.2f}m {t['median_err_m']:>8.2f}m")
 
+    print(f"\nlag-1 rank autocorrelation of |error| (frame ordering):")
+    for sc, v in sorted(rho_per.items()):
+        print(f"  {sc:<12} {v:+.3f}")
+    print(f"  {'pooled':<12} {rho:+.3f}  <- the env's replay AR(1) parameter")
+
     print(f"\nconformal @ alpha={a.alpha}: k = {k:.2f}, "
           f"held-out coverage = {100 * cov:.1f}% over {n_folds} scene folds")
     print(f"  -> true position is within {k:.2f} * sigma "
           f"at least {100 * (1 - a.alpha):.0f}% of the time")
 
     np.savez(a.out, sigma=sigma, err=err, scene=scene.astype(str),
-             inliers=inl, conformal_k=k, ence=e, alpha=a.alpha)
+             inliers=inl, conformal_k=k, ence=e, alpha=a.alpha, rho=rho)
     print(f"\nwrote {a.out}  ({len(err)} pairs) -- this is the replay pool\n")
 
     with open(os.path.splitext(a.out)[0] + "_report.json", "w") as fh:
-        json.dump({"ence": e, "conformal_k": k, "coverage": cov,
+        json.dump({"ence": e, "conformal_k": k, "coverage": cov, "rho": rho,
+                   "rho_per_scene": rho_per,
                    "n": len(err), "n_absurd": n_absurd,
                    "matcher": a.matcher, "excluded": a.exclude_scene,
                    "bins": table}, fh, indent=2)

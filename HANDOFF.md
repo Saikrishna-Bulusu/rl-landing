@@ -333,3 +333,110 @@ It also explains why scaling a search radius by sigma buys nothing: the sweep
 was never the operative variable.
 
 If the sigma arm beats staleness below, this is the mechanism to describe.
+
+---
+
+## Step 3 — the 5-seed ablation (env as originally written, rho=0)
+
+```
+arm          seeds      succ%           hi-sig%            range
+none             5   86.0 +/- 2.8   54.8 +/- 8.9   [39.0, 60.2]
+staleness        5   86.8 +/- 1.3   56.9 +/- 4.1   [49.6, 59.3]
+sigma            5   87.7 +/- 0.7   60.0 +/- 2.4   [56.1, 62.6]
+scripted baseline                       71.7
+
+sigma - none      = +5.2 pts  p ~ 0.21
+sigma - staleness = +3.1 pts  p ~ 0.15
+sigma - baseline  = -11.7 pts p < 0.0001
+```
+
+Ordering is the hypothesised one but **not significant at 5 seeds**. The more
+robust effect is variance: sigma cuts seed-to-seed spread ~4x versus `none`
+(2.4 vs 8.9; worst seed 56.1 vs 39.0). Telling the policy how wrong it is makes
+training *reliable*, which may be the more defensible claim than the mean.
+
+## Step 4 — two action-space redesigns, both falsified, and why
+
+**Attempt 1: the search radius was inert.** Swept directly, `r_fixed=0` ties the
+best tuned sweep (91.0 / 71.7 hi-sig). The camera footprint at the ceiling
+(17.3 m) already dwarfs the disk worth sweeping.
+
+**Attempt 2: replaced it with a chase gain** (low-pass on the guidance target).
+Motivated by a real measurement -- at high sigma the believed pad jumps 51 m
+(p90) between 0.2 s control steps while the aircraft can fly 1.0 m, so it is
+chasing noise. But the gain swept monotone to its boundary:
+
+```
+chase g   0.05   0.10   0.20   0.40   0.70   1.00
+hi-sig     7.0   24.4   32.6   41.9   55.8   70.9
+```
+
+Damping strictly hurts. **Both levers pin at a boundary**, which is the signal
+that the action space was never the binding constraint.
+
+**The actual cause: the error's temporal model.** Freezing the error magnitude
+within an episode instead of re-drawing it every fix:
+
+```
+                     dive              hold+chase
+iid re-draw      86.5 / hi 40.7      93.5 / hi 70.9
+persistent       71.8 / hi 36.0      71.8 / hi 36.0   <- identical
+```
+
+Under a persistent error, loitering buys **exactly zero**. All of the baseline's
+advantage came from `_new_fix()` re-drawing the magnitude iid every 0.5 s, so
+hovering at the ceiling re-rolls the dice until a small draw lands. That is a
+lottery, not an estimation problem, and sigma only tells you how long it takes.
+
+## Step 5 — the error model, measured rather than assumed
+
+`sample_id` is sequential frames (`L09_0001, L09_0002, ...`), so the temporal
+correlation is measurable from data already on disk:
+
+```
+lag-1 RANK autocorrelation of |error|
+  Scene_09  +0.257    Scene_16  +0.468
+  Scene_10  +0.358    Scene_22  +0.550
+  pooled    +0.363
+```
+
+Rank, not Pearson: the error is heavy-tailed and one 160 m fix would otherwise
+set the statistic, and the consumer is a Gaussian copula whose parameter is the
+rank correlation. **Stated assumption:** this is the correlation at the
+*dataset's* frame spacing, not the env's `FIX_DT`. `rho` is a knob
+(`ApproachEnv(rho=...)`) with 0.363 as its data-grounded default.
+
+`_new_fix` now draws through an **AR(1) Gaussian copula**: `z_t = rho*z_{t-1} +
+sqrt(1-rho^2)*eps`, `u_t = Phi(z_t)`, `mag_t = empirical_quantile(bin, u_t)`.
+Because `z_t` is standard normal at stationarity, `u_t` is exactly uniform and
+`P(error | sigma)` stays EXACTLY the measured distribution. An AR(1) on the raw
+magnitude would have distorted that marginal. Asserted in `demo()`.
+
+## Step 6 — and the search lever is a knife-edge
+
+Action space is now 3-dim (vertical rate, search radius, chase gain) so neither
+lateral lever is dropped a priori. Sweeping rho against search radius:
+
+```
+ rho | r=0    r=6    r=12   r=20    best
+0.00 | 57.7  49.3  39.4  40.8     r=0
+0.36 | 70.4  57.7  49.3  46.5     r=0   <- the measured value
+0.60 | 71.8  69.0  62.0  49.3     r=0
+0.80 | 78.9  74.6  66.2  64.8     r=0
+0.95 | 67.6  64.8  60.6  56.3     r=0
+1.00 | 38.0  49.3  49.3  50.7     r=20  <- only here
+```
+
+Spatial search pays **only in the exact limit rho=1**. At the measured rho the
+tuned `sigma_search` selects `k_sigma=0` and no damping -- it degenerates
+*literally* into `fixed_search`, which is why both score 74.8%.
+
+**So at the data-grounded error model, a scripted sigma-aware policy has nothing
+to do.** That part of the study is settled and it is a negative result worth
+reporting. The open question is only whether a *learned* policy can use sigma
+where a rule cannot -- which is the original ablation, and is what the matched
+hyperparameter sweep below is for.
+
+Note also that hi-sigma success is non-monotone in rho (57.7 at 0, peaking 78.9
+at 0.8, collapsing to 38.0 at 1.0). Task difficulty is strongly rho-dependent,
+so rho must be reported alongside any success number from this env.

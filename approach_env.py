@@ -48,6 +48,8 @@ Same replayed errors in all three, so the only difference is what the policy was
 told about them.
 """
 
+import math
+
 import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
@@ -81,7 +83,7 @@ class ApproachEnv(gym.Env):
     FIX_DT = 0.5         # GeoAnchor fix interval (s) -> 2 Hz
 
     def __init__(self, pool="sigma_pool.npz", arm="sigma", seed=None,
-                 sigma_scale=1.0, lam=0.5, t_max=None, vxy_max=None):
+                 sigma_scale=1.0, lam=0.5, t_max=None, vxy_max=None, rho=None):
         """
         t_max / vxy_max override the class defaults. They are the two honest
         difficulty knobs: loiter time is really a battery reserve, and lateral
@@ -113,6 +115,16 @@ class ApproachEnv(gym.Env):
         # one, which is the property the whole replay design exists to preserve.
         order = np.argsort(self.pool_sigma)
         self.sigma_bins = np.array_split(order, 10)
+        # Sorted once so a fix is an O(1) empirical-quantile lookup.
+        self.bin_err_sorted = [np.sort(self.pool_err[b]) for b in self.sigma_bins]
+
+        # Temporal correlation of the localisation error. Measured from the
+        # real frame ordering by calibrate.lag1_rank_corr and carried in the
+        # pool; rho=0 (iid fixes) was the original assumption and it is the one
+        # extreme where "loiter and wait for a lucky fix" dominates everything.
+        # rho=1 is the other, where loitering is worthless. Real data is between.
+        self.rho = float(rho) if rho is not None else float(d["rho"]) \
+            if "rho" in d.files else 0.0
 
         fov = np.radians(self.FOV_DEG)
         self.fov_tan = np.tan(fov / 2.0)
@@ -120,24 +132,44 @@ class ApproachEnv(gym.Env):
         # decoded no matter where the drone is. ~30 m for a 1 m pad at 640 px.
         self.h_detect = self.PAD_SIZE * self.PX / (fov * self.MIN_PX)
 
-        # a[0] vertical velocity, a[1] how hard to chase the newest fix
-        self.action_space = spaces.Box(-1.0, 1.0, (2,), np.float32)
+        # a[0] vertical velocity, a[1] search radius, a[2] chase gain.
+        #
+        # Both lateral levers are present because which one matters is set by
+        # rho. At rho=0 the error re-rolls every fix, so holding still and
+        # waiting beats searching and a sweep is provably inert (r=0 ties the
+        # best tuned sweep). At rho=1 the error is a fixed bias no amount of
+        # waiting removes, and only spatial search can find the pad. Real data
+        # sits between, so neither lever can be dropped a priori.
+        self.action_space = spaces.Box(-1.0, 1.0, (3,), np.float32)
         self.observation_space = spaces.Box(-np.inf, np.inf, (6,), np.float32)
 
     # ---- localization ---------------------------------------------------
     def _new_fix(self):
         """
         Draw the next replayed fix. Sigma is fixed for the episode; the error
-        magnitude is a fresh draw from the real errors that accompany that sigma.
+        magnitude comes from the real errors that accompany that sigma, drawn
+        through an AR(1) GAUSSIAN COPULA so that consecutive fixes are
+        correlated the way real ones are.
+
+        Why a copula rather than an AR(1) on the magnitude itself: the latent
+        z_t is standard normal at stationarity, so u_t = Phi(z_t) is exactly
+        Uniform(0,1) and mag_t is exactly the empirical quantile function of the
+        bin evaluated there. P(error | sigma) therefore stays EXACTLY the
+        measured distribution -- the invariant this whole replay design exists
+        to protect -- while gaining a time axis it previously assumed away.
+        An AR(1) on the raw heavy-tailed magnitude would distort that marginal.
 
         The bearing drifts only slightly. Map-match error direction is set by
         scene structure, not white noise, and a fast-rotating bearing would let
         a drone that simply descends sweep a free search pattern -- which would
         silently destroy the experiment by making the sigma-blind policy good.
         """
-        j = int(self.rng.choice(self._bin))
+        self._z = (self.rho * self._z +
+                   np.sqrt(max(1.0 - self.rho ** 2, 0.0)) * self.rng.normal())
+        u = 0.5 * (1.0 + math.erf(self._z / np.sqrt(2.0)))
+        e = self._bin_err
+        mag = float(e[int(round(u * (len(e) - 1)))]) * self.sigma_scale
         self._bearing += self.rng.normal(0.0, 0.02)
-        mag = float(self.pool_err[j]) * self.sigma_scale
         self.err_xy = mag * np.array([np.cos(self._bearing),
                                       np.sin(self._bearing)])
         self.t_fix = 0.0
@@ -185,12 +217,16 @@ class ApproachEnv(gym.Env):
         self.vxy = np.zeros(2)
         self.tau = float(r.uniform(*self.TAU))
         self.t = 0.0
+        self.phase = r.uniform(0, 2 * np.pi)   # search spiral phase
         self.was_acquired = False
 
         # Pick this episode's conditions: one sigma decile, held for the episode.
-        self._bin = self.sigma_bins[int(r.integers(len(self.sigma_bins)))]
+        b = int(r.integers(len(self.sigma_bins)))
+        self._bin = self.sigma_bins[b]
+        self._bin_err = self.bin_err_sorted[b]
         self.sigma = float(np.median(self.pool_sigma[self._bin])) * self.sigma_scale
         self._bearing = r.uniform(0, 2 * np.pi)
+        self._z = float(r.normal())          # AR(1) latent, at stationarity
         self._new_fix()
         self.target = self._believed_pad()     # the low-passed guidance target
 
@@ -220,7 +256,8 @@ class ApproachEnv(gym.Env):
     def step(self, action):
         a = np.clip(np.asarray(action, float), -1, 1)
         vz_cmd = a[0] * self.VZ_MAX
-        chase = (a[1] + 1.0) * 0.5              # 0..1
+        search_r = (a[1] + 1.0) * 0.5 * 25.0    # 0..25 m
+        chase = (a[2] + 1.0) * 0.5              # 0..1
 
         # --- lateral guidance: a controller, not the policy -----------------
         #
@@ -241,7 +278,10 @@ class ApproachEnv(gym.Env):
             target = self.pad          # marker in view: fly to it, trust nothing else
             self.target = target.copy()
         else:
-            self.target = (1.0 - chase) * self.target + chase * self._believed_pad()
+            self.phase += 0.9 * self.DT
+            raw = self._believed_pad() + search_r * np.array(
+                [np.cos(self.phase), np.sin(self.phase)])
+            self.target = (1.0 - chase) * self.target + chase * raw
             target = self.target
 
         # ponytail: plain P controller with a velocity cap. A full PID adds an
@@ -365,7 +405,7 @@ def demo(pool=None):
         sigma0 = e.sigma
         while True:
             # max descent, tracking every fix: the sigma-blind strategy
-            _, _, term, trunc, i = e.step([-1.0, 1.0])
+            _, _, term, trunc, i = e.step([-1.0, -1.0, 1.0])
             if term or trunc:
                 (hi if sigma0 > 25.0 else lo).append(i["success"])
                 break
@@ -374,6 +414,25 @@ def demo(pool=None):
     assert lo_r - hi_r > 0.15, (
         f"diving succeeds {lo_r:.0%} at low sigma and {hi_r:.0%} at high -- "
         "no sigma-dependent gap, so there is nothing for the policy to learn")
+
+    # The copula must preserve the empirical marginal AND hit the target
+    # autocorrelation. If the marginal drifts, P(error | sigma) is no longer the
+    # measured distribution and the replay design has quietly become a
+    # simulation -- the exact failure this env exists to avoid.
+    ec = ApproachEnv(pool=p, arm="sigma", seed=0, rho=0.6)
+    ec.reset(seed=1)
+    mags = []
+    for _ in range(20000):
+        ec._new_fix()
+        mags.append(np.linalg.norm(ec.err_xy))
+    m = np.asarray(mags)
+    rk = lambda x: np.argsort(np.argsort(x)).astype(float)
+    ac = float(np.corrcoef(rk(m[:-1]), rk(m[1:]))[0, 1])
+    assert abs(ac - 0.6) < 0.08, f"copula autocorr {ac:.3f} != rho 0.6"
+    for q in (50, 90):
+        got, want = np.percentile(m, q), np.percentile(ec._bin_err, q)
+        assert abs(got - want) <= 0.1 * want + 1.0, \
+            f"copula distorted the p{q} marginal: {got:.2f} vs {want:.2f}"
 
     # And the replayed error must actually move the believed position.
     e.reset(seed=3)

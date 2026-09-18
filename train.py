@@ -97,12 +97,12 @@ def run(arm, a):
 
     model = PPO(
         "MlpPolicy", venv,
-        n_steps=1024, batch_size=256, learning_rate=3e-4,
+        n_steps=a.n_steps, batch_size=a.batch_size, learning_rate=a.lr,
         gamma=0.995,          # 600-step episodes; 0.99 discounts touchdown away
         gae_lambda=0.97,
-        ent_coef=0.008,       # WaveLander's value; the task needs exploration
+        ent_coef=a.ent_coef,  # the task needs exploration
         clip_range=0.2,
-        policy_kwargs=dict(net_arch=[128, 64]),
+        policy_kwargs=dict(net_arch=a.net),
         # "" disables logging; SB3 treats any non-None value as a request and
         # then dies if tensorboard is not installed.
         tensorboard_log=a.tb or None, verbose=1, seed=a.seed,
@@ -128,6 +128,15 @@ def main():
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--t-max", type=float, default=None)
     ap.add_argument("--vxy-max", type=float, default=None)
+    # Hyperparameters are flags so each arm can be given the SAME tuning budget
+    # the scripted baselines get. Tuning the baselines with a 12-candidate sweep
+    # while leaving PPO on defaults is a tuning asymmetry running the other way,
+    # which is the very thing "Leveling the Playing Field" measures.
+    ap.add_argument("--lr", type=float, default=3e-4)
+    ap.add_argument("--ent-coef", type=float, default=0.008)
+    ap.add_argument("--n-steps", type=int, default=1024)
+    ap.add_argument("--batch-size", type=int, default=256)
+    ap.add_argument("--net", type=int, nargs="+", default=[128, 64])
     ap.add_argument("--out", default="runs")
     ap.add_argument("--tb", default="runs/tb")
     a = ap.parse_args()

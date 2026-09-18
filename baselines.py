@@ -42,8 +42,8 @@ from approach_env import ApproachEnv
 # the marker is in view -- and never for env.pad, which is ground truth.
 
 def dive(obs, env, p):
-    """Maximum descent, straight at the believed position. No damping."""
-    return np.array([-1.0, 1.0])   # a[1]=+1 -> chase=1, track the newest fix
+    """Maximum descent, straight at the believed position. The strawman."""
+    return np.array([-1.0, -1.0, 1.0])      # no search, chase every fix
 
 
 def _descend_aligned(env):
@@ -61,41 +61,38 @@ def _descend_aligned(env):
     return -align
 
 
-def fixed_chase(obs, env, p):
-    """
-    Hold just under the detection ceiling, chase the newest fix with a fixed
-    gain. Knows nothing about sigma.
-    """
-    return _approach(env, p, chase=p["g_fixed"])
+def fixed_search(obs, env, p):
+    """Hold under the ceiling, sweep a fixed disk, fixed chase gain. Sigma-blind."""
+    return _approach(env, p, radius=p["r_fixed"], chase=p["g_fixed"])
 
 
-def sigma_chase(obs, env, p):
+def sigma_search(obs, env, p):
     """
-    Same, but damp the chase in proportion to sigma. A fix with a 30 m sigma
-    jumps further between updates than the aircraft can fly, so tracking it is
-    tracking noise; a 9 m sigma is worth following.
+    Both levers scaled by sigma: sweep a disk proportional to sigma, and damp
+    the chase when sigma is large enough that consecutive fixes jump further
+    than the aircraft can fly between them.
     """
     g = p["g0"] / (1.0 + (env.sigma / p["g_sigma"]) ** 2)
-    return _approach(env, p, chase=float(np.clip(g, 0.02, 1.0)))
+    return _approach(env, p, radius=p["k_sigma"] * env.sigma,
+                     chase=float(np.clip(g, 0.02, 1.0)))
 
 
-def _approach(env, p, chase):
-    """Shared vertical logic, so the two policies differ ONLY in the gain."""
-    a1 = 2.0 * chase - 1.0                       # chase in [0,1] -> action space
+def _approach(env, p, radius, chase):
+    """Shared vertical logic, so the policies differ ONLY in the two levers."""
+    a1 = float(np.clip(radius / 12.5 - 1.0, -1.0, 1.0))
+    a2 = 2.0 * float(np.clip(chase, 0.0, 1.0)) - 1.0
     if env._acquired():
-        return np.array([_descend_aligned(env), a1])
+        return np.array([_descend_aligned(env), -1.0, 1.0])
     h_hold = p["h_hold"]
-    if env.h > h_hold:
-        vz = -1.0                                # still above the search altitude
-    else:
-        vz = np.clip((h_hold - env.h) / 5.0, -1.0, 1.0)
-    return np.array([vz, a1])
+    vz = -1.0 if env.h > h_hold else np.clip((h_hold - env.h) / 5.0, -1.0, 1.0)
+    return np.array([vz, a1, a2])
 
 
-POLICIES = {"dive": dive, "fixed_chase": fixed_chase,
-            "sigma_chase": sigma_chase}
+POLICIES = {"dive": dive, "fixed_search": fixed_search,
+            "sigma_search": sigma_search}
 
-DEFAULTS = {"h_hold": 28.0, "g_fixed": 1.0, "g0": 1.0, "g_sigma": 15.0}
+DEFAULTS = {"h_hold": 30.0, "r_fixed": 0.0, "k_sigma": 0.5,
+            "g_fixed": 1.0, "g0": 1.0, "g_sigma": 15.0}
 
 
 # --- evaluation --------------------------------------------------------------
@@ -152,13 +149,12 @@ def tune(pool, name, episodes, rng, env_kw=None):
         # -pool run both spiral policies picked their smallest offered value,
         # which meant the optimum lay outside the grid and the "equal budget"
         # was being spent on candidates neither policy wanted.
-        "fixed_chase": [{"h_hold": h, "g_fixed": g}
-                        for h in (26, 30)
-                        for g in (0.05, 0.1, 0.2, 0.4, 0.7, 1.0)],
-        "sigma_chase": [{"h_hold": h, "g0": g, "g_sigma": k}
-                        for h in (26, 30)
-                        for g in (0.4, 1.0)
-                        for k in (8.0, 15.0, 30.0)],
+        "fixed_search": [{"h_hold": h, "r_fixed": r, "g_fixed": g}
+                         for h in (26, 30) for r in (0.0, 6.0, 12.0)
+                         for g in (0.4, 1.0)],
+        "sigma_search": [{"h_hold": h, "k_sigma": k, "g0": 1.0, "g_sigma": gs}
+                         for h in (26, 30) for k in (0.0, 0.5, 1.0)
+                         for gs in (10.0, 1e6)],
     }[name]   # equal budget: 12 candidates each
 
     seeds = rng.integers(0, 2**31, episodes)
@@ -202,7 +198,7 @@ def main():
                             np.random.default_rng(1), env_kw)
             params[name] = p
             extra = {k: v for k, v in p.items() if k in
-                     ("h_hold", "g_fixed", "g0", "g_sigma")}
+                     ("h_hold", "r_fixed", "k_sigma", "g_fixed", "g_sigma")}
             print(f"  {name:<14} {n:>3} candidates  best {sc:5.1f}%  {extra}")
         print()
 
@@ -227,8 +223,8 @@ def main():
         json.dump({"episodes": a.episodes, "tuned": a.tune, "env": env_kw,
                    "results": results}, fh, indent=2)
     print(f"\nwrote {a.out}")
-    print("\nRead the last three columns. If sigma_chase only matches "
-          "fixed_chase\nat high sigma, the uncertainty channel is not "
+    print("\nRead the last three columns. If sigma_search only matches "
+          "fixed_search\nat high sigma, the uncertainty channel is not "
           "carrying usable signal and\nthe RL result will not either -- "
           "investigate before training.")
 
