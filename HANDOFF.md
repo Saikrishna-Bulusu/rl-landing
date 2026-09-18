@@ -719,3 +719,93 @@ shared `replay.py` once the overnight chain finishes.
 
 Stage 2 training has NOT been started: the CPU is saturated by the overnight
 chain, and it was to begin only after those experiments finish.
+
+# ============================================================
+# OVERNIGHT 18->19 SEPT: 216 runs. THE SIGMA EFFECT DOES NOT SURVIVE.
+# ============================================================
+
+Six stages, 00:13 -> 05:43, no crashes, memory guard reported 13.7-14.3 GB free
+at every checkpoint. 132 point-mass runs + 84 cage runs.
+
+## The headline: 20 seeds kills the sigma result
+
+```
+                 none      staleness    sigma     hand rule
+rho=0.363        69.3        69.7        70.4       74.8
+rho=0.707        58.5        60.1        58.2       81.9
+rho=0.80         52.1        55.2        57.0       83.5
+
+               sigma - none            sigma - staleness
+rho=0.363   +1.1  p=0.76             +0.7  p=0.84
+rho=0.707   -0.4  p=0.89             -2.0  p=0.52
+rho=0.80    +4.9  p=0.32             +1.8  p=0.52
+```
+
+**Step 9's rho=0.8 result (+10.4, p=0.007, "the core claim is supported") was a
+small-sample artefact.** At 8 seeds it looked significant. At 20 seeds the same
+comparison is +1.8 with p=0.52. Withdraw it completely.
+
+95% confidence intervals on the sigma advantage, which is the honest way to
+state a null:
+
+```
+rho=0.363   sigma - none  [-5.7, +7.9]   sigma - staleness  [-5.8, +7.1]
+rho=0.707   sigma - none  [-5.6, +4.9]   sigma - staleness  [-7.9, +4.0]
+rho=0.80    sigma - none  [-4.8, +14.6]  sigma - staleness  [-3.8, +7.4]
+```
+
+So: **any sigma advantage larger than roughly 5-15 points is excluded at 95%**,
+while the hand-written rule beats every learned arm by 5 / 22 / 27 points. This
+is a well-powered negative result, not an absence of evidence.
+
+## What the study now says, and it is publishable as a negative
+
+1. A calibrated sigma gives a LEARNED landing policy no measurable advantage
+   over a position-only policy, or over PerchRL's staleness proxy, at any of
+   three error-correlation settings, with 20 seeds per arm.
+2. A tuned scripted rule beats every learned arm at every setting, under equal
+   12-candidate tuning budgets on both sides.
+3. A sigma-aware SCRIPTED rule tunes its sigma term to zero at rho = 0, 0.363,
+   0.707 and 0.8. Four for four.
+4. PerchRL's staleness proxy does not replicate. Caveat unchanged: sigma is
+   constant within an episode here, so that channel is structurally
+   uninformative in this env.
+5. The calibration contribution (ENCE 0.313, conformal k=1.97 at 90% coverage,
+   per-scene error autocorrelation, frame-spacing -> fix-rate rescaling to
+   rho=0.707) is untouched and stands on its own.
+
+**The seed-count lesson is the methodological one worth reporting.** The same
+comparison read as p=0.007 at n=8 and p=0.52 at n=20. Eight seeds is not enough
+to make a claim in this env, and the effect sizes that looked "large" (d=1.37)
+were inflated by exactly that.
+
+## Stage 2 (cage): 84 runs WASTED by an action-space bug. Fixed.
+
+Every one of the 84 cage runs scored 17.0-17.2% -- a 0.1% spread across 12
+different hyperparameter settings and 16 seeds. That is not learning, it is a
+constant.
+
+Cause: `TelloLandingAviary` exposes RAW MOTOR RPM as its action space,
+`Box(0, 21713.7)`. A PPO Gaussian policy emits roughly [-3, +3], which clips to
+[0, 3] RPM against a HOVER_RPM of 14476 -- **0.02% of the thrust needed to stay
+airborne**. The drone fell out of the sky on every step regardless of the
+policy, and landed within 0.25 m by luck 17% of the time.
+
+Fixed in `cage_env.py`: action space is now `Box(-1, 1, (4,))`, mapped to
+`HOVER_RPM * (1 + 0.30 * a)`. Verified: a=-1 descends to 0.00 m, a=0 holds
+1.92 m, a=+1 climbs to 2.99 m.
+
+**A self-check now asserts flight authority** (`demo()` in cage_env.py):
+descend/hover/climb must all be reachable. This is the check whose absence cost
+84 runs -- an un-normalised action space passes every other test in the file and
+then silently returns a constant score.
+
+Also changed: `pad_moves` now defaults to **False**. A drifting pad is a second,
+unrelated source of uncertainty that would confound the localisation-uncertainty
+question being measured.
+
+After the fix, learning is real but slow: 800k steps took ep_rew_mean from
+-2.6e4 to -1.3e4 and success from 3% to 11%. The repo's own `train_landing.py`
+uses 3M steps with a stationary->slow->moderate curriculum, so the cage needs
+roughly 3M steps per run. Re-running the cage properly is ~3.5 h
+(36 sweep @ 1.5M + 48 ablation @ 3M).

@@ -5,3 +5,7 @@
   rho=0.8 winner none        63.4  --lr 1e-4 --ent-coef 0.02 --net 128 64
   rho=0.8 winner staleness   69.1  --lr 1e-4 --ent-coef 0.02 --net 256 128
   rho=0.8 winner sigma       56.9  --lr 3e-4 --ent-coef 0.02 --net 256 128
+[09-19 01:24:37] STAGE 2 done: 60/60
+[09-19 01:24:37] STAGE 3: rho=0.707 seeds 8-19 (36 runs)
+[09-19 02:03:14] STAGE 3 done: 60/60
+[09-19 02:03:14] === ALL OVERNIGHT STAGES COMPLETE ===

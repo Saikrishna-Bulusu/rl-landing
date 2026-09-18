@@ -63,8 +63,22 @@ class CageLandingEnv(TelloLandingAviary):
     SIGMA_SCALE = 1.5 / 80.0      # cage half-extent / outdoor half-extent
     FIX_DT = 0.5                  # GeoAnchor fix interval (s)
 
+    # Thrust authority as a fraction of hover RPM. a=0 hovers, a=+1 is
+    # 1.3x hover (climb), a=-1 is 0.7x hover (descend).
+    ACT_BAND = 0.30
+
     def __init__(self, pool="sigma_pool.npz", arm="sigma", rho=None,
-                 sigma_scale=None, lam=0.5, **kw):
+                 sigma_scale=None, lam=0.5, pad_moves=False, **kw):
+        """
+        pad_moves defaults to FALSE here, unlike the parent aviary.
+
+        A drifting pad is a second, unrelated source of uncertainty. This study
+        is about LOCALISATION uncertainty, so letting the pad wander would
+        confound the very thing being measured -- and it would do so unequally,
+        since a policy that tracks a moving pad well looks good for reasons
+        that have nothing to do with sigma. Turn it back on only to study pad
+        tracking, which is a different question.
+        """
         assert arm in ("none", "staleness", "sigma"), arm
         self.arm = arm
         self.lam = lam
@@ -79,7 +93,7 @@ class CageLandingEnv(TelloLandingAviary):
         self.rho = float(rho) if rho is not None else (
             float(d["rho"]) if "rho" in d.files else 0.0)
 
-        super().__init__(**kw)
+        super().__init__(pad_moves=pad_moves, **kw)
 
         # The parent DECLARES shape (18,) but _computeObs returns 26 -- the
         # base aviary contributes 20 elements, not the 12 its comment assumes.
@@ -89,6 +103,17 @@ class CageLandingEnv(TelloLandingAviary):
         probe = self._computeObs()
         self.observation_space = gym.spaces.Box(
             -np.inf, np.inf, probe.shape, np.float32)
+
+        # THE ACTION SPACE MUST BE NORMALISED.
+        #
+        # The parent exposes raw motor RPM: Box(0, 21713.7). A PPO Gaussian
+        # policy emits roughly [-3, +3], which clips to [0, 3] RPM against a
+        # HOVER_RPM of 14476 -- 0.02% of the thrust needed to stay airborne.
+        # The drone therefore falls out of the sky on EVERY step regardless of
+        # what the policy does, and every run scores an identical ~17% (the
+        # rate at which a falling drone lands within 0.25 m by luck).
+        # 84 training runs were wasted on this before it was caught.
+        self.action_space = gym.spaces.Box(-1.0, 1.0, (4,), np.float32)
 
     # ---- replayed localisation error ------------------------------------
     def _reset_fix_state(self):
@@ -125,7 +150,9 @@ class CageLandingEnv(TelloLandingAviary):
         return obs, (out[1] if isinstance(out, tuple) and len(out) > 1 else {})
 
     def step(self, action):
-        obs, rew, term, trunc, info = super().step(action)
+        a = np.clip(np.asarray(action, dtype=np.float64), -1.0, 1.0)
+        rpm = self.HOVER_RPM * (1.0 + self.ACT_BAND * a)
+        obs, rew, term, trunc, info = super().step(rpm)
         self.t_fix += 1.0 / self.CTRL_FREQ
         if self.t_fix >= self.FIX_DT:
             self._new_fix()
@@ -185,6 +212,33 @@ def demo():
         assert np.allclose(o[a][:-1], o["none"][:-1], atol=1e-5), \
             f"{a} arm differs outside the uncertainty channel"
 
+    # THE ACTION INTERFACE MUST LET THE POLICY FLY.
+    #
+    # This is the check whose absence cost 84 training runs. It asserts that
+    # the actions a policy can actually emit span descend / hover / climb. An
+    # un-normalised action space passes every other test in this file and then
+    # silently produces a constant score, because the policy is never in the
+    # loop at all.
+    def _z_after(act, n=150):
+        e2 = CageLandingEnv(pool=pool, arm="none", render_mode=None)
+        e2.reset(seed=0)
+        z0 = float(e2.pos[0][2])
+        for _ in range(n):
+            e2.step(np.full(4, act, dtype=np.float64))
+        return z0, float(e2.pos[0][2])
+
+    assert tuple(e.action_space.low) == (-1.0,) * 4, \
+        f"action space is not normalised: {e.action_space}"
+    z0, z_hover = _z_after(0.0)
+    z0, z_up = _z_after(1.0)
+    z0, z_down = _z_after(-1.0)
+    assert abs(z_hover - z0) < 0.30, \
+        f"action 0 should roughly hover, went {z0:.2f} -> {z_hover:.2f} m"
+    assert z_up > z0 + 0.20, f"action +1 should climb, went {z0:.2f} -> {z_up:.2f}"
+    assert z_down < z0 - 0.20, f"action -1 should descend, went {z0:.2f} -> {z_down:.2f}"
+
+    print(f"    flight authority: a=-1 -> {z_down:.2f} m, a=0 -> {z_hover:.2f} m, "
+          f"a=+1 -> {z_up:.2f} m  (from {z0:.2f} m)")
     print(f"ok  obs={obs.shape[0]}-dim  cage sigma {lo:.2f}-{hi:.2f} m "
           f"vs {e.LAND_RADIUS:.2f} m landing radius  rho={e.rho:.3f}")
     print(f"    median cage sigma {np.median(sigmas):.2f} m, "
