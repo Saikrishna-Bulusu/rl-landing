@@ -1,6 +1,19 @@
 #!/bin/bash
 # Overnight chain, 18->19 Sept 2026. Runs unattended, no human between stages.
 #
+# RESOURCE SETTINGS, measured not guessed (see the numbers below):
+#   CUDA_VISIBLE_DEVICES=""  -- SB3 defaults to the GPU. The simulation is plain
+#     numpy and the network is a 128x64 MLP, so the GPU buys nothing but cost
+#     12 jobs x 233 MB of an 8 GB card, which produced NVRM out-of-memory errors
+#     in the kernel log. Forcing CPU made it FASTER, not slower.
+#   -P 8 (was 12)  -- 12 GPU jobs held 18.7 GB of 23 GB RAM, leaving 2.4 GB
+#     available with 13 GB already in swap. 8 CPU jobs hold 6.75 GB.
+#   nice -n 10     -- keep the desktop responsive.
+#
+#   measured, 8 CPU-only jobs:  6.75 GB RAM (864 MB each), GPU 15 MiB,
+#   6116 steps/s per job = ~48900 aggregate, load average 11.5 on 32 cores.
+#   That is 5x the throughput of the 12-job GPU configuration it replaces.
+#
 #   1. HP sweep at rho=0.8           (36 runs @ 600k, ALL at training seed 0)
 #   2. 20-seed ablation at rho=0.8   (60 runs @ 2.5M)  <- the disambiguator
 #   3. top rho=0.707 up to 20 seeds  (36 runs @ 2.5M)  <- equal seed counts
@@ -22,10 +35,10 @@ say(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" | tee -a overnight.log; }
 
 # jobs file format:  outdir|steps|rho|seed|hp...
 run_jobs(){
-  cat "$1" | xargs -P 12 -I{} bash -c '
+  cat "$1" | xargs -P 8 -I{} bash -c '
     IFS="|" read -r out steps rho seed hp <<< "{}"
     arm="${out##*/}"; arm="${arm%%_*}"
-    OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 \
+    CUDA_VISIBLE_DEVICES="" OMP_NUM_THREADS=2 MKL_NUM_THREADS=2 nice -n 10 \
     /home/sai/miniconda3/envs/mujoco_drones/bin/python train.py \
       --pool sigma_pool.npz --arm "$arm" --seed "$seed" --steps "$steps" \
       --n-envs 8 --eval-episodes 400 --t-max 45 --rho "$rho" --tb "" \
