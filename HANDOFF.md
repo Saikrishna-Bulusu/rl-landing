@@ -543,3 +543,84 @@ win (hi-sigma peaks at 78.9 there and collapses to 38.0 at rho=1.0). If sigma
 cannot separate the arms at rho=0.8 either, the negative result is solid and
 cheap. If it can, that is the regime to report and the reason to spend the
 150-run budget.
+
+## Step 9 — rho=0.8, and the caveat that turned out to matter most
+
+Re-ran the 8-seed x 3-arm ablation at rho=0.8 (2.5M steps, same per-arm tuned
+HP) because that is where the task is hardest and where holding still stops
+being a free win.
+
+```
+                      rho=0.363 (as measured)      rho=0.80
+arm            succ%      hi-sig%           succ%      hi-sig%
+none           90.2   68.2 +/-  8.4         85.3   57.3 +/- 7.1
+staleness      89.6   67.3 +/-  8.7         84.8   57.6 +/- 6.7
+sigma          91.8   73.9 +/- 11.4         89.4   68.0 +/- 8.4
+baseline              74.8                         83.5
+
+sigma - none        +5.7  p=0.255 d=0.57    +10.7  p=0.006 d=1.37  *
+sigma - staleness   +6.6  p=0.192 d=0.65    +10.4  p=0.007 d=1.36  *
+ none - staleness   +0.9  p=0.831 d=0.11     -0.3  p=0.930 d=-0.04
+sigma - baseline    -0.9  p=0.819           -15.5  p<0.001
+```
+
+**The sigma channel separates, decisively, in the harder regime.** The effect
+roughly doubles (+5.7 -> +10.7 points) and goes from non-significant to
+p=0.006 with a large effect size (d=1.37). Both sigma comparisons survive
+Bonferroni correction for the three pairwise tests (alpha = 0.05/3 = 0.017).
+
+**And rho=0.8 is approximately the CORRECT value, not an arbitrary harder
+setting.** The caveat flagged in Step 5 -- "rho was measured at the dataset's
+frame spacing, not the env's FIX_DT" -- is now resolved with data:
+
+```
+median spacing between consecutive dataset frames: 7.3 m
+at 5.0 m/s (= ApproachEnv.VXY_MAX)  -> 1.5 s between frames
+AR(1) rescaling rho(t) = rho(dt)^(t/dt) to the 0.5 s fix interval:
+
+  at  5 m/s -> rho = 0.707
+  at 10 m/s -> rho = 0.543
+  at 15 m/s -> rho = 0.400
+```
+
+The frame-to-frame 0.363 is a **lower bound**. Fixes arrive closer in time than
+dataset frames do, so they are more correlated. rho=0.363 corresponds to flying
+at ~17 m/s, faster than the env's own airframe limit. `calibrate.py` now
+performs this rescaling and writes rho=0.707 into the pool as the default.
+
+**So the earlier non-significant result was measured at the wrong operating
+point.** The Step 8 run was not wrong, it was answering the question at a speed
+the aircraft cannot fly.
+
+### What is now supported, and what is not
+
+SUPPORTED:
+- A calibrated metre-valued sigma beats both a position-only policy and
+  PerchRL's staleness proxy, at the operationally correct error correlation,
+  p<0.01, large effect, Bonferroni-corrected, 8 seeds.
+- The staleness proxy does not replicate at EITHER rho (+0.9 / -0.3, both
+  p>0.8). Caveat from Step 8 still stands: sigma is constant within an episode
+  here, so the staleness channel is structurally uninformative in this env.
+
+NOT SUPPORTED, AND DO NOT CLAIM:
+- "PPO loses to the scripted baseline at rho=0.8" (-15.5 pts). The
+  hyperparameters were tuned at rho=0.363 and reused at 0.8. That is precisely
+  the tuning asymmetry this project has already been burned by twice. The
+  arm-vs-arm comparison is unaffected (each arm carries its own equal-budget
+  tuning), but the learned-vs-scripted comparison at rho=0.8 is confounded and
+  must not be reported until the HP sweep is re-run at rho=0.8 (36 runs, ~1 h).
+- A tuned sigma-aware SCRIPTED rule still collapses onto the sigma-blind one at
+  rho=0.8 (83.5 vs 83.5), as it did at rho=0 and rho=0.363. Three for three.
+  Whatever sigma is worth here, a hand-written rule cannot extract it -- which
+  is what makes the learned result interesting.
+
+### Next, in priority order
+
+1. **Re-run the HP sweep at rho=0.707** (36 runs, ~1 h) and then the 8-seed
+   ablation (24 runs, ~2 h). This makes the learned-vs-scripted comparison
+   honest and puts every number at the correct operating point. Until this is
+   done the headline is "sigma beats staleness", not "learned beats scripted".
+2. Report rho sensitivity as a curve (0.36 / 0.54 / 0.71 / 0.8), since the
+   value depends on assumed ground speed and difficulty is non-monotone in rho.
+3. Only then consider the ~50-seed run, and only for whichever comparison is
+   still borderline.

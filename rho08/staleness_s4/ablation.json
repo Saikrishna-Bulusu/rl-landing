@@ -1,0 +1,18 @@
+{
+  "steps": 2500000,
+  "pool": "sigma_pool.npz",
+  "rho": 0.8,
+  "results": {
+    "staleness": {
+      "n": 400,
+      "success_%": 91.75,
+      "acquired_%": 93.25,
+      "miss_median_m": 2.3158165913666895e-06,
+      "miss_p90_m": 0.0009500351866579864,
+      "t_median_s": 28.59999999999993,
+      "success_low_sigma_%": 100.0,
+      "success_mid_sigma_%": 100.0,
+      "success_high_sigma_%": 73.17073170731707
+    }
+  }
+}

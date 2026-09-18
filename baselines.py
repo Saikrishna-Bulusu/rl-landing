@@ -181,10 +181,11 @@ def main():
     # if the baselines saturate -- never the camera constants, which are physics.
     ap.add_argument("--t-max", type=float, default=None)
     ap.add_argument("--vxy-max", type=float, default=None)
+    ap.add_argument("--rho", type=float, default=None)
     a = ap.parse_args()
 
-    env_kw = {k: v for k, v in (("t_max", a.t_max), ("vxy_max", a.vxy_max))
-              if v is not None}
+    env_kw = {k: v for k, v in (("t_max", a.t_max), ("vxy_max", a.vxy_max),
+                                ("rho", a.rho)) if v is not None}
     if env_kw:
         print(f"env overrides: {env_kw}\n")
 

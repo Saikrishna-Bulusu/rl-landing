@@ -1,0 +1,70 @@
+{
+  "episodes": 400,
+  "tuned": true,
+  "env": {
+    "t_max": 45.0,
+    "rho": 0.8
+  },
+  "results": {
+    "dive": {
+      "params": {
+        "h_hold": 30.0,
+        "r_fixed": 0.0,
+        "k_sigma": 0.5,
+        "g_fixed": 1.0,
+        "g0": 1.0,
+        "g_sigma": 15.0
+      },
+      "n": 400,
+      "success_%": 83.5,
+      "acquired_%": 83.5,
+      "timeout_%": 0.0,
+      "miss_median_m": 4.367088229616241e-06,
+      "miss_p90_m": 17.05291473236741,
+      "t_median_s": 27.399999999999935,
+      "success_low_sigma_%": 97.54601226993866,
+      "success_mid_sigma_%": 96.36363636363636,
+      "success_high_sigma_%": 54.330708661417326
+    },
+    "fixed_search": {
+      "params": {
+        "h_hold": 30,
+        "r_fixed": 0.0,
+        "k_sigma": 0.5,
+        "g_fixed": 1.0,
+        "g0": 1.0,
+        "g_sigma": 15.0
+      },
+      "n": 400,
+      "success_%": 94.75,
+      "acquired_%": 97.25,
+      "timeout_%": 5.25,
+      "miss_median_m": 4.1891947597779545e-07,
+      "miss_p90_m": 3.5986786869220156e-05,
+      "t_median_s": 29.699999999999925,
+      "success_low_sigma_%": 100.0,
+      "success_mid_sigma_%": 100.0,
+      "success_high_sigma_%": 83.46456692913385
+    },
+    "sigma_search": {
+      "params": {
+        "h_hold": 30,
+        "r_fixed": 0.0,
+        "k_sigma": 0.0,
+        "g_fixed": 1.0,
+        "g0": 1.0,
+        "g_sigma": 1000000.0
+      },
+      "n": 400,
+      "success_%": 94.75,
+      "acquired_%": 97.25,
+      "timeout_%": 5.25,
+      "miss_median_m": 4.1891947597779545e-07,
+      "miss_p90_m": 3.5986786866022715e-05,
+      "t_median_s": 29.699999999999925,
+      "success_low_sigma_%": 100.0,
+      "success_mid_sigma_%": 100.0,
+      "success_high_sigma_%": 83.46456692913385
+    }
+  }
+}

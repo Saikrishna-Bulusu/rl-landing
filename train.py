@@ -42,17 +42,18 @@ import numpy as np
 from approach_env import ApproachEnv
 
 
-def make_env(pool, arm, seed, t_max, vxy_max):
+def make_env(pool, arm, seed, t_max, vxy_max, rho):
     def _f():
         from stable_baselines3.common.monitor import Monitor
         return Monitor(ApproachEnv(pool=pool, arm=arm, seed=seed,
-                                   t_max=t_max, vxy_max=vxy_max))
+                                   t_max=t_max, vxy_max=vxy_max, rho=rho))
     return _f
 
 
-def evaluate(model, pool, arm, episodes, t_max, vxy_max, seed0=10_000_000):
+def evaluate(model, pool, arm, episodes, t_max, vxy_max, rho, seed0=10_000_000):
     """Fixed seeds, so every arm sees the identical episodes and error draws."""
-    env = ApproachEnv(pool=pool, arm=arm, seed=0, t_max=t_max, vxy_max=vxy_max)
+    env = ApproachEnv(pool=pool, arm=arm, seed=0, t_max=t_max, vxy_max=vxy_max,
+                      rho=rho)
     rows = []
     for i in range(episodes):
         obs, _ = env.reset(seed=seed0 + i)
@@ -88,7 +89,7 @@ def run(arm, a):
     from stable_baselines3 import PPO
     from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 
-    venv = DummyVecEnv([make_env(a.pool, arm, a.seed + i, a.t_max, a.vxy_max)
+    venv = DummyVecEnv([make_env(a.pool, arm, a.seed + i, a.t_max, a.vxy_max, a.rho)
                         for i in range(a.n_envs)])
     # Observations are already hand-normalised to roughly unit scale in _obs;
     # VecNormalize is here for the reward, whose magnitude swings by 100 at
@@ -113,7 +114,7 @@ def run(arm, a):
     model.save(os.path.join(a.out, f"ppo_{arm}"))
     venv.save(os.path.join(a.out, f"vecnorm_{arm}.pkl"))
 
-    return evaluate(model, a.pool, arm, a.eval_episodes, a.t_max, a.vxy_max)
+    return evaluate(model, a.pool, arm, a.eval_episodes, a.t_max, a.vxy_max, a.rho)
 
 
 def main():
@@ -128,6 +129,10 @@ def main():
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--t-max", type=float, default=None)
     ap.add_argument("--vxy-max", type=float, default=None)
+    # Temporal correlation of the localisation error. None = use the value
+    # measured from the data and stored in the pool (0.363). Task difficulty is
+    # strongly and non-monotonically rho-dependent, so ALWAYS report it.
+    ap.add_argument("--rho", type=float, default=None)
     # Hyperparameters are flags so each arm can be given the SAME tuning budget
     # the scripted baselines get. Tuning the baselines with a 12-candidate sweep
     # while leaving PPO on defaults is a tuning asymmetry running the other way,
@@ -149,7 +154,8 @@ def main():
 
     os.makedirs(a.out, exist_ok=True)
     with open(os.path.join(a.out, "ablation.json"), "w") as fh:
-        json.dump({"steps": a.steps, "pool": a.pool, "results": results}, fh, indent=2)
+        json.dump({"steps": a.steps, "pool": a.pool, "rho": a.rho,
+                   "results": results}, fh, indent=2)
 
     hdr = (f"\n{'arm':<11} {'succ%':>6} {'acq%':>6} {'miss50':>8} {'miss90':>8} "
            f"{'lo-sig':>7} {'mid':>7} {'hi-sig':>7}")

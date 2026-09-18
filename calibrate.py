@@ -81,8 +81,8 @@ def load(roots, ref="satellite", matcher="XFEAT_LG"):
 
 
 def to_arrays(rows, exclude_scenes=()):
-    """Extract what we need: inliers, error, scene, and the frame ordering."""
-    inl, err, scene, sid = [], [], [], []
+    """Extract what we need: inliers, error, scene, ordering, and gt position."""
+    inl, err, scene, sid, gt = [], [], [], [], []
     dropped_absurd = 0
     for r in rows:
         sc = r.get("scene_name", "")
@@ -106,8 +106,13 @@ def to_arrays(rows, exclude_scenes=()):
         err.append(e)
         scene.append(sc)
         sid.append(r.get("sample_id", ""))
+        try:
+            gt.append((float(r["gt_x"]), float(r["gt_y"])))
+        except (KeyError, ValueError, TypeError):
+            gt.append((np.nan, np.nan))
     return (np.asarray(inl, float), np.asarray(err, float),
-            np.asarray(scene, object), np.asarray(sid, object), dropped_absurd)
+            np.asarray(scene, object), np.asarray(sid, object),
+            np.asarray(gt, float), dropped_absurd)
 
 
 def lag1_rank_corr(err, scene, sid):
@@ -143,6 +148,43 @@ def lag1_rank_corr(err, scene, sid):
             continue
         per[str(sc)] = float(_spearman(e[:-1], e[1:]))
     return float(_spearman(np.concatenate(a), np.concatenate(b))), per
+
+
+def rho_at_fix_rate(rho_frame, scene, sid, gt, speed_mps, fix_dt):
+    """
+    Rescale the measured correlation from the DATASET's frame spacing to the
+    interval at which the aircraft actually receives fixes.
+
+    This is the caveat that had to be resolved before any rho-dependent result
+    could be believed. The lag-1 correlation is measured between consecutive
+    dataset frames, which are metres apart, not between fixes 0.5 s apart. For
+    an AR(1) process the correlation decays as rho(t) = rho(dt)^(t/dt), so with
+    a median frame spacing of `g` metres and a ground speed `v`:
+
+        dt = g / v        seconds between dataset frames
+        rho(fix_dt) = rho_frame ** (fix_dt / dt)
+
+    Frames closer in TIME than the dataset's spacing are MORE correlated, so
+    the raw frame-to-frame number is a LOWER BOUND on what a flying aircraft
+    sees. Reporting it unadjusted understates the correlation substantially.
+    """
+    gaps = []
+    for sc in np.unique(scene):
+        m = scene == sc
+        order = np.argsort(sid[m].astype(str))
+        P = gt[m][order]
+        P = P[np.isfinite(P).all(axis=1)]
+        if len(P) < 20:
+            continue
+        d = np.linalg.norm(np.diff(P, axis=0), axis=1)
+        d = d[d > 0]
+        if len(d):
+            gaps.append(float(np.median(d)))
+    if not gaps or rho_frame <= 0:
+        return float("nan"), float("nan"), float("nan")
+    g = float(np.median(gaps))
+    dt = g / speed_mps
+    return float(rho_frame ** (fix_dt / dt)), g, dt
 
 
 def _spearman(x, y):
@@ -264,6 +306,12 @@ def main():
     ap.add_argument("--exclude-scene", action="append", default=None)
     ap.add_argument("--alpha", type=float, default=0.10)
     ap.add_argument("--out", default="sigma_pool.npz")
+    ap.add_argument("--speed", type=float, default=5.0,
+                    help="ground speed (m/s) used to convert the dataset's "
+                         "frame SPACING into a time interval; default matches "
+                         "ApproachEnv.VXY_MAX")
+    ap.add_argument("--fix-dt", type=float, default=0.5,
+                    help="localisation fix interval (s); ApproachEnv.FIX_DT")
     a = ap.parse_args()
     if a.exclude_scene is None:
         a.exclude_scene = ["Scene_21"]
@@ -273,12 +321,14 @@ def main():
         sys.exit(f"no rows: check --ref/--matcher and that {a.roots} has "
                  f"all_results.csv under a *{a.ref}* directory")
 
-    inl, err, scene, sid, n_absurd = to_arrays(rows, set(a.exclude_scene))
+    inl, err, scene, sid, gt, n_absurd = to_arrays(rows, set(a.exclude_scene))
     if len(err) < 50:
         sys.exit(f"only {len(err)} usable fixes -- too few to calibrate")
 
     sigma = loso_sigma(inl, err, scene)
     rho, rho_per = lag1_rank_corr(err, scene, sid)
+    rho_fix, spacing_m, frame_dt = rho_at_fix_rate(
+        rho, scene, sid, gt, a.speed, a.fix_dt)
     e, table = ence(sigma, err)
     k, cov, n_folds = conformal(sigma, err, scene, a.alpha)
 
@@ -301,7 +351,13 @@ def main():
     print(f"\nlag-1 rank autocorrelation of |error| (frame ordering):")
     for sc, v in sorted(rho_per.items()):
         print(f"  {sc:<12} {v:+.3f}")
-    print(f"  {'pooled':<12} {rho:+.3f}  <- the env's replay AR(1) parameter")
+    print(f"  {'pooled':<12} {rho:+.3f}   (between consecutive DATASET frames)")
+    print(f"\n  median frame spacing {spacing_m:.1f} m -> at {a.speed:.1f} m/s "
+          f"that is {frame_dt:.1f} s between frames")
+    print(f"  rho rescaled to the {a.fix_dt:.1f} s fix interval = {rho_fix:+.3f}"
+          f"   <- the env's replay AR(1) parameter")
+    print("  (the raw frame-to-frame value is a LOWER BOUND: fixes arrive "
+          "closer in time\n   than dataset frames, so they are more correlated)")
 
     print(f"\nconformal @ alpha={a.alpha}: k = {k:.2f}, "
           f"held-out coverage = {100 * cov:.1f}% over {n_folds} scene folds")
@@ -309,12 +365,13 @@ def main():
           f"at least {100 * (1 - a.alpha):.0f}% of the time")
 
     np.savez(a.out, sigma=sigma, err=err, scene=scene.astype(str),
-             inliers=inl, conformal_k=k, ence=e, alpha=a.alpha, rho=rho)
+             inliers=inl, conformal_k=k, ence=e, alpha=a.alpha, rho=rho_fix, rho_frame=rho)
     print(f"\nwrote {a.out}  ({len(err)} pairs) -- this is the replay pool\n")
 
     with open(os.path.splitext(a.out)[0] + "_report.json", "w") as fh:
-        json.dump({"ence": e, "conformal_k": k, "coverage": cov, "rho": rho,
-                   "rho_per_scene": rho_per,
+        json.dump({"ence": e, "conformal_k": k, "coverage": cov, "rho": rho_fix, "rho_frame": rho,
+                   "rho_per_scene": rho_per, "frame_spacing_m": spacing_m,
+                   "frame_dt_s": frame_dt, "speed_mps": a.speed,
                    "n": len(err), "n_absurd": n_absurd,
                    "matcher": a.matcher, "excluded": a.exclude_scene,
                    "bins": table}, fh, indent=2)
