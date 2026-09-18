@@ -688,3 +688,34 @@ budget on anything.
 Standing lesson from this project, stated plainly because it has now happened
 three times: **every single wrong conclusion here came from an unequal
 comparison or an unchecked assumption -- never from a bug in the physics.**
+
+## Stage 2 prepared (19 Sept, overnight) — cage_env.py
+
+`cage_env.py` subclasses the existing `TelloLandingAviary` and adds the same
+three-arm sigma ablation. Self-check passes:
+
+```
+ok  obs=27-dim  cage sigma 0.17-0.55 m vs 0.25 m landing radius  rho=0.707
+    median cage sigma 0.26 m, scale 0.0187 (= 1.5/80)
+```
+
+**Bug found in `MuJoCo-drones-gym/tello_landing_aviary.py` (NOT fixed there).**
+It declares `observation_space` as shape (18,) but `_computeObs` returns 26:
+the base aviary contributes 20 elements, not the 12 the inline comment assumes.
+`observation_space.contains(obs)` is False, which SB3 would reject. `cage_env`
+derives the space from a real observation instead. Decide separately whether to
+patch it upstream -- this project has otherwise not modified that package.
+
+**Sigma scaling is a judgement call, recorded in the module docstring.**
+Scaled by operating half-extent (1.5 / 80), giving median sigma 0.26 m against
+a 0.25 m landing radius. Rejected: scaling by success radius (gives an absurd
+4.6 m in a 3 m cage) and by altitude (0.55 m, defensible but harder).
+`sigma_scale` is a constructor argument so it can be swept.
+
+**The copula code is duplicated from `approach_env`, deliberately.** A 130-run
+experiment was importing that module while this was written, and editing it
+would have changed the code under jobs that had not yet started. Unify into a
+shared `replay.py` once the overnight chain finishes.
+
+Stage 2 training has NOT been started: the CPU is saturated by the overnight
+chain, and it was to begin only after those experiments finish.
