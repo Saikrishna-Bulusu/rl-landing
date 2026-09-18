@@ -227,3 +227,109 @@ approach_env.py  the 6-dim / 2-action approach task + self-check
 baselines.py     three scripted policies, equal tuning budget, eval harness
 train.py         PPO, three ablation arms, σ-split evaluation
 ```
+
+---
+
+# RUN LOG — 18 Sept 2026, real GeoAnchor data
+
+Everything above this line was written against synthetic data. Everything below
+is what actually happened on `results/s8_train`.
+
+## Bugs fixed before anything would run correctly
+
+1. **`calibrate.load()` counted every fix twice.** The per-matcher directories
+   (`satellite-CAMP-XFEAT_LG-yp`) and the aggregate directory (`satellite`) both
+   satisfy `ref in basename(dirname)`, and the aggregate CSV is the
+   concatenation of the three per-matcher ones. Now excludes `d == ref`.
+   *3138 + 1046×3 rows were being read where 1046 was intended.*
+2. **`--exclude-scene` was inescapable.** `action="append"` with a literal
+   default appends to it rather than replacing, so `Scene_21` could never be
+   included and was printed twice. Default is now `None`, resolved after parse.
+3. **`approach_env.demo()` could only run on a synthetic pool.** It now takes an
+   optional pool path: `python3 approach_env.py sigma_pool.npz`.
+4. **`baselines.py` did not expose `--t-max` / `--vxy-max`**, the two difficulty
+   knobs its own docstring tells you to reach for. Wired through to both the
+   tuner and the eval, and recorded in `baselines.json` under `env`.
+
+## Step 1 — calibration on real data (PUBLISHABLE, independent of the RL work)
+
+```
+XFEAT_LG / satellite / excluding Scene_21
+440 fixes, 4 scenes (09, 10, 16, 22), 1 absurd (>1000 m) held out
+
+p50  11.62 m   p90  34.34 m   p99 127.52 m
+within  5 m: 17.3%    within 10 m: 42.7%    within 20 m: 78.6%
+
+ENCE = 0.313   (leave-one-scene-out)
+conformal @ alpha=0.10: k = 1.97, held-out coverage 90.0% over 4 scene folds
+  -> the true position is within 1.97 * sigma at least 90% of the time
+```
+
+These are the two numbers the handoff promised would stand on their own.
+`sigma_pool.npz` holds 440 (sigma, error) pairs; sigma spans 8.75–80.08 m,
+median 13.82 m, with 20.7% of fixes above 25 m.
+
+## Step 1b — the precondition, on the real pool
+
+```
+python3 approach_env.py sigma_pool.npz
+ok  h_detect=30.6 m  footprint@30m=17.3 m
+    dive succeeds 98% at low sigma vs 42% at high -- 56% gap
+```
+
+**The study is viable.** The gap is real on real data (synthetic was 95/33).
+
+## Step 2 — the decision gate, and what it exposed
+
+At stock difficulty (`T_MAX=120`) the task was too easy: `fixed_spiral` scored
+100% / 100% / 88.2%. Median episode finishes in 29 s against a 120 s budget, so
+the battery reserve was not binding at all. Per this document's own instruction,
+`--t-max` was tightened to **45 s** (still ~1.5x a nominal descent) — the camera
+constants were not touched. All numbers below and all training use `--t-max 45`.
+
+**The tuning grids were badly centred.** On the first real-pool run *both*
+spirals selected the smallest value their grid offered (`r_fixed=8`,
+`k_sigma=0.75`) — the optimum was outside the grid, so the "equal budget" was
+being spent on candidates neither policy wanted. Grids were re-centred downward,
+symmetrically, same 12 candidates each: `r_fixed ∈ (3,6,12)`,
+`k_sigma ∈ (0.2,0.4,0.8)`.
+
+```
+policy          succ%   acq%   miss50   miss90    t50  lo-sig     mid  hi-sig
+dive             83.5   83.8    0.00m   22.38m  27.4s  100.0%  100.0%   48.0%
+fixed_spiral     91.0   94.0    0.00m    0.00m  29.3s  100.0%  100.0%   71.7%
+sigma_spiral     91.0   93.5    0.00m    0.00m  29.4s  100.0%  100.0%   71.7%
+```
+
+With a fairly-centred grid the sigma-aware and sigma-blind scripted rules become
+**exactly indistinguishable** (71.7% vs 71.7%). On the badly-centred grid
+sigma_spiral looked worse (61.4 vs 70.9); that gap was a grid artefact, not a
+finding. Report the 71.7/71.7.
+
+## The mechanism, which is not the one the file was written around
+
+Both grids hit their floor a second time, so the sweep radius was swept to zero
+directly:
+
+```
+r_fixed  h_hold   succ%  hi-sig
+    0.0      30    91.0    71.7     <- no search at all
+    3.0      30    91.0    71.7
+    8.0      30    89.8    67.7
+    0.0      34     0.0     0.0     <- above h_detect=30.6: never acquires
+```
+
+**The spiral contributes nothing.** `r_fixed=0` matches the best tuned sweep.
+Every point `fixed_spiral` scores over `dive` (91.0 vs 83.5, 71.7 vs 48.0 at
+high sigma) comes from *holding altitude just under the detection ceiling*, not
+from searching laterally. What the hold buys is time for successive replayed
+fixes to pull the believed pad position around — temporal averaging, not spatial
+coverage.
+
+That reframes the decision the policy is actually making. It is not "how wide do
+I sweep", it is **"how long do I loiter before I commit"** — and with a 45 s
+battery reserve that is a real tradeoff, and one sigma is the natural input to.
+It also explains why scaling a search radius by sigma buys nothing: the sweep
+was never the operative variable.
+
+If the sigma arm beats staleness below, this is the mechanism to describe.

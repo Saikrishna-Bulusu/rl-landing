@@ -147,11 +147,15 @@ def tune(pool, name, episodes, rng, env_kw=None):
     """
     grid = {
         "dive": [{}],
+        # Both grids were re-centred downward after the first real-pool run:
+        # each policy selected the SMALLEST value on offer, which means the
+        # optimum lay outside the grid and the "equal budget" was being spent
+        # on candidates neither policy wanted. Still 12 candidates each.
         "fixed_spiral": [{"h_hold": h, "r_fixed": r, "sweep_frac": f}
-                         for h in (26, 30) for r in (8, 16, 24)
+                         for h in (26, 30) for r in (3, 6, 12)
                          for f in (0.5, 0.8)],
         "sigma_spiral": [{"h_hold": h, "k_sigma": k, "sweep_frac": f}
-                         for h in (26, 30) for k in (0.75, 1.5, 2.5)
+                         for h in (26, 30) for k in (0.2, 0.4, 0.8)
                          for f in (0.5, 0.8)],
     }[name]   # equal budget: 12 candidates each
 
