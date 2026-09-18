@@ -1,0 +1,18 @@
+{
+  "steps": 600000,
+  "pool": "sigma_pool.npz",
+  "rho": 0.8,
+  "results": {
+    "sigma": {
+      "n": 400,
+      "success_%": 82.75,
+      "acquired_%": 82.75,
+      "miss_median_m": 2.58117099348699e-06,
+      "miss_p90_m": 25.043467168216086,
+      "t_median_s": 27.599999999999934,
+      "success_low_sigma_%": 94.9685534591195,
+      "success_mid_sigma_%": 99.15254237288136,
+      "success_high_sigma_%": 51.21951219512195
+    }
+  }
+}
