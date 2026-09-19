@@ -958,3 +958,75 @@ unchecked assumption, never from a bug in the physics:
   4. rho=0.363 -> measured at the wrong time scale
   5. cage runs all 17% -> action space never normalised
   6. cage sigma p=0.011 -> input-shape artefact, caught by the control arm
+
+# ============================================================
+# DIAGNOSTIC (19 Sept): WHY sigma gave no benefit. My hypothesis was WRONG.
+# ============================================================
+
+`sensitivity.py`. No new training: take the already-trained policies, feed each
+one real observations twice -- identical except the uncertainty channel is set
+to the bottom and the top of its range -- and measure how far the commanded
+action moves. Two references make the number readable: the same swing applied
+to a channel the policy MUST use (altitude, distance to pad), and the same
+measurement on the `random` arm, whose channel is meaningless by construction.
+
+## Result
+
+```
+POINT-MASS, 10 trained sigma policies
+  uncertainty channel    action change 0.2841
+  altitude (must use)    action change 0.3159   (sigma is 0.90x this)
+  dist to pad (must use) action change 0.3669   (sigma is 0.77x this)
+
+CAGE, 16 trained policies per arm
+  sigma  channel (real error bar, corr +0.55)  0.1507 +/- 0.0426
+  random channel (zero info,      corr +0.02)  0.1733 +/- 0.0407
+  difference -0.0227, p=0.124  ->  NO DIFFERENCE
+```
+
+## The hypothesis was that the policy learned to ignore sigma. It did not.
+
+The policy is as sensitive to sigma as it is to ALTITUDE -- a channel it cannot
+possibly do the task without. So "the network ignored the input" is ruled out.
+
+But it is exactly as sensitive to a channel known to carry zero information
+(p=0.124, and the point estimate actually favours the meaningless one). So the
+network does not learn to discount uninformative inputs either. It conditions on
+whatever it is given.
+
+**The correct explanation is therefore: the policy READ sigma and acted on it.
+Conditioning on sigma changed its behaviour without improving its outcomes.**
+
+That is a much more specific finding than "sigma did not help", and it relocates
+the failure. It is not a perception failure (the channel is read) and not a
+capacity failure (the network conditions on it fine). Either sigma is not
+actionable in this task as posed, or the reward does not reward acting on it.
+
+Note `approach_env._reward` computes its blind-descent gate from `self.sigma`
+REGARDLESS of arm, so all three arms are already shaped toward sigma-aware
+behaviour. That is a plausible reason the sigma OBSERVATION adds nothing: the
+behaviour it would buy is already being trained in through the reward for every
+arm. Worth testing in the varying-sigma follow-up below.
+
+## Methodological note
+
+A first run of this diagnostic reported only 3 policies per arm because the glob
+`{arm}_s*` matched the sibling `.log` files as well as the run directories, and
+the loader was silently swallowing the resulting exceptions. Fixed to glob the
+model file and to print load failures. Silent `except: continue` in analysis
+code is how a sample quietly halves itself.
+
+# ============================================================
+# NEXT, AS DECIDED 19 Sept: varying-sigma follow-up (SEPARATE, not a replacement)
+# ============================================================
+
+Current results are kept as-is and reported as the "constant sigma" condition.
+A second, clearly-labelled experiment makes sigma vary WITHIN an episode, which
+is both more realistic (uncertainty changes as altitude and viewpoint change)
+and repairs a known structural flaw: with sigma constant, PerchRL's staleness
+channel is a deterministic sawtooth that CANNOT carry error information, so the
+"staleness does not replicate" result is partly an artefact of the test design.
+
+This gives sigma a genuine job -- track changing uncertainty rather than read a
+per-episode constant -- and it makes the staleness comparison fair for the first
+time. Report both conditions.
