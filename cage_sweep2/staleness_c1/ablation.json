@@ -1,0 +1,17 @@
+{
+  "steps": 1500000,
+  "rho": 0.707,
+  "arm": "staleness",
+  "sigma_scale": null,
+  "results": {
+    "staleness": {
+      "n": 400,
+      "success_%": 7.5,
+      "h_dist_median_m": 1.4332860856346077,
+      "h_dist_p90_m": 2.3391151725983335,
+      "success_low_sigma_%": 7.971014492753622,
+      "success_mid_sigma_%": 9.554140127388536,
+      "success_high_sigma_%": 3.8095238095238098
+    }
+  }
+}

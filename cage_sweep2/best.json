@@ -1,0 +1,5 @@
+{
+  "none": "--lr 3e-4 --ent-coef 0.003 --net 256 128",
+  "staleness": "--lr 3e-4 --ent-coef 0.02 --net 256 128",
+  "sigma": "--lr 3e-4 --ent-coef 0.02 --net 256 128"
+}

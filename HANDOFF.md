@@ -809,3 +809,82 @@ After the fix, learning is real but slow: 800k steps took ep_rew_mean from
 uses 3M steps with a stationary->slow->moderate curriculum, so the cage needs
 roughly 3M steps per run. Re-running the cage properly is ~3.5 h
 (36 sweep @ 1.5M + 48 ablation @ 3M).
+
+# ============================================================
+# CAGE RE-RUN (19 Sept, action space fixed). 84 runs, 0 crashes.
+# ============================================================
+
+Preflight passed before launch (`preflight.py`). Policy influence confirmed on
+real runs: the HP sweep spanned 0.2%-24.8% success, versus 0.25 points of
+spread in the broken version.
+
+## Results: 16 seeds x 3 arms @ 3M steps, rho=0.707
+
+```
+arm          n   success%        median   range         median miss
+none        16   7.8 +/- 5.9      6.1     [0.0, 19.0]      1.15 m
+staleness   16  14.9 +/- 6.1     16.4     [6.5, 27.5]      0.74 m
+sigma       16  13.2 +/- 6.1     11.6     [5.0, 27.8]      0.79 m
+                                          (landing radius 0.25 m)
+
+sigma - none        +5.4  p=0.0109  d=+0.90  95%CI[+1.2, +9.6]   SIGNIFICANT
+sigma - staleness   -1.6  p=0.4483  d=-0.27  95%CI[-5.8, +2.6]
+ none - staleness   -7.0  p=0.0009  d=-1.17  95%CI[-11.2,-2.9]   SIGNIFICANT
+```
+
+Both survive Bonferroni correction (alpha = 0.05/3 = 0.0167).
+
+## DO NOT REPORT THIS AS "SIGMA HELPS". The staleness channel is a CLOCK.
+
+Measured directly:
+
+```
+staleness value, 4 different episodes: byte-identical
+  max difference between any two episodes:  0.00e+00
+  correlation(staleness value, actual error): +0.0026
+```
+
+Sigma is constant within an episode, so `exp(-lambda * t_since_fix)` is a
+deterministic sawtooth -- the SAME sawtooth in every episode, carrying zero
+information about the localisation error. It nonetheless beat `none` by 7.0
+points at p=0.0009.
+
+That gain therefore cannot be uncertainty awareness. The mechanism is timing:
+the believed position jumps every FIX_DT=0.5 s, and a clock lets the policy
+anticipate those jumps.
+
+**This also reconciles the two environments.** `ApproachEnv._obs` already
+contains elapsed time (`obs[5]`), so a clock was redundant there and staleness
+did nothing. The cage observation has no time feature, so staleness supplied a
+missing clock. Both results now agree under one explanation.
+
+**Consequence for the sigma claim:** sigma's +5.4 over `none` may likewise be an
+"any extra structured input helps" effect rather than an uncertainty effect.
+Sigma is a per-episode constant, which is genuinely informative about difficulty
+-- but that is not established by this experiment.
+
+## THE CONTROL THAT WOULD SETTLE IT (recommended before any writeup)
+
+Add a fourth arm whose extra channel is a **random per-episode constant**,
+drawn independently of sigma and of the error. Same shape as the sigma channel,
+zero information.
+
+  - if the random-constant arm ALSO beats `none`, then neither sigma nor
+    staleness is being used as uncertainty, and the whole cage result is an
+    input-shape artefact. That is the single most likely way this project
+    produces a false positive.
+  - if it does NOT beat `none`, sigma's advantage is real and specific.
+
+Cost: 16 seeds x 3M = 48 runs-equivalent, ~1.3 h. Cheap relative to the risk of
+publishing an artefact.
+
+A second useful arm would be a bare clock (`t / T_MAX`), to confirm the
+staleness gain is timing rather than anything else.
+
+## Caveat on absolute performance
+
+Success is 8-15% against a 0.25 m landing radius, with median miss 0.74-1.15 m.
+The task is hard: the policy learns to fly from raw motor commands AND to land.
+The repo's own trainer uses a stationary -> slow -> moderate pad curriculum.
+Differences between arms are significant, but all arms are weak in absolute
+terms, so these numbers should not be presented as landing performance.

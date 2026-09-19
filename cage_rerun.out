@@ -1,0 +1,12 @@
+[09-19 09:50:54] === CAGE RE-RUN START (action space fixed, preflight passed) ===
+[09-19 09:50:54]   guard: 12555 MB RAM available, 333 GB disk free
+[09-19 09:50:54] STAGE A: cage HP sweep (36 runs @ 1.5M, seed 0)
+[09-19 11:03:44] STAGE A done: 36/36
+[09-19 11:03:44]   guard: 11960 MB RAM available, 333 GB disk free
+[09-19 11:03:44] STAGE B: cage 16-seed ablation (48 runs @ 3M)
+  cage winner none        24.8%  spread 24.50  --lr 3e-4 --ent-coef 0.003 --net 256 128
+  cage winner staleness   20.8%  spread 20.00  --lr 3e-4 --ent-coef 0.02 --net 256 128
+  cage winner sigma       22.2%  spread 20.75  --lr 3e-4 --ent-coef 0.02 --net 256 128
+[09-19 14:41:54] STAGE B done: 48/48
+[09-19 14:41:54]   guard: 11323 MB RAM available, 333 GB disk free
+[09-19 14:41:54] === CAGE RE-RUN COMPLETE ===

@@ -1,0 +1,17 @@
+{
+  "steps": 3000000,
+  "rho": 0.707,
+  "arm": "none",
+  "sigma_scale": null,
+  "results": {
+    "none": {
+      "n": 400,
+      "success_%": 0.0,
+      "h_dist_median_m": 1.2563409150357616,
+      "h_dist_p90_m": 1.9227076306208108,
+      "success_low_sigma_%": 0.0,
+      "success_mid_sigma_%": 0.0,
+      "success_high_sigma_%": 0.0
+    }
+  }
+}
