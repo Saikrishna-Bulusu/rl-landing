@@ -1030,3 +1030,74 @@ channel is a deterministic sawtooth that CANNOT carry error information, so the
 This gives sigma a genuine job -- track changing uncertainty rather than read a
 per-episode constant -- and it makes the staleness comparison fair for the first
 time. Report both conditions.
+
+# ============================================================
+# V2 COMPLETE (19-20 Sept): sigma's information is REAL, but carrying it costs.
+# ============================================================
+
+224 runs, 0 crashes. Scene-based episodes, sigma-free reward, 16 seeds per arm,
+equal 12-candidate tuning budget per (scale, arm), evaluated on the two scenes
+that contain NO easy fixes (Scene_10, Scene_22).
+
+```
+                  ERROR SCALE 1.5x        ERROR SCALE 2.0x
+none              85.3 +/- 11.9           66.7 +/- 11.6
+staleness         82.1 +/- 13.0           67.5 +/-  8.1
+sigma             88.8 +/-  7.3           52.2 +/- 17.2
+random            80.0 +/-  9.2           45.3 +/- 12.7
+
+sigma - random    +8.8  p=0.0029  **      +6.9  p=0.199
+sigma - none      +3.5  p=0.319           -14.6 p=0.0049  **
+sigma - staleness +6.7  p=0.073           -15.4 p=0.0012  **
+random - none     -5.3  p=0.161           -21.4 p<0.0001  **
+```
+(** survives Bonferroni for 4 comparisons, alpha=0.0125)
+
+## Finding 1: sigma's information is real and the policy extracts it
+
+sigma beats the MEANINGLESS control at BOTH scales, same direction both times
+(+8.8 and +6.9), significant at 1.5x. This is the comparison the cage
+experiment FAILED (there sigma vs random was p=0.397). It is the first result in
+this project to survive a control built specifically to kill it.
+
+## Finding 2: carrying an extra varying input has a COST, and it can dominate
+
+At 2.0x, sigma is 14.6 points WORSE than having no channel at all (p=0.0049),
+and `random` is 21.4 points worse. The ordering is: no channel > sigma > noise.
+
+Mechanism that fits the data: `staleness` costs nothing at 2.0x (+0.8). It is a
+deterministic sawtooth, IDENTICAL in every episode, so the network can learn it
+carries nothing. `sigma` and `random` VARY per episode, which invites
+conditioning. When the conditioning pays (1.5x) it helps; when the task is
+harder, the instability it introduces dominates. sigma's spread at 2.0x is 17.2
+with individual seeds from 30% to 79% -- a training-stability signature, not a
+clean capability difference.
+
+All four arms had CONVERGED (flat ep_rew_mean in the final training quarter), so
+this is not "sigma needs longer".
+
+## Framing decision (Sai, 20 Sept): report the 2.0x result as PRELIMINARY
+
+State it with the confidence interval and the wide seed spread attached, and say
+plainly that it rests on 16 runs and is not replicated. Do NOT lead with it.
+Given seven results have already been withdrawn here, presenting a surprising one
+with its caveats visible is more credible than presenting it as settled.
+
+## Curve fill running (1.75x, 2.25x)
+
+Two points that disagree is the shape of claim a reviewer attacks first, so the
+curve is being filled in. Difficulty was checked BEFORE launching:
+
+```
+scale   dive (hard)   hold (hard)   verdict
+1.25       79.2%         99.3%      SATURATED - dropped
+1.50       59.7%         94.6%      ok
+1.75       41.6%         75.2%      ok
+2.00       29.5%         51.0%      ok
+2.25       22.1%         40.9%      ok
+2.50       18.1%         33.6%      ok
+```
+
+1.25x was the originally planned point and would have produced another
+uninformative saturated result. Replaced with 2.25x. Final curve: 1.5 / 1.75 /
+2.0 / 2.25.
