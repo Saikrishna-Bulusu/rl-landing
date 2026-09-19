@@ -1,0 +1,17 @@
+{
+  "steps": 1500000,
+  "rho": 0.707,
+  "arm": "clock",
+  "sigma_scale": null,
+  "results": {
+    "clock": {
+      "n": 400,
+      "success_%": 9.75,
+      "h_dist_median_m": 0.9840137635235285,
+      "h_dist_p90_m": 1.787363452935495,
+      "success_low_sigma_%": 13.043478260869565,
+      "success_mid_sigma_%": 8.9171974522293,
+      "success_high_sigma_%": 6.666666666666667
+    }
+  }
+}

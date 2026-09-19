@@ -60,7 +60,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--pool", default="sigma_pool.npz")
     ap.add_argument("--arm", default="sigma",
-                    choices=["none", "staleness", "sigma"])
+                    choices=["none", "staleness", "sigma", "random", "clock"])
     ap.add_argument("--steps", type=int, default=1_000_000)
     ap.add_argument("--n-envs", type=int, default=4)
     ap.add_argument("--eval-episodes", type=int, default=200)

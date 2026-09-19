@@ -79,7 +79,8 @@ class CageLandingEnv(TelloLandingAviary):
         that have nothing to do with sigma. Turn it back on only to study pad
         tracking, which is a different question.
         """
-        assert arm in ("none", "staleness", "sigma"), arm
+        # "random" and "clock" are CONTROL arms, not hypotheses. See _computeObs.
+        assert arm in ("none", "staleness", "sigma", "random", "clock"), arm
         self.arm = arm
         self.lam = lam
         self.sigma_scale = self.SIGMA_SCALE if sigma_scale is None else sigma_scale
@@ -122,6 +123,13 @@ class CageLandingEnv(TelloLandingAviary):
         self._bin_err = self.bin_err_sorted[b]
         self.sigma = float(np.median(self.pool_sigma[self.sigma_bins[b]])) \
             * self.sigma_scale
+        # CONTROL: a sigma drawn from an INDEPENDENT bin. Same marginal
+        # distribution as the real sigma channel, but no relationship whatever
+        # to the error this episode will actually experience.
+        b2 = int(r.integers(len(self.sigma_bins)))
+        self.sigma_fake = float(np.median(self.pool_sigma[self.sigma_bins[b2]])) \
+            * self.sigma_scale
+        self._t_elapsed = 0.0
         self._bearing = float(r.uniform(0, 2 * np.pi))
         self._z = float(r.normal())
         self.t_fix = 0.0
@@ -153,6 +161,7 @@ class CageLandingEnv(TelloLandingAviary):
         a = np.clip(np.asarray(action, dtype=np.float64), -1.0, 1.0)
         rpm = self.HOVER_RPM * (1.0 + self.ACT_BAND * a)
         obs, rew, term, trunc, info = super().step(rpm)
+        self._t_elapsed += 1.0 / self.CTRL_FREQ
         self.t_fix += 1.0 / self.CTRL_FREQ
         if self.t_fix >= self.FIX_DT:
             self._new_fix()
@@ -168,10 +177,29 @@ class CageLandingEnv(TelloLandingAviary):
         obs[20:22] = believed
         obs[25] = np.linalg.norm(believed)
 
+        # The one channel that differs between arms.
+        #
+        # CONTROLS, added after the cage result showed `staleness` beating
+        # `none` by 7.0 points (p=0.0009) despite being BYTE-IDENTICAL in every
+        # episode and correlating +0.003 with the actual error. A channel
+        # carrying zero information should not win, so the win must come from
+        # something other than uncertainty awareness. These two arms separate
+        # the possibilities:
+        #   "random" -- same distribution as the sigma channel, independent of
+        #               the error. If this beats `none`, then ANY extra
+        #               structured input helps and the sigma result is an
+        #               artefact of input shape, not of uncertainty.
+        #   "clock"  -- bare elapsed time. If this reproduces the staleness
+        #               gain, that gain was timing, as hypothesised.
         if self.arm == "sigma":
             unc = self.sigma / (self.SIGMA_SCALE * 50.0)
         elif self.arm == "staleness":
             unc = float(np.exp(-self.lam * self.t_fix))
+        elif self.arm == "random":
+            unc = self.sigma_fake / (self.SIGMA_SCALE * 50.0)
+        elif self.arm == "clock":
+            unc = float(min(self._t_elapsed, self.MAX_EPISODE_S)
+                        / self.MAX_EPISODE_S)
         else:
             unc = 0.0
         return np.concatenate([obs, [unc]]).astype(np.float32)
@@ -205,10 +233,11 @@ def demo():
 
     # Arms differ in exactly one channel and nothing else.
     envs = {a: CageLandingEnv(pool=pool, arm=a, render_mode=None)
-            for a in ("none", "staleness", "sigma")}
+            for a in ("none", "staleness", "sigma", "random", "clock")}
     o = {a: v.reset(seed=1)[0] for a, v in envs.items()}
     assert o["none"][-1] == 0.0 and o["sigma"][-1] > 0 and o["staleness"][-1] > 0
-    for a in ("sigma", "staleness"):
+    assert o["random"][-1] > 0, "random control channel is dead"
+    for a in ("sigma", "staleness", "random", "clock"):
         assert np.allclose(o[a][:-1], o["none"][:-1], atol=1e-5), \
             f"{a} arm differs outside the uncertainty channel"
 

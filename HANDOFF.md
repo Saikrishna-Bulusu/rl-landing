@@ -888,3 +888,73 @@ The task is hard: the policy learns to fly from raw motor commands AND to land.
 The repo's own trainer uses a stationary -> slow -> moderate pad curriculum.
 Differences between arms are significant, but all arms are weak in absolute
 terms, so these numbers should not be presented as landing performance.
+
+# ============================================================
+# CONTROL EXPERIMENT (19 Sept). THE CAGE SIGMA RESULT DOES NOT SURVIVE.
+# ============================================================
+
+56 runs (24 tuning + 32 ablation), 0 crashes. Control arms received the SAME
+12-candidate tuning budget as the real arms, so they are not disadvantaged.
+
+## All five arms, 16 seeds @ 3M steps, rho=0.707
+
+```
+arm          n   success%      median   channel carries
+none        16   7.8 +/- 5.9     6.1    nothing
+clock       16  10.1 +/- 8.1     7.6    CONTROL: bare elapsed time
+random      16  11.5 +/- 5.5    13.2    CONTROL: zero info (corr +0.02 w/ error)
+sigma       16  13.2 +/- 6.1    11.6    real error bar (corr +0.55 w/ error)
+staleness   16  14.9 +/- 6.1    16.4    a clock (corr +0.003 w/ error)
+
+sigma - none       +5.4  p=0.0109  d=+0.90  CI[+1.2,+9.6]  SIGNIFICANT
+sigma - random     +1.7  p=0.3973  d=+0.30  CI[-2.3,+5.8]  n.s.   <- THE CONTROL
+random - none      +3.7  p=0.0703  d=+0.64  CI[-0.3,+7.6]  n.s.
+clock - none       +2.3  p=0.3668  d=+0.32  CI[-2.7,+7.2]  n.s.
+staleness - clock  +4.8  p=0.0593  d=+0.67  CI[-0.2,+9.7]  n.s.
+```
+
+## Verdict
+
+**Sigma is not distinguishable from a meaningless input.** The `random` channel
+has the same distribution as the sigma channel (median 0.262, range
+[0.17,0.55]) but is drawn from an independent bin and correlates +0.016 with the
+episode's actual error, against sigma's +0.549. It scores 11.5% to sigma's
+13.2%: +1.7 points, p=0.40.
+
+**The best-performing arm carries no information at all.** `staleness` (14.9%)
+is byte-identical across every episode and correlates +0.003 with the error.
+The only informative channel, sigma, ranks THIRD of five.
+
+So the earlier "sigma - none = +5.4, p=0.011" is real only in the sense that
+sigma beats an EMPTY channel. It is not evidence that uncertainty is the active
+ingredient. Any extra structured input produces a comparable lift.
+
+**Do not claim the cage shows sigma helping.** The defensible statement is:
+"a calibrated sigma gave no measurable benefit over an uninformative input of
+the same shape (+1.7 points, p=0.40, 95% CI [-2.3,+5.8], 16 seeds)."
+
+**Power limit, state it:** the CI admits a sigma advantage up to ~5.8 points.
+This is "not demonstrated", NOT "proven absent". Ruling out a 2-point effect
+would need roughly 170 seeds per arm.
+
+## Why this control mattered
+
+Without it the cage would have been written up as "sigma significantly improves
+landing success, p=0.011". That claim would not have survived a single question
+from a careful reader, and the answer would have been embarrassing: the
+best-performing channel in the whole experiment is a deterministic sawtooth.
+
+Running the control arm cost 3 hours. It is now the template: **any time an
+extra observation channel appears to help, test a same-shaped channel with the
+information removed before believing it.**
+
+## Standing lesson, now six for six
+
+Every wrong conclusion in this project came from an unequal comparison or an
+unchecked assumption, never from a bug in the physics:
+  1. scripted beat PPO by 11.7 -> tuning asymmetry
+  2. sigma beat staleness p=0.007 -> only 8 seeds
+  3. sigma variance advantage -> undertuned hyperparameters
+  4. rho=0.363 -> measured at the wrong time scale
+  5. cage runs all 17% -> action space never normalised
+  6. cage sigma p=0.011 -> input-shape artefact, caught by the control arm
