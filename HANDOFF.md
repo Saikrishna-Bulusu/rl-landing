@@ -1222,3 +1222,15 @@ All buildable.
 **WARNING: ArUco markers are chiral.** A 45-degree mirror produces a mirror
 image and standard detection will FAIL TO DECODE it -- returning nothing, not a
 misread. Flip the frame horizontally before detection (`cv2.flip(frame, 1)`).
+
+**THE FLIP IS SPECIFIC TO THE TELLO MIRROR RIG. DO NOT APPLY IT ELSEWHERE.**
+It compensates for one physical mirror in the optical path, nothing more.
+
+  - Tello + 45-degree mirror  -> FLIP REQUIRED (mirror reverses the image)
+  - Gazebo virtual downward camera -> NO FLIP (no mirror; the camera simply
+    points down, so the image is already correct). Flipping there would break
+    detection that currently works.
+  - Any real drone with a genuine downward-facing camera -> NO FLIP.
+
+The rule is: flip if and only if there is an odd number of mirrors between the
+scene and the sensor.
