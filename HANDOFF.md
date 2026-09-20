@@ -1101,3 +1101,124 @@ scale   dive (hard)   hold (hard)   verdict
 1.25x was the originally planned point and would have produced another
 uninformative saturated result. Replaced with 2.25x. Final curve: 1.5 / 1.75 /
 2.0 / 2.25.
+
+# ============================================================
+# FINDING 8 (20 Sept): THE 1.5x SIGMA RESULT DOES NOT REPLICATE
+# ============================================================
+
+Curve filled to four difficulty levels, 16 seeds each, 448 runs total.
+
+```
+scale        none    staleness    sigma    random
+1.50         85.3      82.1       88.8      80.0
+1.75         53.3      62.1       61.0      59.5
+2.00         66.7      67.5       52.2      45.3
+2.25         45.4      41.7       40.2      48.0
+```
+
+**The curve is not monotone in difficulty.** 2.25x scores HIGHER than 1.75x for
+three of four arms, which is impossible if difficulty drove the numbers.
+
+sigma - random across the four levels:
+```
+ 1.50x  +8.8 +/- 2.9     p=0.0029
+ 1.75x  +1.5 +/- 4.8     p=0.7546
+ 2.00x  +6.9 +/- 5.3     p=0.1990
+ 2.25x  -7.8 +/- 4.6     p=0.0874
+ POOLED +3.9 +/- 2.0     p=0.055
+ signs: + + + -   heterogeneity Q=9.9 on 3 df (effects disagree beyond chance)
+```
+
+**Withdraw the p=0.0029 claim.** Three positive, one clearly negative, pooled
+p=0.055, and formal heterogeneity says the four estimates disagree more than
+chance allows. That is the signature of noise.
+
+## Cause: independent HP sweeps per scale (my design error)
+
+Each scale got its OWN max-of-12 single-seed sweep, so every point carried
+independent winner's-curse noise -- and that noise exceeded the difficulty
+effect. Arms were comparable WITHIN a scale but scales were not comparable with
+each other, which is exactly what a curve needs.
+
+**Fix, running:** one hyperparameter set per arm, chosen by MEAN RANK across all
+four existing sweeps (48 data points per arm instead of 12), then all four
+scales re-run with it fixed. Three of four points then run on settings tuned for
+a different difficulty -- a handicap, but applied equally to every arm.
+256 runs, ~4.5 h.
+
+# ============================================================
+# EDGE-CASE GUARDRAILS: approach_env_v3.py
+# ============================================================
+
+Two additions, both from edge cases Sai identified. Separate labelled
+experiment; v1 and v2 stand.
+
+## 1. Outcome ordering with a battery reserve (Sai's ordering)
+
+```
+delivered on the pad                   +100
+mission time expired, airborne (RTL)    -10   flight wasted, aircraft safe
+landed off-pad, battery <= reserve      -30   least-bad option remaining
+landed off-pad, battery >  reserve      -80   reckless: you could have gone home
+```
+
+v2 could not express this: its only outcomes were ground contact and a flat -40
+timeout. That mattered because the learned policy ALREADY refuses to land blind
+-- 0 blind landings in 1200 episodes across three difficulty levels -- but its
+abort was "hover until the clock expires", which in reality is the battery dying
+at altitude. The policy had the right instinct; the environment gave it nowhere
+to go. The -30/-80 gradient encodes "only when you have nothing left".
+
+## 2. ArUco identity as a HARD SAFETY LAYER, outside the policy
+
+Sai's case: two markers in neighbouring gardens. A deterministic layer decodes
+the ID, compares it with the package manifest, and withholds `acquired` unless
+it matches. A wrong marker is therefore INDISTINGUISHABLE FROM NO MARKER, and
+the abort behaviour the policy already has handles it -- no retraining, no new
+reward term, no extra observation channel.
+
+Measured, with `id_check` toggling the layer:
+
+```
+of 150 decoy-only sightings:
+  unprotected drone fooled 138   (would descend into the wrong garden)
+  protected drone   fooled   0
+```
+
+Two bugs caught by the file's own assertions while building it:
+  - the decoy was anchored to the ORIGIN, not the delivery address, because
+    `_pick_episode` runs before `self.pad` is assigned. Now stored as an offset
+    and resolved lazily.
+  - the first version of the safety-layer test counted cases where the real pad
+    was ALSO in frame as failures. The test was wrong, not the code.
+
+# ============================================================
+# TELLO CAGE FEASIBILITY (confirmed viable, 20 Sept)
+# ============================================================
+
+Cage: 3 x 2 m floor, 2.0 m ceiling (NOT the 3.0 m in tello_landing_aviary.py --
+that must be corrected before any hardware work, and SPAWN_Z_MAX=2.5 m is
+currently above the real roof).
+
+Tello 720p: 1280x720, HFOV 74.9 deg. To preserve the outdoor structure
+(spawn/ceiling = 1.80, error/footprint = 0.66) with spawn 1.8 m -> ceiling 1.0 m:
+
+```
+processing width   marker needed   footprint @1m   sigma needed
+      1280 px          2.0 cm          0.77 m         0.51 m
+       320 px          8.2 cm          0.77 m         0.51 m
+```
+
+**Downsampling the feed is the enabler** -- it emulates the outdoor pixel budget
+and turns an impractical 2 cm marker into a normal 8 cm one. One line of code.
+
+45-degree mirror, if it crops the field of view:
+```
+FOV 74 deg -> marker 8.1 cm    FOV 45 deg -> marker 4.9 cm
+FOV 60 deg -> marker 6.5 cm    FOV 30 deg -> marker 3.3 cm
+```
+All buildable.
+
+**WARNING: ArUco markers are chiral.** A 45-degree mirror produces a mirror
+image and standard detection will FAIL TO DECODE it -- returning nothing, not a
+misread. Flip the frame horizontally before detection (`cv2.flip(frame, 1)`).

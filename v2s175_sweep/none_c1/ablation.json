@@ -1,0 +1,35 @@
+{
+  "steps": 600000,
+  "rho": 0.707,
+  "sigma_scale": 1.75,
+  "results": {
+    "none": {
+      "n": 400,
+      "success_%": 1.0,
+      "acquired_%": 56.25,
+      "miss_median_m": 2.2055744608511216e-07,
+      "miss_p90_m": 32.39270972261987,
+      "t_median_s": 45.0000000000001,
+      "by_scene": {
+        "Scene_09": {
+          "n": 107,
+          "success_%": 0.0
+        },
+        "Scene_10": {
+          "n": 108,
+          "success_%": 2.7777777777777777
+        },
+        "Scene_16": {
+          "n": 98,
+          "success_%": 1.0204081632653061
+        },
+        "Scene_22": {
+          "n": 87,
+          "success_%": 0.0
+        }
+      },
+      "success_hard_scenes_%": 1.5384615384615385,
+      "n_hard": 195
+    }
+  }
+}
