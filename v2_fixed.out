@@ -5,3 +5,6 @@
     staleness  --lr 3e-4 --ent-coef 0.02 --net 128 64
     sigma      --lr 1e-3 --ent-coef 0.02 --net 256 128
     random     --lr 1e-3 --ent-coef 0.02 --net 128 64
+[09-20 19:04:12] DONE: 256/256
+[09-20 19:04:12]   guard: 9524 MB RAM, 332 GB disk
+[09-20 19:04:12] === FIXED-HP CURVE COMPLETE ===

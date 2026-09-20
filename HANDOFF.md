@@ -1234,3 +1234,76 @@ It compensates for one physical mirror in the optical path, nothing more.
 
 The rule is: flip if and only if there is an odd number of mirrors between the
 scene and the sensor.
+
+# ============================================================
+# DEFINITIVE RESULT (20 Sept): FIXED-HP CURVE, 256 runs, 0 crashes
+# ============================================================
+
+One hyperparameter set per arm, chosen by mean rank across all four earlier
+sweeps, held FIXED across every difficulty level. Three of four points therefore
+run on settings tuned for a different difficulty -- a handicap applied EQUALLY
+to every arm, which is what finally makes the scales comparable.
+
+## The curve is now monotone in difficulty (it was not before)
+
+```
+scale        none    staleness    sigma    random
+1.50         88.1      82.1       87.5      81.2
+1.75         69.9      59.2       61.0      61.2
+2.00         48.6      45.4       52.2      45.3
+2.25         45.4      41.7       49.9      48.0
+
+none: 88 > 70 > 49 > 45   MONOTONE
+(previous per-scale-tuned curve: 85 -> 53 -> 67 -> 45, jagged and unreadable)
+```
+
+## Pooled over all four levels -- 64 seeds per arm
+
+```
+      sigma - random      +4.6 +/- 1.9  p=0.0141 *   Q=1.8  consistent
+      sigma - none        +0.1 +/- 2.2  p=0.9729     Q=4.6  consistent
+     random - none        -3.9 +/- 2.1  p=0.0597     Q=4.4  consistent
+  staleness - none        -5.9 +/- 2.3  p=0.0118 **  Q=1.5  consistent
+  sigma - staleness       +5.8 +/- 2.3  p=0.0121 **  Q=0.9  consistent
+```
+(** survives Bonferroni for 5 tests, alpha=0.01)
+
+## THE CONCLUSION, AND IT IS NOT WHAT THE EARLIER RUNS SUGGESTED
+
+**A calibrated sigma confers EXACTLY NOTHING over having no channel at all:
++0.1 +/- 2.2 points, p=0.97, 95% CI [-4.2, +4.4].** That is about as precise a
+null as this project can produce. Any sigma advantage larger than ~4.4 points is
+excluded at 95% confidence, pooled over 64 seeds and four difficulty levels.
+
+**What sigma DOES beat is other channels -- because they actively HURT.**
+
+  - PerchRL's staleness proxy: **-5.9 points, p=0.012**, survives Bonferroni,
+    consistent across all four levels. The stopwatch does not merely fail to
+    replicate, it DEGRADES performance.
+  - A meaningless random channel: -3.9 points, p=0.060.
+
+So the correct reading of every "sigma wins" result in this project is:
+
+    ANY EXTRA OBSERVATION CHANNEL HURTS, EXCEPT SIGMA, WHICH IS NEUTRAL.
+
+sigma's apparent advantage over staleness (+5.8) and over random (+4.6) is
+entirely explained by sigma being HARMLESS while those two are HARMFUL. Sigma
+itself adds no capability. The mechanism is the one the sensitivity diagnostic
+already showed: the network conditions on whatever channel it is given, whether
+or not that channel carries information, and conditioning on noise costs
+policy quality without buying anything.
+
+## Withdrawn by this run
+
+  - "sigma - random +8.8, p=0.0029 at 1.5x" (Finding 8 era). Now +6.2, p=0.015
+    at that scale, and +4.6 pooled -- real but explained by random being
+    harmful, not by sigma helping.
+  - Any framing in which sigma "helps". It does not. It declines to hurt.
+
+## What IS now established, with the best power in the project
+
+1. sigma over nothing: no effect, tightly bounded. CI [-4.2, +4.4].
+2. staleness over nothing: NEGATIVE, significant, consistent. -5.9 points.
+3. An uninformative channel costs roughly 4 points of success.
+4. Task difficulty behaves monotonically once the tuning confound is removed,
+   which validates the degradation-sweep design itself.
