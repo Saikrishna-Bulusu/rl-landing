@@ -201,6 +201,14 @@ class ApproachEnv(gym.Env):
             return False
         return np.linalg.norm(self.pad - self.xy) <= self.h * self.fov_tan
 
+    def _visual_target(self):
+        """
+        Where the camera says to fly, once something is acquired. The base env
+        has exactly one marker, so this is the pad. Subclasses that model more
+        than one marker in the world override it.
+        """
+        return self.pad
+
     # ---- gym ------------------------------------------------------------
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
@@ -275,7 +283,12 @@ class ApproachEnv(gym.Env):
         # construction: snap to the fix when sigma is small, hold station when
         # it is large.
         if self._acquired():
-            target = self.pad          # marker in view: fly to it, trust nothing else
+            # Fly to whichever marker was actually acquired -- NOT unconditionally
+            # to the true pad. Hardcoding self.pad here meant a drone fooled by a
+            # neighbour's ArUco still flew to the correct address, so being
+            # deceived cost nothing and the ArUco safety-layer experiment measured
+            # nothing. Subclasses override _visual_target() to model deception.
+            target = self._visual_target()
             self.target = target.copy()
         else:
             self.phase += 0.9 * self.DT

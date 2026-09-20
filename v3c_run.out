@@ -1,0 +1,6 @@
+[09-20 20:33:23] === STAGE C RE-RUN (deception now has a consequence) ===
+[09-20 20:33:23]   guard: 10061 MB RAM, 331 GB disk
+[09-20 20:33:23]   using the sigma arm's tuned HP: --lr 3e-4 --ent-coef 0.003 --net 128 64
+[09-20 20:58:53] DONE: 32/32
+[09-20 20:58:53]   guard: 9949 MB RAM, 331 GB disk
+[09-20 20:58:53] === STAGE C COMPLETE ===

@@ -1,0 +1,44 @@
+{
+  "steps": 600000,
+  "rho": 0.707,
+  "sigma_scale": 1.75,
+  "results": {
+    "random": {
+      "n": 400,
+      "success_%": 63.24999999999999,
+      "acquired_%": 64.25,
+      "miss_median_m": 0.0001133587880387914,
+      "miss_p90_m": 23.97664738955653,
+      "t_median_s": 31.59999999999992,
+      "outcomes_%": {
+        "rtl": 36.75,
+        "delivered": 63.25
+      },
+      "reckless_landing_%": 0.0,
+      "rtl_%": 36.75,
+      "decoy_episodes": 118,
+      "decoy_seen_%": 19.49,
+      "decoy_ep_success_%": 64.41,
+      "by_scene": {
+        "Scene_09": {
+          "n": 107,
+          "success_%": 65.42056074766354
+        },
+        "Scene_10": {
+          "n": 108,
+          "success_%": 88.88888888888889
+        },
+        "Scene_16": {
+          "n": 98,
+          "success_%": 63.26530612244898
+        },
+        "Scene_22": {
+          "n": 87,
+          "success_%": 28.735632183908045
+        }
+      },
+      "success_hard_scenes_%": 62.05128205128205,
+      "n_hard": 195
+    }
+  }
+}

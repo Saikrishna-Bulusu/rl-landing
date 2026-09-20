@@ -116,6 +116,24 @@ class ApproachEnvV3(ApproachEnvV2):
             return real                      # wrong ID -> withheld
         return real or decoy                 # no check -> a decoy fools it
 
+    def _visual_target(self):
+        """
+        THE CONSEQUENCE OF BEING DECEIVED.
+
+        If the only marker in frame is the neighbour's, a drone without the
+        identity check flies to THE NEIGHBOUR'S GARDEN. That is what being
+        fooled means, and without it `id_check=False` was free: measurement
+        showed a drone placed on a decoy still flew 21.6 m to the correct pad.
+
+        With the safety layer on, a wrong ID never reaches acquisition at all,
+        so this method is never reached via a decoy.
+        """
+        if self._sees(self.pad):
+            return self.pad                      # the real thing wins
+        if self._decoy is not None and self._sees(self._decoy):
+            return self._decoy                   # deceived
+        return self.pad
+
     # ---- outcome ---------------------------------------------------------
     def step(self, action):
         obs, r, term, trunc, info = super().step(action)

@@ -1307,3 +1307,87 @@ policy quality without buying anything.
 3. An uninformative channel costs roughly 4 points of success.
 4. Task difficulty behaves monotonically once the tuning confound is removed,
    which validates the degradation-sweep design itself.
+
+# ============================================================
+# V3 GUARDRAILS (20 Sept): BOTH WORK. First clearly positive result.
+# ============================================================
+
+## 1. Outcome ordering -- learned, not hardcoded
+
+128 runs (48 sweep + 80 ablation), 0 crashes.
+
+```
+arm          delivered      RTL     RECKLESS
+none            89.9%      10.1%       0.0%
+staleness       60.2%      39.8%       0.0%
+sigma           91.3%       8.7%       0.0%
+random          88.5%      11.5%       0.0%
+```
+
+**Zero reckless landings in every arm.** No policy ever lands off-target while
+it still has battery to return home. Sai's ordering -- marker > RTL > risky
+only when nearly dead -- emerged from the reward structure.
+
+Note `staleness` aborts 39.8% of the time vs ~10% for the others and delivers
+30 points less. That is the MECHANISM behind the definitive curve's finding that
+the stopwatch actively hurts: it makes the policy needlessly timid.
+
+Also worth recording: at 200k steps the policy aborts 100% of episodes -- a real
+local optimum, since RTL is safe. It escapes by 600k. Any run shorter than
+~500k would have looked like total failure.
+
+## 2. ArUco identity safety layer -- decisively valuable
+
+```
+metric                                      layer ON   layer OFF     difference
+  overall delivered %                          90.2       87.0    +3.2  p=0.064
+  delivered, hard scenes %                     86.7       85.6    +1.1  p=0.554
+  delivered WHEN a neighbour's marker exists   89.3       78.7   +10.6  p<0.0001 **
+  RECKLESS landing %                            0.0        3.3    -3.3  p<0.0001 **
+```
+
+**Without the identity check the drone delivers to the WRONG GARDEN on 3.3% of
+ALL flights** -- one in thirty, confidently, with battery to spare. With the
+check: exactly zero, across all 16 seeds.
+
+Per-seed decoy-episode success shows no overlap:
+```
+ON : 90 91 93 93 92 76 95 81 86 95 85 91 93 90 93 85
+OFF: 80 80 80 81 82 75 81 81 81 81 84 64 71 82 74 83
+```
+
+The overall +3.2 is diluted because only 30% of episodes contain a neighbour's
+marker; the layer has nothing to do in the other 70%.
+
+**Why this worked where sigma did not.** Sigma was an extra INPUT the network had
+to learn to exploit, and it could not. The identity check is a DETERMINISTIC
+GUARANTEE outside the policy -- it asks the network to learn nothing. In this
+task safety came from a hard constraint, not from giving the learner more
+information. That is the paper's cleanest positive claim.
+
+# ============================================================
+# FINDING 10: A MODELLING GAP OF A NEW KIND
+# ============================================================
+
+The first Stage C run measured nothing: safety layer ON 91.3% vs OFF 90.3%.
+
+Cause: `approach_env.step` hardcoded `target = self.pad` whenever ANYTHING was
+acquired. So a drone fooled by a neighbour's marker still flew to the correct
+address. Measured directly: placed ON a decoy 21.8 m from the pad with the layer
+OFF, it reported acquired=True and then flew 21.6 m to the REAL pad, ending
+0.2 m away. **Being deceived was free.**
+
+Fix: `approach_env` gained a `_visual_target()` hook returning `self.pad` by
+default -- so v1 and v2 are bit-identical, verified by re-evaluating a trained
+policy to its exact stored score (64.2% vs 64.2%). v3 overrides it: if the only
+marker in frame is the neighbour's, the drone flies THERE.
+
+**This failure has a different character from findings 1-9.** Those were unfair
+comparisons or unchecked assumptions. This was a modelling gap: the hazard
+existed in the OBSERVATION but had no consequence in the DYNAMICS. The drone
+could be deceived, and being deceived changed nothing.
+
+General hazard when evaluating any safety system: it is easy to model the
+DETECTION of a hazard while forgetting to model the HARM, and then measure that
+your safety system is unnecessary. Before trusting any "the guardrail makes no
+difference" result, verify the failure it guards against can actually occur.
