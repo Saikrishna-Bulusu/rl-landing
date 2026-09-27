@@ -1,0 +1,19 @@
+<section id="windnext" data-transition="fade" style="background:#14181f; color:#f7f6f2; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:26px">
+  <h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:68px; font-weight:400; line-height:1.08; color:#f7f6f2">Where part four stands</h2>
+  <div style="display:flex; gap:24px">
+    <div style="flex:1; background:#1e232c; border-radius:16px; padding:32px; display:flex; flex-direction:column; gap:12px">
+      <h3 style="font-size:31px; font-weight:600; color:#1f7a4d">Shown</h3>
+      <p style="font-size:26px; color:#a8b0bb; line-height:1.4">A learned push holds the drone over the pad in gusts the rule cannot: <b style="color:#f7f6f2">51% vs 6%</b> at 18&nbsp;m/s in the twin, <b style="color:#f7f6f2">5&ndash;6 of 20 vs 0</b> on PX4, never crashing. Pricing a crash properly makes a deciding learner land <b style="color:#f7f6f2">87%</b>.</p>
+    </div>
+    <div style="flex:1; background:#1e232c; border-radius:16px; padding:32px; display:flex; flex-direction:column; gap:12px">
+      <h3 style="font-size:31px; font-weight:600; color:#b8620a">Not shown</h3>
+      <p style="font-size:26px; color:#a8b0bb; line-height:1.4">That the decider is safe on PX4: <b style="color:#f7f6f2">3 crashes in 20</b> at 18&nbsp;m/s against 3% in the twin. Three seeds, and one Gazebo seed, are thin.</p>
+    </div>
+    <div style="flex:1; background:#1e232c; border-radius:16px; padding:32px; display:flex; flex-direction:column; gap:12px">
+      <h3 style="font-size:31px; font-weight:600; color:#f7f6f2">Next</h3>
+      <p style="font-size:26px; color:#a8b0bb; line-height:1.4">Trace the three Gazebo crashes; seeds for the two variants that reached <b style="color:#f7f6f2">94%</b>; then the same Gazebo ladder for them.</p>
+    </div>
+  </div>
+  <p style="font-size:31px; line-height:1.45; color:#f7f6f2"><b style="color:#b8620a">What the learner actually learned.</b> Most of its push is a steady lean downwind that PX4's own integrator would have found anyway. The gain is in the part that <b style="color:#f7f6f2">reacts to each gust</b>.</p>
+  <aside>Three things to take away from part four. Shown: a small learned push on top of the rule holds the drone over the pad in gusts where the rule gives up, in the twin and on PX4, and it never crashes. And putting a proper price on a crash turned the deciding learner from reckless into the best lander we have in the twin. Not shown: that the deciding learner is safe on the real flight software. It crashed three times in twenty flights at 18 metres per second in Gazebo, five times its crash rate in the twin, and I have three training seeds and only one of them flown in Gazebo. Next: look at those three crashes, train more seeds of the two variants that did best, then put them on the Gazebo ladder. The last line is what the learner actually does: when I looked at its push, most of it is a steady lean into the wind, which PX4's integral term would have supplied by itself. What helps is the part that reacts to each individual gust, which is why filtering out the steady part made learning faster.</aside>
+</section>

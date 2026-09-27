@@ -1,0 +1,206 @@
+{
+ "corridor": {
+  "rule": {
+   "clean": 68.7744140625,
+   "delivered": 96.6552734375,
+   "violation": 30.029296875,
+   "median_t": 147.75
+  },
+  "shield_obs": {
+   "clean": 71.8505859375,
+   "delivered": 96.2890625,
+   "violation": 26.1962890625,
+   "median_t": 152.25
+  },
+  "safeplan_obs": {
+   "clean": 69.287109375,
+   "delivered": 97.705078125,
+   "violation": 29.7119140625,
+   "median_t": 151.25
+  },
+  "shield_full": {
+   "clean": 95.0439453125,
+   "delivered": 95.703125,
+   "violation": 0.7080078125,
+   "median_t": 166.0
+  },
+  "safeplan_full": {
+   "clean": 95.6787109375,
+   "delivered": 96.2890625,
+   "violation": 0.732421875,
+   "median_t": 163.25
+  },
+  "shield_prior": {
+   "clean": 67.1142578125,
+   "delivered": 83.0078125,
+   "violation": 18.4326171875,
+   "median_t": 233.25
+  },
+  "fail_best_obs": {
+   "bird strike": 0.0,
+   "crash, unmapped": 0.0,
+   "crash": 0.0244140625,
+   "near mid-air (NMAC)": 0.146484375,
+   "120 m ceiling": 0.0,
+   "helipad duty": 0.634765625,
+   "drone separation": 0.0732421875,
+   "people 30 m": 0.0,
+   "vehicle 30 m": 0.830078125,
+   "over a person": 24.4873046875,
+   "timeout, people at pad": 1.0986328125,
+   "timeout, helipad duty": 0.7080078125,
+   "timeout, other": 0.146484375,
+   "landed off pad": 0.0
+  },
+  "ladder": {
+   "better decisions, same sensors": {
+    "pp": 3.076171875,
+    "ci95": 0.7748231515288353
+   },
+   "knowing this flight's future": {
+    "pp": 23.828125,
+    "ci95": 1.3632536754012108
+   },
+   "total headroom over the rule": {
+    "pp": 26.904296875,
+    "ci95": 1.4111968725919724
+   }
+  },
+  "fail_rule": {
+   "bird strike": 0.0,
+   "crash, unmapped": 0.0,
+   "crash": 0.048828125,
+   "near mid-air (NMAC)": 0.3173828125,
+   "120 m ceiling": 0.0,
+   "helipad duty": 1.220703125,
+   "drone separation": 0.341796875,
+   "people 30 m": 0.0,
+   "vehicle 30 m": 0.78125,
+   "over a person": 27.3193359375,
+   "timeout, people at pad": 0.68359375,
+   "timeout, helipad duty": 0.48828125,
+   "timeout, other": 0.0,
+   "landed off pad": 0.0244140625
+  },
+  "fail_oracle": {
+   "bird strike": 0.0,
+   "crash, unmapped": 0.0,
+   "crash": 0.0244140625,
+   "near mid-air (NMAC)": 0.146484375,
+   "120 m ceiling": 0.0,
+   "helipad duty": 0.2685546875,
+   "drone separation": 0.0244140625,
+   "people 30 m": 0.0,
+   "vehicle 30 m": 0.1953125,
+   "over a person": 0.0732421875,
+   "timeout, people at pad": 2.8076171875,
+   "timeout, helipad duty": 0.634765625,
+   "timeout, other": 0.146484375,
+   "landed off pad": 0.0
+  },
+  "best_obs": "shield_obs",
+  "best_full": "safeplan_full"
+ },
+ "random": {
+  "rule": {
+   "clean": 68.9697265625,
+   "delivered": 96.9482421875,
+   "violation": 29.9072265625,
+   "median_t": 147.75
+  },
+  "shield_obs": {
+   "clean": 72.0947265625,
+   "delivered": 96.6552734375,
+   "violation": 26.220703125,
+   "median_t": 152.25
+  },
+  "safeplan_obs": {
+   "clean": 69.4091796875,
+   "delivered": 97.5830078125,
+   "violation": 29.39453125,
+   "median_t": 151.25
+  },
+  "shield_full": {
+   "clean": 95.8251953125,
+   "delivered": 96.3623046875,
+   "violation": 0.5615234375,
+   "median_t": 167.25
+  },
+  "safeplan_full": {
+   "clean": 95.947265625,
+   "delivered": 96.484375,
+   "violation": 0.6591796875,
+   "median_t": 163.25
+  },
+  "shield_prior": {
+   "clean": 68.6279296875,
+   "delivered": 85.107421875,
+   "violation": 19.2626953125,
+   "median_t": 232.0
+  },
+  "fail_best_obs": {
+   "bird strike": 0.0,
+   "crash, unmapped": 0.0,
+   "crash": 0.0,
+   "near mid-air (NMAC)": 0.0244140625,
+   "120 m ceiling": 0.0,
+   "helipad duty": 0.5126953125,
+   "drone separation": 0.048828125,
+   "people 30 m": 0.0,
+   "vehicle 30 m": 0.8056640625,
+   "over a person": 24.8291015625,
+   "timeout, people at pad": 1.0009765625,
+   "timeout, helipad duty": 0.537109375,
+   "timeout, other": 0.146484375,
+   "landed off pad": 0.0
+  },
+  "ladder": {
+   "better decisions, same sensors": {
+    "pp": 3.125,
+    "ci95": 0.7351994076743722
+   },
+   "knowing this flight's future": {
+    "pp": 23.8525390625,
+    "ci95": 1.365371586754918
+   },
+   "total headroom over the rule": {
+    "pp": 26.9775390625,
+    "ci95": 1.4074456915259361
+   }
+  },
+  "fail_rule": {
+   "bird strike": 0.0,
+   "crash, unmapped": 0.0,
+   "crash": 0.048828125,
+   "near mid-air (NMAC)": 0.09765625,
+   "120 m ceiling": 0.0,
+   "helipad duty": 1.0498046875,
+   "drone separation": 0.1708984375,
+   "people 30 m": 0.0,
+   "vehicle 30 m": 0.8544921875,
+   "over a person": 27.685546875,
+   "timeout, people at pad": 0.5859375,
+   "timeout, helipad duty": 0.5126953125,
+   "timeout, other": 0.0244140625,
+   "landed off pad": 0.0
+  },
+  "fail_oracle": {
+   "bird strike": 0.0,
+   "crash, unmapped": 0.0,
+   "crash": 0.0,
+   "near mid-air (NMAC)": 0.048828125,
+   "120 m ceiling": 0.0,
+   "helipad duty": 0.244140625,
+   "drone separation": 0.048828125,
+   "people 30 m": 0.0,
+   "vehicle 30 m": 0.1953125,
+   "over a person": 0.1220703125,
+   "timeout, people at pad": 2.5634765625,
+   "timeout, helipad duty": 0.634765625,
+   "timeout, other": 0.1953125,
+   "landed off pad": 0.0
+  },
+  "best_obs": "shield_obs",
+  "best_full": "safeplan_full"
+ }
+}

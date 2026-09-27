@@ -1,0 +1,16 @@
+<section id="scratch" data-transition="fade" style="background:#f7f6f2; color:#14181f; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:28px">
+  <h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:68px; font-weight:400; line-height:1.08">Trial and error alone lost to the rule</h2>
+  <div style="display:flex; gap:48px; align-items:flex-start">
+    <div style="flex:1; display:flex; flex-direction:column; gap:20px">
+      <p style="font-size:30px; line-height:1.45; color:#3d444d">PPO practised on the GPU for <b style="color:#14181f">410,000 flights</b> per world. Rolling its dice it reached <b style="color:#14181f">91.8%</b>, below the rule. Forced to take its top choice every time, it swung between 10% and 92%.</p>
+      <div style="background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:30px; display:flex; flex-direction:column; gap:10px">
+        <h3 style="font-size:29px; font-weight:600; color:#b8620a">The copy test</h3>
+        <p style="font-size:26px; line-height:1.4; color:#3d444d">The same network, seeing the same inputs, taught by <b>copying the planner</b> instead: <b style="color:#1f7a4d">94.1%</b>, above the rule by 0.95 points (&plusmn;0.49).</p>
+      </div>
+      <p style="font-size:26px; line-height:1.4; color:#3d444d"><b style="color:#14181f">A better policy existed; PPO never found it.</b> Yet the copy caught only 48% of the moments the planner overrides the rule. From raw positions, the network cannot redo a 20-second look-ahead.</p>
+    </div>
+    <img src="/_blob/b27bb6f2dcf1e4e962398864831bec7b" alt="Corridor world, PPO from scratch: rolling its dice stays near 92% for 400,000 flights, under the rule (93.1%) and planner (95.3%); its top choice swings from 92% down to 10% and back to 81%" style="width:800px; height:484px; object-fit:contain; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px">
+  </div>
+  <p style="position:absolute; left:128px; bottom:64px; font-size:24px; color:#6a7179">Corridor world shown; random: 91.8% dice, 69.6% top choice. Copy test paired on the same 4,096 flights.</p>
+  <aside>The first training run failed, and the interesting part is why. PPO is the trial-and-error method: it flies, gets a score at the end, and slowly adjusts. After 410,000 practice flights it still sat below the simple rule. Its "top choice" version, which is what a real drone would fly, swung wildly during training, down to 10% at one point. To find out whether the problem was the learning or the network, I ran a copy test: the same network with the same inputs, taught by being shown the planner's correct choice at every decision instead of by trial and error. That copy reached 94.1%, better than the rule. So the network was capable of a good policy and trial and error simply never found it: like a learner driver told only "fail" at the end of a 3-hour drive, never which junction went wrong. But the copy still fell short of the planner, because it only reproduced 48% of the planner's key calls: the planner simulates each manoeuvre 20 seconds ahead, and the network cannot do that in its head from raw positions.</aside>
+</section>

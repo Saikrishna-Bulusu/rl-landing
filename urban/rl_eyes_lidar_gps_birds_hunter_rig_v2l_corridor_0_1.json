@@ -1,0 +1,4419 @@
+{
+ "map": "logan_map_lidar.npz",
+ "nav": "gps",
+ "birds": true,
+ "fog": false,
+ "unmapped": false,
+ "cameras": false,
+ "hunter": true,
+ "rig": true,
+ "baselines": {
+  "rule": 77.783203125,
+  "planner": 74.51171875,
+  "oracle": 76.318359375
+ },
+ "corridor_eyes_lidar_gps_birds_hunter_rig_v2l_s0": {
+  "log": [
+   {
+    "gen": -1,
+    "env_steps": 0,
+    "episodes": 0,
+    "eval_clean": 74.51171875,
+    "eval_sampled": 73.4375,
+    "eval_mean": 73.2421875
+   },
+   {
+    "gen": 0,
+    "env_steps": 1501164,
+    "episodes": 2048,
+    "clean": 71.875,
+    "delivered": 73.4375,
+    "violation": 24.072265625,
+    "rule_share": 79.00509238243103,
+    "planner_share": 96.07824087142944,
+    "eval_clean": 74.51171875,
+    "eval_violation": 21.337890625,
+    "eval_sampled": 73.53515625,
+    "eval_mean": 73.2421875
+   },
+   {
+    "gen": 1,
+    "env_steps": 2991640,
+    "episodes": 4096,
+    "clean": 72.265625,
+    "delivered": 73.92578125,
+    "violation": 23.14453125,
+    "rule_share": 78.7607491016388,
+    "planner_share": 96.04328274726868
+   },
+   {
+    "gen": 2,
+    "env_steps": 4514620,
+    "episodes": 6144,
+    "clean": 72.216796875,
+    "delivered": 73.681640625,
+    "violation": 22.802734375,
+    "rule_share": 78.19958329200745,
+    "planner_share": 96.10356092453003
+   },
+   {
+    "gen": 3,
+    "env_steps": 6026106,
+    "episodes": 8192,
+    "clean": 72.0703125,
+    "delivered": 73.974609375,
+    "violation": 23.046875,
+    "rule_share": 79.09765243530273,
+    "planner_share": 96.07167840003967
+   },
+   {
+    "gen": 4,
+    "env_steps": 7531148,
+    "episodes": 10240,
+    "clean": 72.509765625,
+    "delivered": 73.73046875,
+    "violation": 22.998046875,
+    "rule_share": 78.15622687339783,
+    "planner_share": 96.09047770500183
+   },
+   {
+    "gen": 5,
+    "env_steps": 9051872,
+    "episodes": 12288,
+    "clean": 70.947265625,
+    "delivered": 72.900390625,
+    "violation": 23.33984375,
+    "rule_share": 78.78641486167908,
+    "planner_share": 96.08659744262695
+   },
+   {
+    "gen": 6,
+    "env_steps": 10590020,
+    "episodes": 14336,
+    "clean": 70.80078125,
+    "delivered": 72.021484375,
+    "violation": 23.486328125,
+    "rule_share": 76.02311372756958,
+    "planner_share": 92.93527007102966
+   },
+   {
+    "gen": 7,
+    "env_steps": 12126854,
+    "episodes": 16384,
+    "clean": 73.291015625,
+    "delivered": 74.609375,
+    "violation": 22.265625,
+    "rule_share": 73.23211431503296,
+    "planner_share": 89.61983323097229
+   },
+   {
+    "gen": 8,
+    "env_steps": 13674048,
+    "episodes": 18432,
+    "clean": 73.92578125,
+    "delivered": 75.1953125,
+    "violation": 20.654296875,
+    "rule_share": 71.34244441986084,
+    "planner_share": 86.90933585166931
+   },
+   {
+    "gen": 9,
+    "env_steps": 15265536,
+    "episodes": 20480,
+    "clean": 73.095703125,
+    "delivered": 74.51171875,
+    "violation": 21.97265625,
+    "rule_share": 69.55591440200806,
+    "planner_share": 85.32467484474182
+   },
+   {
+    "gen": 10,
+    "env_steps": 16871258,
+    "episodes": 22528,
+    "clean": 74.169921875,
+    "delivered": 75.439453125,
+    "violation": 19.62890625,
+    "rule_share": 68.0187463760376,
+    "planner_share": 83.54684114456177,
+    "eval_clean": 74.462890625,
+    "eval_violation": 21.38671875,
+    "eval_sampled": 73.388671875,
+    "eval_mean": 74.169921875
+   },
+   {
+    "gen": 11,
+    "env_steps": 18458732,
+    "episodes": 24576,
+    "clean": 72.607421875,
+    "delivered": 74.560546875,
+    "violation": 22.4609375,
+    "rule_share": 66.90616607666016,
+    "planner_share": 82.78396725654602
+   },
+   {
+    "gen": 12,
+    "env_steps": 20026614,
+    "episodes": 26624,
+    "clean": 74.31640625,
+    "delivered": 75.927734375,
+    "violation": 21.044921875,
+    "rule_share": 66.92264080047607,
+    "planner_share": 83.1608533859253
+   },
+   {
+    "gen": 13,
+    "env_steps": 21554584,
+    "episodes": 28672,
+    "clean": 74.365234375,
+    "delivered": 75.78125,
+    "violation": 21.19140625,
+    "rule_share": 67.30878353118896,
+    "planner_share": 83.81146192550659
+   },
+   {
+    "gen": 14,
+    "env_steps": 23089598,
+    "episodes": 30720,
+    "clean": 73.876953125,
+    "delivered": 75.244140625,
+    "violation": 20.751953125,
+    "rule_share": 68.21709871292114,
+    "planner_share": 85.16495823860168
+   },
+   {
+    "gen": 15,
+    "env_steps": 24619856,
+    "episodes": 32768,
+    "clean": 72.802734375,
+    "delivered": 74.21875,
+    "violation": 23.14453125,
+    "rule_share": 67.221999168396,
+    "planner_share": 85.18811464309692
+   },
+   {
+    "gen": 16,
+    "env_steps": 26126470,
+    "episodes": 34816,
+    "clean": 73.095703125,
+    "delivered": 74.70703125,
+    "violation": 22.802734375,
+    "rule_share": 67.6187813282013,
+    "planner_share": 85.55808067321777
+   },
+   {
+    "gen": 17,
+    "env_steps": 27617462,
+    "episodes": 36864,
+    "clean": 74.12109375,
+    "delivered": 75.390625,
+    "violation": 21.875,
+    "rule_share": 67.90391802787781,
+    "planner_share": 86.36545538902283
+   },
+   {
+    "gen": 18,
+    "env_steps": 29131804,
+    "episodes": 38912,
+    "clean": 74.609375,
+    "delivered": 76.5625,
+    "violation": 21.630859375,
+    "rule_share": 67.79842376708984,
+    "planner_share": 86.07712388038635
+   },
+   {
+    "gen": 19,
+    "env_steps": 30644936,
+    "episodes": 40960,
+    "clean": 74.560546875,
+    "delivered": 76.07421875,
+    "violation": 21.58203125,
+    "rule_share": 68.1805670261383,
+    "planner_share": 86.7670476436615
+   },
+   {
+    "gen": 20,
+    "env_steps": 32145590,
+    "episodes": 43008,
+    "clean": 73.779296875,
+    "delivered": 75.732421875,
+    "violation": 22.705078125,
+    "rule_share": 67.20682978630066,
+    "planner_share": 86.31677031517029,
+    "eval_clean": 74.609375,
+    "eval_violation": 21.240234375,
+    "eval_sampled": 74.853515625,
+    "eval_mean": 73.73046875
+   },
+   {
+    "gen": 21,
+    "env_steps": 33653156,
+    "episodes": 45056,
+    "clean": 74.951171875,
+    "delivered": 76.220703125,
+    "violation": 21.044921875,
+    "rule_share": 66.2116289138794,
+    "planner_share": 85.72520017623901
+   },
+   {
+    "gen": 22,
+    "env_steps": 35159450,
+    "episodes": 47104,
+    "clean": 74.0234375,
+    "delivered": 75.634765625,
+    "violation": 21.728515625,
+    "rule_share": 64.75229859352112,
+    "planner_share": 85.17168164253235
+   },
+   {
+    "gen": 23,
+    "env_steps": 36659506,
+    "episodes": 49152,
+    "clean": 75.68359375,
+    "delivered": 77.24609375,
+    "violation": 21.142578125,
+    "rule_share": 63.524025678634644,
+    "planner_share": 83.51621627807617
+   },
+   {
+    "gen": 24,
+    "env_steps": 38172118,
+    "episodes": 51200,
+    "clean": 72.94921875,
+    "delivered": 74.4140625,
+    "violation": 22.94921875,
+    "rule_share": 62.43676543235779,
+    "planner_share": 82.80497193336487
+   },
+   {
+    "gen": 25,
+    "env_steps": 39650288,
+    "episodes": 53248,
+    "clean": 75.927734375,
+    "delivered": 76.7578125,
+    "violation": 20.99609375,
+    "rule_share": 60.97485423088074,
+    "planner_share": 81.24261498451233
+   },
+   {
+    "gen": 26,
+    "env_steps": 41161752,
+    "episodes": 55296,
+    "clean": 73.73046875,
+    "delivered": 75.09765625,
+    "violation": 21.6796875,
+    "rule_share": 59.84118580818176,
+    "planner_share": 80.28295636177063
+   },
+   {
+    "gen": 27,
+    "env_steps": 42659198,
+    "episodes": 57344,
+    "clean": 74.609375,
+    "delivered": 75.439453125,
+    "violation": 21.435546875,
+    "rule_share": 59.45296287536621,
+    "planner_share": 80.11654615402222
+   },
+   {
+    "gen": 28,
+    "env_steps": 44142994,
+    "episodes": 59392,
+    "clean": 73.974609375,
+    "delivered": 75.1953125,
+    "violation": 22.265625,
+    "rule_share": 58.39603543281555,
+    "planner_share": 78.75813245773315
+   },
+   {
+    "gen": 29,
+    "env_steps": 45653366,
+    "episodes": 61440,
+    "clean": 74.267578125,
+    "delivered": 75.9765625,
+    "violation": 21.875,
+    "rule_share": 57.018935680389404,
+    "planner_share": 78.50807905197144
+   },
+   {
+    "gen": 30,
+    "env_steps": 47148578,
+    "episodes": 63488,
+    "clean": 74.51171875,
+    "delivered": 75.9765625,
+    "violation": 22.0703125,
+    "rule_share": 56.49927854537964,
+    "planner_share": 77.78040766716003,
+    "eval_clean": 74.51171875,
+    "eval_violation": 21.09375,
+    "eval_sampled": 76.123046875,
+    "eval_mean": 74.4140625
+   },
+   {
+    "gen": 31,
+    "env_steps": 48663602,
+    "episodes": 65536,
+    "clean": 75.29296875,
+    "delivered": 76.904296875,
+    "violation": 20.751953125,
+    "rule_share": 56.668275594711304,
+    "planner_share": 77.66121029853821
+   },
+   {
+    "gen": 32,
+    "env_steps": 50156770,
+    "episodes": 67584,
+    "clean": 74.072265625,
+    "delivered": 75.439453125,
+    "violation": 21.484375,
+    "rule_share": 57.43975043296814,
+    "planner_share": 77.3899495601654
+   },
+   {
+    "gen": 33,
+    "env_steps": 51674616,
+    "episodes": 69632,
+    "clean": 73.6328125,
+    "delivered": 74.951171875,
+    "violation": 21.826171875,
+    "rule_share": 55.54068088531494,
+    "planner_share": 76.23553276062012
+   },
+   {
+    "gen": 34,
+    "env_steps": 53160710,
+    "episodes": 71680,
+    "clean": 75.68359375,
+    "delivered": 76.806640625,
+    "violation": 21.240234375,
+    "rule_share": 54.80837821960449,
+    "planner_share": 75.13360381126404
+   },
+   {
+    "gen": 35,
+    "env_steps": 54634366,
+    "episodes": 73728,
+    "clean": 73.974609375,
+    "delivered": 75.048828125,
+    "violation": 22.8515625,
+    "rule_share": 54.42776083946228,
+    "planner_share": 74.59026575088501
+   },
+   {
+    "gen": 36,
+    "env_steps": 56132810,
+    "episodes": 75776,
+    "clean": 73.73046875,
+    "delivered": 75.48828125,
+    "violation": 22.8515625,
+    "rule_share": 54.526299238204956,
+    "planner_share": 74.18895959854126
+   },
+   {
+    "gen": 37,
+    "env_steps": 57606466,
+    "episodes": 77824,
+    "clean": 76.26953125,
+    "delivered": 77.783203125,
+    "violation": 21.435546875,
+    "rule_share": 53.438252210617065,
+    "planner_share": 73.2003927230835
+   },
+   {
+    "gen": 38,
+    "env_steps": 59098264,
+    "episodes": 79872,
+    "clean": 75.87890625,
+    "delivered": 77.490234375,
+    "violation": 21.044921875,
+    "rule_share": 52.724164724349976,
+    "planner_share": 72.56076335906982
+   },
+   {
+    "gen": 39,
+    "env_steps": 60587812,
+    "episodes": 81920,
+    "clean": 77.880859375,
+    "delivered": 79.39453125,
+    "violation": 19.482421875,
+    "rule_share": 52.03484296798706,
+    "planner_share": 72.37738966941833
+   },
+   {
+    "gen": 40,
+    "env_steps": 62056900,
+    "episodes": 83968,
+    "clean": 75.927734375,
+    "delivered": 77.294921875,
+    "violation": 21.240234375,
+    "rule_share": 52.151405811309814,
+    "planner_share": 72.41690158843994,
+    "eval_clean": 77.099609375,
+    "eval_violation": 19.140625,
+    "eval_sampled": 76.3671875,
+    "eval_mean": 77.34375
+   },
+   {
+    "gen": 41,
+    "env_steps": 63544396,
+    "episodes": 86016,
+    "clean": 76.26953125,
+    "delivered": 77.685546875,
+    "violation": 20.849609375,
+    "rule_share": 51.13183259963989,
+    "planner_share": 71.51709794998169
+   },
+   {
+    "gen": 42,
+    "env_steps": 65020752,
+    "episodes": 88064,
+    "clean": 76.904296875,
+    "delivered": 78.173828125,
+    "violation": 20.21484375,
+    "rule_share": 51.72803997993469,
+    "planner_share": 72.00431227684021
+   },
+   {
+    "gen": 43,
+    "env_steps": 66497412,
+    "episodes": 90112,
+    "clean": 75.87890625,
+    "delivered": 77.34375,
+    "violation": 20.8984375,
+    "rule_share": 50.99670886993408,
+    "planner_share": 71.46912813186646
+   },
+   {
+    "gen": 44,
+    "env_steps": 67970694,
+    "episodes": 92160,
+    "clean": 76.26953125,
+    "delivered": 77.490234375,
+    "violation": 21.142578125,
+    "rule_share": 50.379765033721924,
+    "planner_share": 71.7688798904419
+   },
+   {
+    "gen": 45,
+    "env_steps": 69431364,
+    "episodes": 94208,
+    "clean": 76.611328125,
+    "delivered": 77.685546875,
+    "violation": 20.8984375,
+    "rule_share": 50.1994252204895,
+    "planner_share": 71.91726565361023
+   },
+   {
+    "gen": 46,
+    "env_steps": 70905774,
+    "episodes": 96256,
+    "clean": 75.390625,
+    "delivered": 77.099609375,
+    "violation": 21.435546875,
+    "rule_share": 50.77556371688843,
+    "planner_share": 72.43778705596924
+   },
+   {
+    "gen": 47,
+    "env_steps": 72359320,
+    "episodes": 98304,
+    "clean": 76.7578125,
+    "delivered": 78.515625,
+    "violation": 20.263671875,
+    "rule_share": 50.368136167526245,
+    "planner_share": 71.63915038108826
+   },
+   {
+    "gen": 48,
+    "env_steps": 73833438,
+    "episodes": 100352,
+    "clean": 76.416015625,
+    "delivered": 78.466796875,
+    "violation": 20.654296875,
+    "rule_share": 50.6270170211792,
+    "planner_share": 72.03236222267151
+   },
+   {
+    "gen": 49,
+    "env_steps": 75293180,
+    "episodes": 102400,
+    "clean": 78.02734375,
+    "delivered": 79.4921875,
+    "violation": 19.677734375,
+    "rule_share": 50.44987201690674,
+    "planner_share": 72.72120714187622
+   },
+   {
+    "gen": 50,
+    "env_steps": 76757230,
+    "episodes": 104448,
+    "clean": 76.66015625,
+    "delivered": 78.076171875,
+    "violation": 20.458984375,
+    "rule_share": 49.666061997413635,
+    "planner_share": 72.13482856750488,
+    "eval_clean": 76.46484375,
+    "eval_violation": 20.068359375,
+    "eval_sampled": 77.880859375,
+    "eval_mean": 78.02734375
+   },
+   {
+    "gen": 51,
+    "env_steps": 78197170,
+    "episodes": 106496,
+    "clean": 75.29296875,
+    "delivered": 77.24609375,
+    "violation": 22.314453125,
+    "rule_share": 50.01736283302307,
+    "planner_share": 71.56728506088257
+   },
+   {
+    "gen": 52,
+    "env_steps": 79656354,
+    "episodes": 108544,
+    "clean": 76.025390625,
+    "delivered": 77.685546875,
+    "violation": 21.630859375,
+    "rule_share": 49.709564447402954,
+    "planner_share": 71.10796570777893
+   },
+   {
+    "gen": 53,
+    "env_steps": 81120564,
+    "episodes": 110592,
+    "clean": 77.34375,
+    "delivered": 78.857421875,
+    "violation": 19.921875,
+    "rule_share": 49.254000186920166,
+    "planner_share": 70.9226131439209
+   },
+   {
+    "gen": 54,
+    "env_steps": 82563764,
+    "episodes": 112640,
+    "clean": 76.806640625,
+    "delivered": 78.7109375,
+    "violation": 21.484375,
+    "rule_share": 49.97131526470184,
+    "planner_share": 70.62832713127136
+   },
+   {
+    "gen": 55,
+    "env_steps": 84021148,
+    "episodes": 114688,
+    "clean": 78.564453125,
+    "delivered": 79.736328125,
+    "violation": 18.994140625,
+    "rule_share": 49.178388714790344,
+    "planner_share": 69.99664902687073
+   },
+   {
+    "gen": 56,
+    "env_steps": 85470520,
+    "episodes": 116736,
+    "clean": 77.392578125,
+    "delivered": 79.4921875,
+    "violation": 20.41015625,
+    "rule_share": 48.15754592418671,
+    "planner_share": 70.67157626152039
+   },
+   {
+    "gen": 57,
+    "env_steps": 86925500,
+    "episodes": 118784,
+    "clean": 77.1484375,
+    "delivered": 78.90625,
+    "violation": 20.5078125,
+    "rule_share": 47.72120714187622,
+    "planner_share": 69.71353888511658
+   },
+   {
+    "gen": 58,
+    "env_steps": 88396080,
+    "episodes": 120832,
+    "clean": 76.46484375,
+    "delivered": 78.41796875,
+    "violation": 21.337890625,
+    "rule_share": 47.18927443027496,
+    "planner_share": 70.80988883972168
+   },
+   {
+    "gen": 59,
+    "env_steps": 89854022,
+    "episodes": 122880,
+    "clean": 77.783203125,
+    "delivered": 79.443359375,
+    "violation": 20.01953125,
+    "rule_share": 47.13054299354553,
+    "planner_share": 69.92473006248474
+   },
+   {
+    "gen": 60,
+    "env_steps": 91318562,
+    "episodes": 124928,
+    "clean": 77.5390625,
+    "delivered": 79.736328125,
+    "violation": 19.921875,
+    "rule_share": 47.23312556743622,
+    "planner_share": 70.0721025466919,
+    "eval_clean": 78.02734375,
+    "eval_violation": 18.45703125,
+    "eval_sampled": 79.00390625,
+    "eval_mean": 77.978515625
+   },
+   {
+    "gen": 61,
+    "env_steps": 92753834,
+    "episodes": 126976,
+    "clean": 76.07421875,
+    "delivered": 78.3203125,
+    "violation": 21.923828125,
+    "rule_share": 47.823548316955566,
+    "planner_share": 71.27401828765869
+   },
+   {
+    "gen": 62,
+    "env_steps": 94211496,
+    "episodes": 129024,
+    "clean": 76.220703125,
+    "delivered": 78.22265625,
+    "violation": 21.533203125,
+    "rule_share": 46.786290407180786,
+    "planner_share": 70.0029194355011
+   },
+   {
+    "gen": 63,
+    "env_steps": 95655252,
+    "episodes": 131072,
+    "clean": 77.05078125,
+    "delivered": 78.759765625,
+    "violation": 20.947265625,
+    "rule_share": 47.139957547187805,
+    "planner_share": 69.78132128715515
+   },
+   {
+    "gen": 64,
+    "env_steps": 97099352,
+    "episodes": 133120,
+    "clean": 77.001953125,
+    "delivered": 78.759765625,
+    "violation": 21.2890625,
+    "rule_share": 46.53278887271881,
+    "planner_share": 70.16592025756836
+   },
+   {
+    "gen": 65,
+    "env_steps": 98555292,
+    "episodes": 135168,
+    "clean": 76.318359375,
+    "delivered": 77.978515625,
+    "violation": 21.875,
+    "rule_share": 46.276769042015076,
+    "planner_share": 70.24231553077698
+   },
+   {
+    "gen": 66,
+    "env_steps": 99993048,
+    "episodes": 137216,
+    "clean": 76.806640625,
+    "delivered": 79.052734375,
+    "violation": 21.2890625,
+    "rule_share": 45.89095711708069,
+    "planner_share": 70.5037534236908
+   },
+   {
+    "gen": 67,
+    "env_steps": 101437508,
+    "episodes": 139264,
+    "clean": 75.390625,
+    "delivered": 77.978515625,
+    "violation": 22.65625,
+    "rule_share": 45.85866034030914,
+    "planner_share": 70.62722444534302
+   },
+   {
+    "gen": 68,
+    "env_steps": 102883372,
+    "episodes": 141312,
+    "clean": 77.83203125,
+    "delivered": 80.322265625,
+    "violation": 20.361328125,
+    "rule_share": 45.37314772605896,
+    "planner_share": 70.2889084815979
+   },
+   {
+    "gen": 69,
+    "env_steps": 104323690,
+    "episodes": 143360,
+    "clean": 77.9296875,
+    "delivered": 81.005859375,
+    "violation": 19.62890625,
+    "rule_share": 45.29736042022705,
+    "planner_share": 69.71446871757507
+   },
+   {
+    "gen": 70,
+    "env_steps": 105769264,
+    "episodes": 145408,
+    "clean": 79.833984375,
+    "delivered": 81.201171875,
+    "violation": 18.45703125,
+    "rule_share": 45.05905508995056,
+    "planner_share": 69.36635375022888,
+    "eval_clean": 77.44140625,
+    "eval_violation": 18.994140625,
+    "eval_sampled": 78.515625,
+    "eval_mean": 78.22265625
+   },
+   {
+    "gen": 71,
+    "env_steps": 107202266,
+    "episodes": 147456,
+    "clean": 78.076171875,
+    "delivered": 79.6875,
+    "violation": 19.7265625,
+    "rule_share": 45.41221857070923,
+    "planner_share": 69.50820684432983
+   },
+   {
+    "gen": 72,
+    "env_steps": 108649678,
+    "episodes": 149504,
+    "clean": 77.880859375,
+    "delivered": 79.931640625,
+    "violation": 19.82421875,
+    "rule_share": 44.949328899383545,
+    "planner_share": 70.1769769191742
+   },
+   {
+    "gen": 73,
+    "env_steps": 110098286,
+    "episodes": 151552,
+    "clean": 76.7578125,
+    "delivered": 78.662109375,
+    "violation": 21.044921875,
+    "rule_share": 44.45385038852692,
+    "planner_share": 69.19318437576294
+   },
+   {
+    "gen": 74,
+    "env_steps": 111529030,
+    "episodes": 153600,
+    "clean": 77.880859375,
+    "delivered": 79.6875,
+    "violation": 20.556640625,
+    "rule_share": 44.62307691574097,
+    "planner_share": 68.97446513175964
+   },
+   {
+    "gen": 75,
+    "env_steps": 112983156,
+    "episodes": 155648,
+    "clean": 77.490234375,
+    "delivered": 79.443359375,
+    "violation": 20.3125,
+    "rule_share": 45.13969421386719,
+    "planner_share": 69.33966279029846
+   },
+   {
+    "gen": 76,
+    "env_steps": 114444112,
+    "episodes": 157696,
+    "clean": 79.1015625,
+    "delivered": 81.201171875,
+    "violation": 19.04296875,
+    "rule_share": 45.21162807941437,
+    "planner_share": 69.38347220420837
+   },
+   {
+    "gen": 77,
+    "env_steps": 115894480,
+    "episodes": 159744,
+    "clean": 78.80859375,
+    "delivered": 80.46875,
+    "violation": 19.43359375,
+    "rule_share": 44.21567618846893,
+    "planner_share": 68.72090697288513
+   },
+   {
+    "gen": 78,
+    "env_steps": 117335460,
+    "episodes": 161792,
+    "clean": 78.076171875,
+    "delivered": 79.19921875,
+    "violation": 19.873046875,
+    "rule_share": 44.06348466873169,
+    "planner_share": 67.48018264770508
+   },
+   {
+    "gen": 79,
+    "env_steps": 118767510,
+    "episodes": 163840,
+    "clean": 78.662109375,
+    "delivered": 80.37109375,
+    "violation": 19.482421875,
+    "rule_share": 44.646623730659485,
+    "planner_share": 67.45057702064514
+   },
+   {
+    "gen": 80,
+    "env_steps": 120199270,
+    "episodes": 165888,
+    "clean": 78.90625,
+    "delivered": 80.2734375,
+    "violation": 19.62890625,
+    "rule_share": 45.10225057601929,
+    "planner_share": 68.21171045303345,
+    "eval_clean": 79.541015625,
+    "eval_violation": 17.724609375,
+    "eval_sampled": 78.22265625,
+    "eval_mean": 79.1015625
+   },
+   {
+    "gen": 81,
+    "env_steps": 121618736,
+    "episodes": 167936,
+    "clean": 78.955078125,
+    "delivered": 81.0546875,
+    "violation": 19.3359375,
+    "rule_share": 44.65918838977814,
+    "planner_share": 68.05192828178406
+   },
+   {
+    "gen": 82,
+    "env_steps": 123068882,
+    "episodes": 169984,
+    "clean": 78.466796875,
+    "delivered": 80.908203125,
+    "violation": 19.384765625,
+    "rule_share": 45.898690819740295,
+    "planner_share": 68.48813891410828
+   },
+   {
+    "gen": 83,
+    "env_steps": 124526178,
+    "episodes": 172032,
+    "clean": 76.5625,
+    "delivered": 78.564453125,
+    "violation": 21.044921875,
+    "rule_share": 44.412389397621155,
+    "planner_share": 68.17132234573364
+   },
+   {
+    "gen": 84,
+    "env_steps": 125962248,
+    "episodes": 174080,
+    "clean": 77.392578125,
+    "delivered": 79.19921875,
+    "violation": 20.849609375,
+    "rule_share": 45.54945230484009,
+    "planner_share": 68.94914507865906
+   },
+   {
+    "gen": 85,
+    "env_steps": 127403778,
+    "episodes": 176128,
+    "clean": 77.34375,
+    "delivered": 78.7109375,
+    "violation": 20.80078125,
+    "rule_share": 45.2144593000412,
+    "planner_share": 68.8744604587555
+   },
+   {
+    "gen": 86,
+    "env_steps": 128842110,
+    "episodes": 178176,
+    "clean": 79.78515625,
+    "delivered": 81.298828125,
+    "violation": 18.505859375,
+    "rule_share": 45.527735352516174,
+    "planner_share": 69.28442120552063
+   },
+   {
+    "gen": 87,
+    "env_steps": 130288242,
+    "episodes": 180224,
+    "clean": 77.392578125,
+    "delivered": 78.955078125,
+    "violation": 20.263671875,
+    "rule_share": 45.63497602939606,
+    "planner_share": 70.08143067359924
+   },
+   {
+    "gen": 88,
+    "env_steps": 131727520,
+    "episodes": 182272,
+    "clean": 77.63671875,
+    "delivered": 78.955078125,
+    "violation": 19.970703125,
+    "rule_share": 45.087048411369324,
+    "planner_share": 69.49359178543091
+   },
+   {
+    "gen": 89,
+    "env_steps": 133159352,
+    "episodes": 184320,
+    "clean": 77.490234375,
+    "delivered": 79.00390625,
+    "violation": 20.556640625,
+    "rule_share": 45.96600830554962,
+    "planner_share": 68.52773427963257
+   },
+   {
+    "gen": 90,
+    "env_steps": 134588532,
+    "episodes": 186368,
+    "clean": 79.6875,
+    "delivered": 80.95703125,
+    "violation": 17.87109375,
+    "rule_share": 45.908841490745544,
+    "planner_share": 69.07835006713867,
+    "eval_clean": 78.173828125,
+    "eval_violation": 18.798828125,
+    "eval_sampled": 78.857421875,
+    "eval_mean": 79.931640625
+   },
+   {
+    "gen": 91,
+    "env_steps": 136032870,
+    "episodes": 188416,
+    "clean": 79.541015625,
+    "delivered": 81.73828125,
+    "violation": 18.896484375,
+    "rule_share": 45.90545892715454,
+    "planner_share": 68.7328040599823
+   },
+   {
+    "gen": 92,
+    "env_steps": 137465444,
+    "episodes": 190464,
+    "clean": 78.61328125,
+    "delivered": 80.322265625,
+    "violation": 19.140625,
+    "rule_share": 46.30071520805359,
+    "planner_share": 69.71535086631775
+   },
+   {
+    "gen": 93,
+    "env_steps": 138902560,
+    "episodes": 192512,
+    "clean": 78.3203125,
+    "delivered": 80.2734375,
+    "violation": 20.21484375,
+    "rule_share": 47.35497832298279,
+    "planner_share": 69.59437727928162
+   },
+   {
+    "gen": 94,
+    "env_steps": 140341578,
+    "episodes": 194560,
+    "clean": 80.76171875,
+    "delivered": 82.421875,
+    "violation": 17.3828125,
+    "rule_share": 47.59787619113922,
+    "planner_share": 69.77841854095459
+   },
+   {
+    "gen": 95,
+    "env_steps": 141766832,
+    "episodes": 196608,
+    "clean": 77.44140625,
+    "delivered": 79.1015625,
+    "violation": 20.703125,
+    "rule_share": 46.605026721954346,
+    "planner_share": 70.09698152542114
+   },
+   {
+    "gen": 96,
+    "env_steps": 143199858,
+    "episodes": 198656,
+    "clean": 79.39453125,
+    "delivered": 80.95703125,
+    "violation": 18.65234375,
+    "rule_share": 47.15155065059662,
+    "planner_share": 70.40444016456604
+   },
+   {
+    "gen": 97,
+    "env_steps": 144650356,
+    "episodes": 200704,
+    "clean": 79.638671875,
+    "delivered": 80.859375,
+    "violation": 17.48046875,
+    "rule_share": 46.71430289745331,
+    "planner_share": 70.48186659812927
+   },
+   {
+    "gen": 98,
+    "env_steps": 146085054,
+    "episodes": 202752,
+    "clean": 78.90625,
+    "delivered": 80.419921875,
+    "violation": 19.287109375,
+    "rule_share": 46.55251502990723,
+    "planner_share": 70.87219953536987
+   },
+   {
+    "gen": 99,
+    "env_steps": 147515840,
+    "episodes": 204800,
+    "clean": 80.126953125,
+    "delivered": 81.494140625,
+    "violation": 18.115234375,
+    "rule_share": 46.899956464767456,
+    "planner_share": 70.41444182395935
+   },
+   {
+    "gen": 100,
+    "env_steps": 148941140,
+    "episodes": 206848,
+    "clean": 77.197265625,
+    "delivered": 79.345703125,
+    "violation": 21.09375,
+    "rule_share": 45.25952339172363,
+    "planner_share": 69.53216791152954,
+    "eval_clean": 79.541015625,
+    "eval_violation": 17.1875,
+    "eval_sampled": 79.296875,
+    "eval_mean": 79.248046875
+   },
+   {
+    "gen": 101,
+    "env_steps": 150347584,
+    "episodes": 208896,
+    "clean": 79.6875,
+    "delivered": 81.34765625,
+    "violation": 18.310546875,
+    "rule_share": 46.071651577949524,
+    "planner_share": 70.78646421432495
+   },
+   {
+    "gen": 102,
+    "env_steps": 151792086,
+    "episodes": 210944,
+    "clean": 78.857421875,
+    "delivered": 80.712890625,
+    "violation": 18.75,
+    "rule_share": 44.96276080608368,
+    "planner_share": 70.25701403617859
+   },
+   {
+    "gen": 103,
+    "env_steps": 153226294,
+    "episodes": 212992,
+    "clean": 79.248046875,
+    "delivered": 80.859375,
+    "violation": 18.896484375,
+    "rule_share": 44.53984498977661,
+    "planner_share": 70.38226127624512
+   },
+   {
+    "gen": 104,
+    "env_steps": 154671720,
+    "episodes": 215040,
+    "clean": 80.17578125,
+    "delivered": 81.787109375,
+    "violation": 17.626953125,
+    "rule_share": 44.65852975845337,
+    "planner_share": 70.57310342788696
+   },
+   {
+    "gen": 105,
+    "env_steps": 156084340,
+    "episodes": 217088,
+    "clean": 78.7109375,
+    "delivered": 80.56640625,
+    "violation": 19.23828125,
+    "rule_share": 43.606773018836975,
+    "planner_share": 70.52838206291199
+   },
+   {
+    "gen": 106,
+    "env_steps": 157500844,
+    "episodes": 219136,
+    "clean": 79.4921875,
+    "delivered": 81.103515625,
+    "violation": 18.75,
+    "rule_share": 43.551307916641235,
+    "planner_share": 70.73160409927368
+   },
+   {
+    "gen": 107,
+    "env_steps": 158923872,
+    "episodes": 221184,
+    "clean": 77.63671875,
+    "delivered": 79.736328125,
+    "violation": 20.068359375,
+    "rule_share": 43.84017884731293,
+    "planner_share": 70.38034796714783
+   },
+   {
+    "gen": 108,
+    "env_steps": 160336488,
+    "episodes": 223232,
+    "clean": 77.5390625,
+    "delivered": 79.4921875,
+    "violation": 20.3125,
+    "rule_share": 43.27106475830078,
+    "planner_share": 70.89697122573853
+   },
+   {
+    "gen": 109,
+    "env_steps": 161745792,
+    "episodes": 225280,
+    "clean": 77.1484375,
+    "delivered": 79.443359375,
+    "violation": 20.5078125,
+    "rule_share": 44.164493680000305,
+    "planner_share": 69.96758580207825
+   },
+   {
+    "gen": 110,
+    "env_steps": 163160244,
+    "episodes": 227328,
+    "clean": 79.19921875,
+    "delivered": 80.76171875,
+    "violation": 18.701171875,
+    "rule_share": 44.30931508541107,
+    "planner_share": 70.44551372528076,
+    "eval_clean": 79.931640625,
+    "eval_violation": 17.28515625,
+    "eval_sampled": 79.296875,
+    "eval_mean": 80.859375
+   },
+   {
+    "gen": 111,
+    "env_steps": 164565408,
+    "episodes": 229376,
+    "clean": 79.00390625,
+    "delivered": 81.103515625,
+    "violation": 18.75,
+    "rule_share": 45.1043426990509,
+    "planner_share": 69.90656852722168
+   },
+   {
+    "gen": 112,
+    "env_steps": 165986774,
+    "episodes": 231424,
+    "clean": 78.759765625,
+    "delivered": 80.810546875,
+    "violation": 19.53125,
+    "rule_share": 43.94448697566986,
+    "planner_share": 70.01574635505676
+   },
+   {
+    "gen": 113,
+    "env_steps": 167377494,
+    "episodes": 233472,
+    "clean": 78.61328125,
+    "delivered": 81.0546875,
+    "violation": 19.23828125,
+    "rule_share": 42.92539358139038,
+    "planner_share": 68.47489476203918
+   },
+   {
+    "gen": 114,
+    "env_steps": 168786310,
+    "episodes": 235520,
+    "clean": 77.685546875,
+    "delivered": 80.029296875,
+    "violation": 20.947265625,
+    "rule_share": 44.03129816055298,
+    "planner_share": 68.62670183181763
+   },
+   {
+    "gen": 115,
+    "env_steps": 170216402,
+    "episodes": 237568,
+    "clean": 77.392578125,
+    "delivered": 79.4921875,
+    "violation": 20.3125,
+    "rule_share": 43.26672852039337,
+    "planner_share": 69.06898617744446
+   },
+   {
+    "gen": 116,
+    "env_steps": 171644734,
+    "episodes": 239616,
+    "clean": 78.466796875,
+    "delivered": 80.322265625,
+    "violation": 18.9453125,
+    "rule_share": 44.11159157752991,
+    "planner_share": 68.52916479110718
+   },
+   {
+    "gen": 117,
+    "env_steps": 173073338,
+    "episodes": 241664,
+    "clean": 77.392578125,
+    "delivered": 79.443359375,
+    "violation": 20.80078125,
+    "rule_share": 43.67746114730835,
+    "planner_share": 68.43533515930176
+   },
+   {
+    "gen": 118,
+    "env_steps": 174487114,
+    "episodes": 243712,
+    "clean": 78.173828125,
+    "delivered": 80.029296875,
+    "violation": 19.53125,
+    "rule_share": 44.64045166969299,
+    "planner_share": 68.89408230781555
+   },
+   {
+    "gen": 119,
+    "env_steps": 175919544,
+    "episodes": 245760,
+    "clean": 79.736328125,
+    "delivered": 81.884765625,
+    "violation": 18.212890625,
+    "rule_share": 43.16231906414032,
+    "planner_share": 68.85683536529541
+   },
+   {
+    "gen": 120,
+    "env_steps": 177350492,
+    "episodes": 247808,
+    "clean": 78.3203125,
+    "delivered": 80.517578125,
+    "violation": 19.873046875,
+    "rule_share": 43.63121688365936,
+    "planner_share": 68.81452202796936,
+    "eval_clean": 79.19921875,
+    "eval_violation": 17.919921875,
+    "eval_sampled": 78.662109375,
+    "eval_mean": 79.98046875
+   },
+   {
+    "gen": 121,
+    "env_steps": 178779406,
+    "episodes": 249856,
+    "clean": 77.44140625,
+    "delivered": 80.2734375,
+    "violation": 20.654296875,
+    "rule_share": 44.36670243740082,
+    "planner_share": 69.01017427444458
+   },
+   {
+    "gen": 122,
+    "env_steps": 180188938,
+    "episodes": 251904,
+    "clean": 78.7109375,
+    "delivered": 81.396484375,
+    "violation": 19.091796875,
+    "rule_share": 45.01224458217621,
+    "planner_share": 69.78713274002075
+   },
+   {
+    "gen": 123,
+    "env_steps": 181599808,
+    "episodes": 253952,
+    "clean": 78.271484375,
+    "delivered": 80.6640625,
+    "violation": 19.82421875,
+    "rule_share": 45.10309100151062,
+    "planner_share": 68.87835264205933
+   },
+   {
+    "gen": 124,
+    "env_steps": 183016976,
+    "episodes": 256000,
+    "clean": 79.833984375,
+    "delivered": 82.8125,
+    "violation": 18.65234375,
+    "rule_share": 44.88275349140167,
+    "planner_share": 68.01861524581909
+   },
+   {
+    "gen": 125,
+    "env_steps": 184438194,
+    "episodes": 258048,
+    "clean": 77.490234375,
+    "delivered": 80.615234375,
+    "violation": 20.3125,
+    "rule_share": 45.236408710479736,
+    "planner_share": 67.44271516799927
+   },
+   {
+    "gen": 126,
+    "env_steps": 185856998,
+    "episodes": 260096,
+    "clean": 78.662109375,
+    "delivered": 82.958984375,
+    "violation": 19.287109375,
+    "rule_share": 45.18580436706543,
+    "planner_share": 67.20956563949585
+   },
+   {
+    "gen": 127,
+    "env_steps": 187279030,
+    "episodes": 262144,
+    "clean": 76.07421875,
+    "delivered": 79.58984375,
+    "violation": 21.38671875,
+    "rule_share": 44.31208074092865,
+    "planner_share": 67.9146409034729
+   },
+   {
+    "gen": 128,
+    "env_steps": 188693956,
+    "episodes": 264192,
+    "clean": 76.85546875,
+    "delivered": 80.419921875,
+    "violation": 20.947265625,
+    "rule_share": 44.41787302494049,
+    "planner_share": 67.85005331039429
+   },
+   {
+    "gen": 129,
+    "env_steps": 190104340,
+    "episodes": 266240,
+    "clean": 77.83203125,
+    "delivered": 80.712890625,
+    "violation": 20.361328125,
+    "rule_share": 43.5461550951004,
+    "planner_share": 67.65972971916199
+   },
+   {
+    "gen": 130,
+    "env_steps": 191506130,
+    "episodes": 268288,
+    "clean": 77.197265625,
+    "delivered": 80.17578125,
+    "violation": 21.19140625,
+    "rule_share": 43.97605657577515,
+    "planner_share": 67.7022933959961,
+    "eval_clean": 79.39453125,
+    "eval_violation": 17.138671875,
+    "eval_sampled": 80.029296875,
+    "eval_mean": 79.4921875
+   },
+   {
+    "gen": 131,
+    "env_steps": 192898354,
+    "episodes": 270336,
+    "clean": 78.515625,
+    "delivered": 81.15234375,
+    "violation": 19.3359375,
+    "rule_share": 45.704999566078186,
+    "planner_share": 67.61095523834229
+   },
+   {
+    "gen": 132,
+    "env_steps": 194295200,
+    "episodes": 272384,
+    "clean": 76.3671875,
+    "delivered": 79.638671875,
+    "violation": 21.875,
+    "rule_share": 45.613330602645874,
+    "planner_share": 67.40614175796509
+   },
+   {
+    "gen": 133,
+    "env_steps": 195707952,
+    "episodes": 274432,
+    "clean": 80.6640625,
+    "delivered": 83.544921875,
+    "violation": 17.48046875,
+    "rule_share": 44.912341237068176,
+    "planner_share": 67.26870536804199
+   },
+   {
+    "gen": 134,
+    "env_steps": 197120512,
+    "episodes": 276480,
+    "clean": 79.248046875,
+    "delivered": 81.787109375,
+    "violation": 18.896484375,
+    "rule_share": 44.483065605163574,
+    "planner_share": 68.39398145675659
+   },
+   {
+    "gen": 135,
+    "env_steps": 198518100,
+    "episodes": 278528,
+    "clean": 77.734375,
+    "delivered": 81.15234375,
+    "violation": 19.82421875,
+    "rule_share": 43.8558429479599,
+    "planner_share": 67.92846322059631
+   },
+   {
+    "gen": 136,
+    "env_steps": 199899728,
+    "episodes": 280576,
+    "clean": 78.90625,
+    "delivered": 82.32421875,
+    "violation": 19.775390625,
+    "rule_share": 44.50865387916565,
+    "planner_share": 68.5381293296814
+   },
+   {
+    "gen": 137,
+    "env_steps": 201297340,
+    "episodes": 282624,
+    "clean": 78.271484375,
+    "delivered": 81.93359375,
+    "violation": 19.7265625,
+    "rule_share": 45.72156071662903,
+    "planner_share": 69.42799687385559
+   },
+   {
+    "gen": 138,
+    "env_steps": 202699296,
+    "episodes": 284672,
+    "clean": 77.392578125,
+    "delivered": 81.54296875,
+    "violation": 20.751953125,
+    "rule_share": 44.588702917099,
+    "planner_share": 69.36408877372742
+   },
+   {
+    "gen": 139,
+    "env_steps": 204096586,
+    "episodes": 286720,
+    "clean": 77.1484375,
+    "delivered": 80.712890625,
+    "violation": 21.240234375,
+    "rule_share": 45.56892216205597,
+    "planner_share": 70.18828988075256
+   },
+   {
+    "gen": 140,
+    "env_steps": 205496570,
+    "episodes": 288768,
+    "clean": 79.00390625,
+    "delivered": 82.568359375,
+    "violation": 19.677734375,
+    "rule_share": 46.070098876953125,
+    "planner_share": 69.7007954120636,
+    "eval_clean": 77.880859375,
+    "eval_violation": 19.482421875,
+    "eval_sampled": 77.880859375,
+    "eval_mean": 78.857421875
+   },
+   {
+    "gen": 141,
+    "env_steps": 206912058,
+    "episodes": 290816,
+    "clean": 76.318359375,
+    "delivered": 80.859375,
+    "violation": 21.77734375,
+    "rule_share": 44.47144567966461,
+    "planner_share": 69.47851181030273
+   },
+   {
+    "gen": 142,
+    "env_steps": 208292442,
+    "episodes": 292864,
+    "clean": 76.806640625,
+    "delivered": 81.982421875,
+    "violation": 21.6796875,
+    "rule_share": 43.57946813106537,
+    "planner_share": 68.99906396865845
+   },
+   {
+    "gen": 143,
+    "env_steps": 209675724,
+    "episodes": 294912,
+    "clean": 77.880859375,
+    "delivered": 82.763671875,
+    "violation": 20.263671875,
+    "rule_share": 43.4848427772522,
+    "planner_share": 69.61097121238708
+   },
+   {
+    "gen": 144,
+    "env_steps": 211069066,
+    "episodes": 296960,
+    "clean": 76.85546875,
+    "delivered": 82.861328125,
+    "violation": 21.2890625,
+    "rule_share": 42.44944751262665,
+    "planner_share": 69.38870549201965
+   },
+   {
+    "gen": 145,
+    "env_steps": 212443776,
+    "episodes": 299008,
+    "clean": 76.318359375,
+    "delivered": 81.640625,
+    "violation": 21.77734375,
+    "rule_share": 43.501245975494385,
+    "planner_share": 68.60792636871338
+   },
+   {
+    "gen": 146,
+    "env_steps": 213827554,
+    "episodes": 301056,
+    "clean": 76.025390625,
+    "delivered": 81.73828125,
+    "violation": 22.16796875,
+    "rule_share": 42.71407723426819,
+    "planner_share": 68.09097528457642
+   },
+   {
+    "gen": 147,
+    "env_steps": 215205690,
+    "episodes": 303104,
+    "clean": 74.853515625,
+    "delivered": 80.908203125,
+    "violation": 23.53515625,
+    "rule_share": 42.369839549064636,
+    "planner_share": 67.29727387428284
+   },
+   {
+    "gen": 148,
+    "env_steps": 216593792,
+    "episodes": 305152,
+    "clean": 76.953125,
+    "delivered": 82.666015625,
+    "violation": 21.337890625,
+    "rule_share": 43.571868538856506,
+    "planner_share": 69.00919079780579
+   },
+   {
+    "gen": 149,
+    "env_steps": 217971478,
+    "episodes": 307200,
+    "clean": 75.732421875,
+    "delivered": 82.177734375,
+    "violation": 22.75390625,
+    "rule_share": 43.42426359653473,
+    "planner_share": 68.9072847366333
+   },
+   {
+    "gen": 150,
+    "env_steps": 219337874,
+    "episodes": 309248,
+    "clean": 76.318359375,
+    "delivered": 82.421875,
+    "violation": 22.412109375,
+    "rule_share": 43.25627386569977,
+    "planner_share": 69.0386950969696,
+    "eval_clean": 76.171875,
+    "eval_violation": 21.38671875,
+    "eval_sampled": 77.001953125,
+    "eval_mean": 75.634765625
+   },
+   {
+    "gen": 151,
+    "env_steps": 220712738,
+    "episodes": 311296,
+    "clean": 77.099609375,
+    "delivered": 83.447265625,
+    "violation": 21.6796875,
+    "rule_share": 42.1030730009079,
+    "planner_share": 69.0702497959137
+   },
+   {
+    "gen": 152,
+    "env_steps": 222076360,
+    "episodes": 313344,
+    "clean": 76.513671875,
+    "delivered": 82.666015625,
+    "violation": 21.97265625,
+    "rule_share": 43.318748474121094,
+    "planner_share": 69.40251588821411
+   },
+   {
+    "gen": 153,
+    "env_steps": 223433766,
+    "episodes": 315392,
+    "clean": 74.462890625,
+    "delivered": 81.884765625,
+    "violation": 24.267578125,
+    "rule_share": 43.12637448310852,
+    "planner_share": 68.89891028404236
+   },
+   {
+    "gen": 154,
+    "env_steps": 224807592,
+    "episodes": 317440,
+    "clean": 77.001953125,
+    "delivered": 82.763671875,
+    "violation": 21.19140625,
+    "rule_share": 42.93440282344818,
+    "planner_share": 69.01004910469055
+   },
+   {
+    "gen": 155,
+    "env_steps": 226184056,
+    "episodes": 319488,
+    "clean": 78.076171875,
+    "delivered": 83.740234375,
+    "violation": 20.8984375,
+    "rule_share": 43.024879693984985,
+    "planner_share": 67.9936408996582
+   },
+   {
+    "gen": 156,
+    "env_steps": 227561904,
+    "episodes": 321536,
+    "clean": 75.390625,
+    "delivered": 81.54296875,
+    "violation": 23.33984375,
+    "rule_share": 44.11197602748871,
+    "planner_share": 68.65096688270569
+   },
+   {
+    "gen": 157,
+    "env_steps": 228925676,
+    "episodes": 323584,
+    "clean": 76.171875,
+    "delivered": 81.982421875,
+    "violation": 22.314453125,
+    "rule_share": 43.77095103263855,
+    "planner_share": 67.36565828323364
+   },
+   {
+    "gen": 158,
+    "env_steps": 230309304,
+    "episodes": 325632,
+    "clean": 78.02734375,
+    "delivered": 83.10546875,
+    "violation": 20.166015625,
+    "rule_share": 43.24066936969757,
+    "planner_share": 67.7251398563385
+   },
+   {
+    "gen": 159,
+    "env_steps": 231688762,
+    "episodes": 327680,
+    "clean": 75.048828125,
+    "delivered": 81.93359375,
+    "violation": 23.6328125,
+    "rule_share": 43.66149604320526,
+    "planner_share": 67.81127452850342
+   },
+   {
+    "gen": 160,
+    "env_steps": 233080448,
+    "episodes": 329728,
+    "clean": 76.3671875,
+    "delivered": 81.591796875,
+    "violation": 21.337890625,
+    "rule_share": 45.27386128902435,
+    "planner_share": 68.60297322273254,
+    "eval_clean": 77.9296875,
+    "eval_violation": 19.3359375,
+    "eval_sampled": 77.9296875,
+    "eval_mean": 76.5625
+   },
+   {
+    "gen": 161,
+    "env_steps": 234441120,
+    "episodes": 331776,
+    "clean": 76.806640625,
+    "delivered": 83.349609375,
+    "violation": 22.119140625,
+    "rule_share": 45.33127546310425,
+    "planner_share": 67.86175966262817
+   },
+   {
+    "gen": 162,
+    "env_steps": 235823192,
+    "episodes": 333824,
+    "clean": 76.7578125,
+    "delivered": 82.177734375,
+    "violation": 21.533203125,
+    "rule_share": 44.09061074256897,
+    "planner_share": 67.83539652824402
+   },
+   {
+    "gen": 163,
+    "env_steps": 237193472,
+    "episodes": 335872,
+    "clean": 75.830078125,
+    "delivered": 81.494140625,
+    "violation": 22.75390625,
+    "rule_share": 44.86878514289856,
+    "planner_share": 68.64275932312012
+   },
+   {
+    "gen": 164,
+    "env_steps": 238574082,
+    "episodes": 337920,
+    "clean": 76.5625,
+    "delivered": 82.421875,
+    "violation": 22.16796875,
+    "rule_share": 45.20002007484436,
+    "planner_share": 68.37542653083801
+   },
+   {
+    "gen": 165,
+    "env_steps": 239973400,
+    "episodes": 339968,
+    "clean": 75.732421875,
+    "delivered": 82.177734375,
+    "violation": 21.97265625,
+    "rule_share": 44.95590031147003,
+    "planner_share": 68.59598755836487
+   },
+   {
+    "gen": 166,
+    "env_steps": 241332314,
+    "episodes": 342016,
+    "clean": 77.099609375,
+    "delivered": 82.71484375,
+    "violation": 21.630859375,
+    "rule_share": 45.91342508792877,
+    "planner_share": 69.13196444511414
+   },
+   {
+    "gen": 167,
+    "env_steps": 242731526,
+    "episodes": 344064,
+    "clean": 75.68359375,
+    "delivered": 80.859375,
+    "violation": 22.16796875,
+    "rule_share": 44.97874677181244,
+    "planner_share": 69.0617322921753
+   },
+   {
+    "gen": 168,
+    "env_steps": 244111980,
+    "episodes": 346112,
+    "clean": 77.1484375,
+    "delivered": 82.958984375,
+    "violation": 21.044921875,
+    "rule_share": 45.76610028743744,
+    "planner_share": 69.20186877250671
+   },
+   {
+    "gen": 169,
+    "env_steps": 245490680,
+    "episodes": 348160,
+    "clean": 74.90234375,
+    "delivered": 80.76171875,
+    "violation": 23.193359375,
+    "rule_share": 45.18648087978363,
+    "planner_share": 69.29121613502502
+   },
+   {
+    "gen": 170,
+    "env_steps": 246866430,
+    "episodes": 350208,
+    "clean": 75.09765625,
+    "delivered": 81.54296875,
+    "violation": 23.193359375,
+    "rule_share": 44.35515105724335,
+    "planner_share": 68.40239763259888,
+    "eval_clean": 77.44140625,
+    "eval_violation": 20.01953125,
+    "eval_sampled": 77.685546875,
+    "eval_mean": 77.685546875
+   },
+   {
+    "gen": 171,
+    "env_steps": 248250814,
+    "episodes": 352256,
+    "clean": 76.3671875,
+    "delivered": 81.73828125,
+    "violation": 21.58203125,
+    "rule_share": 44.54284310340881,
+    "planner_share": 68.4939980506897
+   },
+   {
+    "gen": 172,
+    "env_steps": 249622838,
+    "episodes": 354304,
+    "clean": 75.634765625,
+    "delivered": 81.689453125,
+    "violation": 22.802734375,
+    "rule_share": 45.30678987503052,
+    "planner_share": 68.81555914878845
+   },
+   {
+    "gen": 173,
+    "env_steps": 251002530,
+    "episodes": 356352,
+    "clean": 76.611328125,
+    "delivered": 83.935546875,
+    "violation": 21.97265625,
+    "rule_share": 43.86181831359863,
+    "planner_share": 67.95719861984253
+   },
+   {
+    "gen": 174,
+    "env_steps": 252367618,
+    "episodes": 358400,
+    "clean": 76.806640625,
+    "delivered": 82.421875,
+    "violation": 21.97265625,
+    "rule_share": 43.330103158950806,
+    "planner_share": 67.62772798538208
+   },
+   {
+    "gen": 175,
+    "env_steps": 253753032,
+    "episodes": 360448,
+    "clean": 76.07421875,
+    "delivered": 83.154296875,
+    "violation": 22.412109375,
+    "rule_share": 45.01831233501434,
+    "planner_share": 68.31676363945007
+   },
+   {
+    "gen": 176,
+    "env_steps": 255123742,
+    "episodes": 362496,
+    "clean": 77.783203125,
+    "delivered": 83.88671875,
+    "violation": 20.947265625,
+    "rule_share": 44.659772515296936,
+    "planner_share": 68.4238076210022
+   },
+   {
+    "gen": 177,
+    "env_steps": 256496972,
+    "episodes": 364544,
+    "clean": 75.87890625,
+    "delivered": 82.6171875,
+    "violation": 22.998046875,
+    "rule_share": 44.40537989139557,
+    "planner_share": 67.71276593208313
+   },
+   {
+    "gen": 178,
+    "env_steps": 257878462,
+    "episodes": 366592,
+    "clean": 76.513671875,
+    "delivered": 82.763671875,
+    "violation": 22.216796875,
+    "rule_share": 44.94118690490723,
+    "planner_share": 69.09496188163757
+   },
+   {
+    "gen": 179,
+    "env_steps": 259246596,
+    "episodes": 368640,
+    "clean": 77.734375,
+    "delivered": 84.47265625,
+    "violation": 20.849609375,
+    "rule_share": 45.35462260246277,
+    "planner_share": 68.91225576400757
+   },
+   {
+    "gen": 180,
+    "env_steps": 260620124,
+    "episodes": 370688,
+    "clean": 77.880859375,
+    "delivered": 83.69140625,
+    "violation": 20.654296875,
+    "rule_share": 44.82719004154205,
+    "planner_share": 68.61236095428467,
+    "eval_clean": 77.63671875,
+    "eval_violation": 19.677734375,
+    "eval_sampled": 78.955078125,
+    "eval_mean": 77.83203125
+   },
+   {
+    "gen": 181,
+    "env_steps": 262015050,
+    "episodes": 372736,
+    "clean": 77.294921875,
+    "delivered": 82.8125,
+    "violation": 21.38671875,
+    "rule_share": 45.06016671657562,
+    "planner_share": 68.74300241470337
+   },
+   {
+    "gen": 182,
+    "env_steps": 263391852,
+    "episodes": 374784,
+    "clean": 77.001953125,
+    "delivered": 83.69140625,
+    "violation": 20.99609375,
+    "rule_share": 45.818644762039185,
+    "planner_share": 69.33967471122742
+   },
+   {
+    "gen": 183,
+    "env_steps": 264763682,
+    "episodes": 376832,
+    "clean": 76.123046875,
+    "delivered": 82.958984375,
+    "violation": 22.119140625,
+    "rule_share": 46.27380967140198,
+    "planner_share": 68.77995133399963
+   },
+   {
+    "gen": 184,
+    "env_steps": 266153218,
+    "episodes": 378880,
+    "clean": 76.318359375,
+    "delivered": 83.642578125,
+    "violation": 21.728515625,
+    "rule_share": 46.4917778968811,
+    "planner_share": 69.22944188117981
+   },
+   {
+    "gen": 185,
+    "env_steps": 267533466,
+    "episodes": 380928,
+    "clean": 76.07421875,
+    "delivered": 82.91015625,
+    "violation": 22.55859375,
+    "rule_share": 45.243462920188904,
+    "planner_share": 68.1344211101532
+   },
+   {
+    "gen": 186,
+    "env_steps": 268924090,
+    "episodes": 382976,
+    "clean": 74.853515625,
+    "delivered": 82.91015625,
+    "violation": 23.193359375,
+    "rule_share": 44.686126708984375,
+    "planner_share": 68.45531463623047
+   },
+   {
+    "gen": 187,
+    "env_steps": 270283626,
+    "episodes": 385024,
+    "clean": 76.171875,
+    "delivered": 82.177734375,
+    "violation": 22.16796875,
+    "rule_share": 45.44830024242401,
+    "planner_share": 68.35023164749146
+   },
+   {
+    "gen": 188,
+    "env_steps": 271654898,
+    "episodes": 387072,
+    "clean": 77.490234375,
+    "delivered": 83.056640625,
+    "violation": 20.849609375,
+    "rule_share": 45.95280885696411,
+    "planner_share": 68.26391816139221
+   },
+   {
+    "gen": 189,
+    "env_steps": 273023402,
+    "episodes": 389120,
+    "clean": 76.513671875,
+    "delivered": 83.056640625,
+    "violation": 22.119140625,
+    "rule_share": 45.34177482128143,
+    "planner_share": 67.86330342292786
+   },
+   {
+    "gen": 190,
+    "env_steps": 274409282,
+    "episodes": 391168,
+    "clean": 77.294921875,
+    "delivered": 84.27734375,
+    "violation": 21.2890625,
+    "rule_share": 44.688430428504944,
+    "planner_share": 67.8351640701294,
+    "eval_clean": 77.099609375,
+    "eval_violation": 20.458984375,
+    "eval_sampled": 76.416015625,
+    "eval_mean": 77.05078125
+   },
+   {
+    "gen": 191,
+    "env_steps": 275777138,
+    "episodes": 393216,
+    "clean": 76.611328125,
+    "delivered": 83.10546875,
+    "violation": 21.77734375,
+    "rule_share": 46.069616079330444,
+    "planner_share": 68.27224493026733
+   },
+   {
+    "gen": 192,
+    "env_steps": 277142740,
+    "episodes": 395264,
+    "clean": 76.416015625,
+    "delivered": 82.958984375,
+    "violation": 21.826171875,
+    "rule_share": 46.347472071647644,
+    "planner_share": 68.96577477455139
+   },
+   {
+    "gen": 193,
+    "env_steps": 278506986,
+    "episodes": 397312,
+    "clean": 77.587890625,
+    "delivered": 84.130859375,
+    "violation": 21.337890625,
+    "rule_share": 45.771947503089905,
+    "planner_share": 69.3370521068573
+   },
+   {
+    "gen": 194,
+    "env_steps": 279873622,
+    "episodes": 399360,
+    "clean": 76.806640625,
+    "delivered": 82.080078125,
+    "violation": 21.484375,
+    "rule_share": 46.34343087673187,
+    "planner_share": 69.62292790412903
+   },
+   {
+    "gen": 195,
+    "env_steps": 281260890,
+    "episodes": 401408,
+    "clean": 75.5859375,
+    "delivered": 82.373046875,
+    "violation": 22.900390625,
+    "rule_share": 47.39920198917389,
+    "planner_share": 70.88176012039185
+   },
+   {
+    "gen": 196,
+    "env_steps": 282632178,
+    "episodes": 403456,
+    "clean": 77.880859375,
+    "delivered": 83.935546875,
+    "violation": 20.5078125,
+    "rule_share": 48.955145478248596,
+    "planner_share": 71.31397724151611
+   },
+   {
+    "gen": 197,
+    "env_steps": 284013320,
+    "episodes": 405504,
+    "clean": 77.880859375,
+    "delivered": 83.837890625,
+    "violation": 20.263671875,
+    "rule_share": 48.23501110076904,
+    "planner_share": 70.86048722267151
+   },
+   {
+    "gen": 198,
+    "env_steps": 285406654,
+    "episodes": 407552,
+    "clean": 77.001953125,
+    "delivered": 84.08203125,
+    "violation": 21.826171875,
+    "rule_share": 47.895050048828125,
+    "planner_share": 69.91202235221863
+   },
+   {
+    "gen": 199,
+    "env_steps": 286776930,
+    "episodes": 409600,
+    "clean": 76.611328125,
+    "delivered": 82.51953125,
+    "violation": 21.923828125,
+    "rule_share": 48.21729362010956,
+    "planner_share": 71.20229601860046,
+    "eval_clean": 77.490234375,
+    "eval_violation": 19.873046875,
+    "eval_sampled": 78.662109375,
+    "eval_mean": 77.783203125
+   },
+   {
+    "kept_greedy": {
+     "gen": 110,
+     "validation": 79.931640625
+    },
+    "kept_sampled": {
+     "gen": 130,
+     "validation": 80.029296875
+    },
+    "kept_mean": {
+     "gen": 110,
+     "validation": 80.859375
+    }
+   }
+  ],
+  "eval": {
+   "greedy": {
+    "clean": 79.736328125,
+    "delivered": 80.8837890625,
+    "violation": 17.236328125,
+    "ceiling": 0.0,
+    "median_t": 157.75,
+    "vs_rule": [
+     6.15234375,
+     1.4071184899657965
+    ],
+    "vs_planner": [
+     6.591796875,
+     1.3090572319924831
+    ]
+   },
+   "sampled": {
+    "clean": 78.4423828125,
+    "delivered": 81.4208984375,
+    "violation": 19.580078125,
+    "ceiling": 0.0,
+    "median_t": 158.75,
+    "vs_rule": [
+     4.8583984375,
+     1.5022436957806349
+    ],
+    "vs_planner": [
+     5.2978515625,
+     1.4885912220925093
+    ]
+   },
+   "mean": {
+    "clean": 79.345703125,
+    "delivered": 80.8837890625,
+    "violation": 19.04296875,
+    "ceiling": 0.0,
+    "median_t": 159.5,
+    "vs_rule": [
+     5.76171875,
+     1.4487460125237703
+    ],
+    "vs_planner": [
+     6.201171875,
+     1.4596500843763351
+    ]
+   },
+   "last_greedy": {
+    "clean": 76.46484375,
+    "delivered": 82.421875,
+    "violation": 20.8984375,
+    "ceiling": 0.0,
+    "median_t": 154.25,
+    "vs_rule": [
+     2.880859375,
+     1.5467647388577461
+    ],
+    "vs_planner": [
+     3.3203125,
+     1.499307917430997
+    ]
+   },
+   "last_sampled": {
+    "clean": 77.6123046875,
+    "delivered": 84.619140625,
+    "violation": 20.751953125,
+    "ceiling": 0.0,
+    "median_t": 155.25,
+    "vs_rule": [
+     4.0283203125,
+     1.5613204166293144
+    ],
+    "vs_planner": [
+     4.4677734375,
+     1.5498885326087475
+    ]
+   },
+   "last_mean": {
+    "clean": 76.0009765625,
+    "delivered": 83.154296875,
+    "violation": 22.7783203125,
+    "ceiling": 0.0,
+    "median_t": 154.75,
+    "vs_rule": [
+     2.4169921875,
+     1.5644374564290047
+    ],
+    "vs_planner": [
+     2.8564453125,
+     1.5460667088627815
+    ]
+   }
+  }
+ },
+ "corridor_eyes_lidar_gps_birds_hunter_rig_v2l_s1": {
+  "log": [
+   {
+    "gen": -1,
+    "env_steps": 0,
+    "episodes": 0,
+    "eval_clean": 74.51171875,
+    "eval_sampled": 73.046875,
+    "eval_mean": 74.267578125
+   },
+   {
+    "gen": 0,
+    "env_steps": 1519214,
+    "episodes": 2048,
+    "clean": 72.705078125,
+    "delivered": 73.876953125,
+    "violation": 22.412109375,
+    "rule_share": 77.76324152946472,
+    "planner_share": 96.08271718025208,
+    "eval_clean": 74.51171875,
+    "eval_violation": 21.337890625,
+    "eval_sampled": 72.412109375,
+    "eval_mean": 74.267578125
+   },
+   {
+    "gen": 1,
+    "env_steps": 3026418,
+    "episodes": 4096,
+    "clean": 71.2890625,
+    "delivered": 72.705078125,
+    "violation": 24.072265625,
+    "rule_share": 78.50483655929565,
+    "planner_share": 96.09448909759521
+   },
+   {
+    "gen": 2,
+    "env_steps": 4548580,
+    "episodes": 6144,
+    "clean": 72.021484375,
+    "delivered": 73.53515625,
+    "violation": 22.216796875,
+    "rule_share": 78.01443338394165,
+    "planner_share": 96.08846306800842
+   },
+   {
+    "gen": 3,
+    "env_steps": 6048028,
+    "episodes": 8192,
+    "clean": 71.875,
+    "delivered": 73.92578125,
+    "violation": 23.73046875,
+    "rule_share": 78.39111685752869,
+    "planner_share": 96.10297083854675
+   },
+   {
+    "gen": 4,
+    "env_steps": 7556458,
+    "episodes": 10240,
+    "clean": 70.458984375,
+    "delivered": 72.119140625,
+    "violation": 23.828125,
+    "rule_share": 78.33548784255981,
+    "planner_share": 96.08944058418274
+   },
+   {
+    "gen": 5,
+    "env_steps": 9063012,
+    "episodes": 12288,
+    "clean": 72.998046875,
+    "delivered": 74.31640625,
+    "violation": 22.900390625,
+    "rule_share": 77.96415090560913,
+    "planner_share": 96.09984159469604
+   },
+   {
+    "gen": 6,
+    "env_steps": 10595104,
+    "episodes": 14336,
+    "clean": 72.412109375,
+    "delivered": 74.21875,
+    "violation": 22.265625,
+    "rule_share": 76.40533447265625,
+    "planner_share": 93.66905093193054
+   },
+   {
+    "gen": 7,
+    "env_steps": 12129932,
+    "episodes": 16384,
+    "clean": 73.046875,
+    "delivered": 74.4140625,
+    "violation": 22.55859375,
+    "rule_share": 74.19828176498413,
+    "planner_share": 90.62370657920837
+   },
+   {
+    "gen": 8,
+    "env_steps": 13680904,
+    "episodes": 18432,
+    "clean": 73.876953125,
+    "delivered": 75.830078125,
+    "violation": 21.533203125,
+    "rule_share": 72.20942378044128,
+    "planner_share": 88.00957798957825
+   },
+   {
+    "gen": 9,
+    "env_steps": 15263188,
+    "episodes": 20480,
+    "clean": 73.6328125,
+    "delivered": 75.048828125,
+    "violation": 20.80078125,
+    "rule_share": 69.93371844291687,
+    "planner_share": 85.80204248428345
+   },
+   {
+    "gen": 10,
+    "env_steps": 16829620,
+    "episodes": 22528,
+    "clean": 73.6328125,
+    "delivered": 75.09765625,
+    "violation": 20.751953125,
+    "rule_share": 68.08594465255737,
+    "planner_share": 84.30471420288086,
+    "eval_clean": 74.462890625,
+    "eval_violation": 21.435546875,
+    "eval_sampled": 74.609375,
+    "eval_mean": 76.220703125
+   },
+   {
+    "gen": 11,
+    "env_steps": 18401234,
+    "episodes": 24576,
+    "clean": 73.681640625,
+    "delivered": 75.09765625,
+    "violation": 22.16796875,
+    "rule_share": 66.16650223731995,
+    "planner_share": 81.90051913261414
+   },
+   {
+    "gen": 12,
+    "env_steps": 19970232,
+    "episodes": 26624,
+    "clean": 73.779296875,
+    "delivered": 75.1953125,
+    "violation": 22.119140625,
+    "rule_share": 64.6616518497467,
+    "planner_share": 80.92604279518127
+   },
+   {
+    "gen": 13,
+    "env_steps": 21530920,
+    "episodes": 28672,
+    "clean": 74.31640625,
+    "delivered": 75.634765625,
+    "violation": 21.77734375,
+    "rule_share": 63.20943236351013,
+    "planner_share": 79.41061854362488
+   },
+   {
+    "gen": 14,
+    "env_steps": 23090176,
+    "episodes": 30720,
+    "clean": 74.267578125,
+    "delivered": 75.634765625,
+    "violation": 21.630859375,
+    "rule_share": 62.53315806388855,
+    "planner_share": 78.70407104492188
+   },
+   {
+    "gen": 15,
+    "env_steps": 24649610,
+    "episodes": 32768,
+    "clean": 73.291015625,
+    "delivered": 74.609375,
+    "violation": 23.193359375,
+    "rule_share": 62.97938823699951,
+    "planner_share": 79.32172417640686
+   },
+   {
+    "gen": 16,
+    "env_steps": 26201268,
+    "episodes": 34816,
+    "clean": 75.0,
+    "delivered": 76.46484375,
+    "violation": 20.8984375,
+    "rule_share": 62.46647238731384,
+    "planner_share": 79.485684633255
+   },
+   {
+    "gen": 17,
+    "env_steps": 27727366,
+    "episodes": 36864,
+    "clean": 72.75390625,
+    "delivered": 74.755859375,
+    "violation": 23.486328125,
+    "rule_share": 62.908935546875,
+    "planner_share": 80.16890287399292
+   },
+   {
+    "gen": 18,
+    "env_steps": 29262554,
+    "episodes": 38912,
+    "clean": 73.92578125,
+    "delivered": 75.68359375,
+    "violation": 22.412109375,
+    "rule_share": 62.2455358505249,
+    "planner_share": 80.12803792953491
+   },
+   {
+    "gen": 19,
+    "env_steps": 30781692,
+    "episodes": 40960,
+    "clean": 74.8046875,
+    "delivered": 76.953125,
+    "violation": 22.021484375,
+    "rule_share": 60.886502265930176,
+    "planner_share": 79.29852604866028
+   },
+   {
+    "gen": 20,
+    "env_steps": 32288318,
+    "episodes": 43008,
+    "clean": 75.9765625,
+    "delivered": 77.5390625,
+    "violation": 21.09375,
+    "rule_share": 61.04155778884888,
+    "planner_share": 79.01284098625183,
+    "eval_clean": 73.828125,
+    "eval_violation": 21.826171875,
+    "eval_sampled": 75.78125,
+    "eval_mean": 78.271484375
+   },
+   {
+    "gen": 21,
+    "env_steps": 33801714,
+    "episodes": 45056,
+    "clean": 73.92578125,
+    "delivered": 75.732421875,
+    "violation": 23.291015625,
+    "rule_share": 59.786731004714966,
+    "planner_share": 78.50529551506042
+   },
+   {
+    "gen": 22,
+    "env_steps": 35304976,
+    "episodes": 47104,
+    "clean": 75.146484375,
+    "delivered": 77.099609375,
+    "violation": 21.58203125,
+    "rule_share": 58.64287614822388,
+    "planner_share": 76.98312401771545
+   },
+   {
+    "gen": 23,
+    "env_steps": 36797374,
+    "episodes": 49152,
+    "clean": 72.94921875,
+    "delivered": 74.8046875,
+    "violation": 23.779296875,
+    "rule_share": 57.434409856796265,
+    "planner_share": 75.4214346408844
+   },
+   {
+    "gen": 24,
+    "env_steps": 38290658,
+    "episodes": 51200,
+    "clean": 74.365234375,
+    "delivered": 76.220703125,
+    "violation": 22.900390625,
+    "rule_share": 56.039440631866455,
+    "planner_share": 74.73247051239014
+   },
+   {
+    "gen": 25,
+    "env_steps": 39783764,
+    "episodes": 53248,
+    "clean": 74.70703125,
+    "delivered": 76.26953125,
+    "violation": 22.94921875,
+    "rule_share": 54.972249269485474,
+    "planner_share": 73.79140853881836
+   },
+   {
+    "gen": 26,
+    "env_steps": 41285050,
+    "episodes": 55296,
+    "clean": 76.123046875,
+    "delivered": 77.587890625,
+    "violation": 21.240234375,
+    "rule_share": 54.11227345466614,
+    "planner_share": 73.24666976928711
+   },
+   {
+    "gen": 27,
+    "env_steps": 42800922,
+    "episodes": 57344,
+    "clean": 74.560546875,
+    "delivered": 76.123046875,
+    "violation": 22.36328125,
+    "rule_share": 52.83176898956299,
+    "planner_share": 72.32285737991333
+   },
+   {
+    "gen": 28,
+    "env_steps": 44310160,
+    "episodes": 59392,
+    "clean": 76.318359375,
+    "delivered": 78.02734375,
+    "violation": 21.09375,
+    "rule_share": 50.96174478530884,
+    "planner_share": 70.60742378234863
+   },
+   {
+    "gen": 29,
+    "env_steps": 45810144,
+    "episodes": 61440,
+    "clean": 74.658203125,
+    "delivered": 76.3671875,
+    "violation": 23.2421875,
+    "rule_share": 50.152403116226196,
+    "planner_share": 71.03329300880432
+   },
+   {
+    "gen": 30,
+    "env_steps": 47298664,
+    "episodes": 63488,
+    "clean": 75.537109375,
+    "delivered": 77.34375,
+    "violation": 21.875,
+    "rule_share": 48.82218837738037,
+    "planner_share": 70.26953101158142,
+    "eval_clean": 74.462890625,
+    "eval_violation": 21.2890625,
+    "eval_sampled": 76.416015625,
+    "eval_mean": 77.392578125
+   },
+   {
+    "gen": 31,
+    "env_steps": 48811584,
+    "episodes": 65536,
+    "clean": 75.29296875,
+    "delivered": 77.05078125,
+    "violation": 22.0703125,
+    "rule_share": 47.52795696258545,
+    "planner_share": 69.58662271499634
+   },
+   {
+    "gen": 32,
+    "env_steps": 50302794,
+    "episodes": 67584,
+    "clean": 76.611328125,
+    "delivered": 77.978515625,
+    "violation": 21.337890625,
+    "rule_share": 46.679139137268066,
+    "planner_share": 68.44280958175659
+   },
+   {
+    "gen": 33,
+    "env_steps": 51798794,
+    "episodes": 69632,
+    "clean": 74.853515625,
+    "delivered": 76.26953125,
+    "violation": 22.4609375,
+    "rule_share": 46.75107002258301,
+    "planner_share": 68.83168816566467
+   },
+   {
+    "gen": 34,
+    "env_steps": 53296676,
+    "episodes": 71680,
+    "clean": 75.732421875,
+    "delivered": 77.63671875,
+    "violation": 21.77734375,
+    "rule_share": 46.8787282705307,
+    "planner_share": 69.32575702667236
+   },
+   {
+    "gen": 35,
+    "env_steps": 54789876,
+    "episodes": 73728,
+    "clean": 75.146484375,
+    "delivered": 76.904296875,
+    "violation": 22.265625,
+    "rule_share": 46.93865776062012,
+    "planner_share": 68.00495982170105
+   },
+   {
+    "gen": 36,
+    "env_steps": 56292418,
+    "episodes": 75776,
+    "clean": 75.9765625,
+    "delivered": 77.978515625,
+    "violation": 21.19140625,
+    "rule_share": 46.96321189403534,
+    "planner_share": 68.56353878974915
+   },
+   {
+    "gen": 37,
+    "env_steps": 57766796,
+    "episodes": 77824,
+    "clean": 75.68359375,
+    "delivered": 77.34375,
+    "violation": 22.119140625,
+    "rule_share": 46.29979431629181,
+    "planner_share": 68.90431046485901
+   },
+   {
+    "gen": 38,
+    "env_steps": 59255732,
+    "episodes": 79872,
+    "clean": 75.927734375,
+    "delivered": 77.34375,
+    "violation": 21.728515625,
+    "rule_share": 46.00466191768646,
+    "planner_share": 68.29615235328674
+   },
+   {
+    "gen": 39,
+    "env_steps": 60748364,
+    "episodes": 81920,
+    "clean": 76.5625,
+    "delivered": 78.271484375,
+    "violation": 21.337890625,
+    "rule_share": 44.7779506444931,
+    "planner_share": 68.19390058517456
+   },
+   {
+    "gen": 40,
+    "env_steps": 62233032,
+    "episodes": 83968,
+    "clean": 75.439453125,
+    "delivered": 76.806640625,
+    "violation": 22.216796875,
+    "rule_share": 44.57710385322571,
+    "planner_share": 68.05063486099243,
+    "eval_clean": 74.51171875,
+    "eval_violation": 21.19140625,
+    "eval_sampled": 78.076171875,
+    "eval_mean": 76.904296875
+   },
+   {
+    "gen": 41,
+    "env_steps": 63713768,
+    "episodes": 86016,
+    "clean": 74.853515625,
+    "delivered": 76.953125,
+    "violation": 22.314453125,
+    "rule_share": 43.677470088005066,
+    "planner_share": 67.48468279838562
+   },
+   {
+    "gen": 42,
+    "env_steps": 65215186,
+    "episodes": 88064,
+    "clean": 76.220703125,
+    "delivered": 77.9296875,
+    "violation": 21.09375,
+    "rule_share": 43.483296036720276,
+    "planner_share": 67.2897219657898
+   },
+   {
+    "gen": 43,
+    "env_steps": 66713734,
+    "episodes": 90112,
+    "clean": 77.83203125,
+    "delivered": 79.78515625,
+    "violation": 20.068359375,
+    "rule_share": 44.762665033340454,
+    "planner_share": 67.49840378761292
+   },
+   {
+    "gen": 44,
+    "env_steps": 68214690,
+    "episodes": 92160,
+    "clean": 77.880859375,
+    "delivered": 79.39453125,
+    "violation": 19.82421875,
+    "rule_share": 44.20502781867981,
+    "planner_share": 67.389315366745
+   },
+   {
+    "gen": 45,
+    "env_steps": 69712694,
+    "episodes": 94208,
+    "clean": 77.099609375,
+    "delivered": 78.662109375,
+    "violation": 19.53125,
+    "rule_share": 44.70655620098114,
+    "planner_share": 67.45936274528503
+   },
+   {
+    "gen": 46,
+    "env_steps": 71193344,
+    "episodes": 96256,
+    "clean": 74.70703125,
+    "delivered": 76.5625,
+    "violation": 23.095703125,
+    "rule_share": 45.19069194793701,
+    "planner_share": 68.281090259552
+   },
+   {
+    "gen": 47,
+    "env_steps": 72690100,
+    "episodes": 98304,
+    "clean": 77.587890625,
+    "delivered": 79.443359375,
+    "violation": 20.1171875,
+    "rule_share": 44.54246461391449,
+    "planner_share": 67.75453090667725
+   },
+   {
+    "gen": 48,
+    "env_steps": 74155102,
+    "episodes": 100352,
+    "clean": 77.44140625,
+    "delivered": 79.150390625,
+    "violation": 21.044921875,
+    "rule_share": 44.78574097156525,
+    "planner_share": 68.83171796798706
+   },
+   {
+    "gen": 49,
+    "env_steps": 75652450,
+    "episodes": 102400,
+    "clean": 77.197265625,
+    "delivered": 79.052734375,
+    "violation": 20.849609375,
+    "rule_share": 45.35939395427704,
+    "planner_share": 68.60249042510986
+   },
+   {
+    "gen": 50,
+    "env_steps": 77133546,
+    "episodes": 104448,
+    "clean": 75.48828125,
+    "delivered": 77.392578125,
+    "violation": 22.16796875,
+    "rule_share": 44.60264444351196,
+    "planner_share": 68.34709048271179,
+    "eval_clean": 74.951171875,
+    "eval_violation": 21.97265625,
+    "eval_sampled": 77.587890625,
+    "eval_mean": 77.490234375
+   },
+   {
+    "gen": 51,
+    "env_steps": 78594508,
+    "episodes": 106496,
+    "clean": 76.26953125,
+    "delivered": 78.02734375,
+    "violation": 21.2890625,
+    "rule_share": 43.780192732810974,
+    "planner_share": 68.7546968460083
+   },
+   {
+    "gen": 52,
+    "env_steps": 80097160,
+    "episodes": 108544,
+    "clean": 77.978515625,
+    "delivered": 79.39453125,
+    "violation": 19.43359375,
+    "rule_share": 43.114173412323,
+    "planner_share": 68.61322522163391
+   },
+   {
+    "gen": 53,
+    "env_steps": 81575660,
+    "episodes": 110592,
+    "clean": 75.68359375,
+    "delivered": 77.5390625,
+    "violation": 21.484375,
+    "rule_share": 44.11647021770477,
+    "planner_share": 67.36124753952026
+   },
+   {
+    "gen": 54,
+    "env_steps": 83051942,
+    "episodes": 112640,
+    "clean": 76.46484375,
+    "delivered": 77.5390625,
+    "violation": 21.58203125,
+    "rule_share": 43.6791867017746,
+    "planner_share": 67.83676743507385
+   },
+   {
+    "gen": 55,
+    "env_steps": 84519878,
+    "episodes": 114688,
+    "clean": 78.125,
+    "delivered": 79.19921875,
+    "violation": 20.068359375,
+    "rule_share": 42.624881863594055,
+    "planner_share": 66.82471036911011
+   },
+   {
+    "gen": 56,
+    "env_steps": 85996062,
+    "episodes": 116736,
+    "clean": 78.125,
+    "delivered": 79.6875,
+    "violation": 20.1171875,
+    "rule_share": 42.906442284584045,
+    "planner_share": 65.63667058944702
+   },
+   {
+    "gen": 57,
+    "env_steps": 87464810,
+    "episodes": 118784,
+    "clean": 79.00390625,
+    "delivered": 80.46875,
+    "violation": 19.677734375,
+    "rule_share": 43.43971908092499,
+    "planner_share": 65.56536555290222
+   },
+   {
+    "gen": 58,
+    "env_steps": 88933730,
+    "episodes": 120832,
+    "clean": 77.24609375,
+    "delivered": 78.857421875,
+    "violation": 21.09375,
+    "rule_share": 44.01887059211731,
+    "planner_share": 66.60798192024231
+   },
+   {
+    "gen": 59,
+    "env_steps": 90412608,
+    "episodes": 122880,
+    "clean": 78.173828125,
+    "delivered": 80.029296875,
+    "violation": 20.01953125,
+    "rule_share": 42.96337962150574,
+    "planner_share": 66.97536706924438
+   },
+   {
+    "gen": 60,
+    "env_steps": 91879674,
+    "episodes": 124928,
+    "clean": 77.63671875,
+    "delivered": 79.736328125,
+    "violation": 20.166015625,
+    "rule_share": 42.78484880924225,
+    "planner_share": 67.51393675804138,
+    "eval_clean": 77.587890625,
+    "eval_violation": 18.798828125,
+    "eval_sampled": 78.271484375,
+    "eval_mean": 78.173828125
+   },
+   {
+    "gen": 61,
+    "env_steps": 93340490,
+    "episodes": 126976,
+    "clean": 78.02734375,
+    "delivered": 79.58984375,
+    "violation": 20.1171875,
+    "rule_share": 42.359066009521484,
+    "planner_share": 67.95434951782227
+   },
+   {
+    "gen": 62,
+    "env_steps": 94814432,
+    "episodes": 129024,
+    "clean": 76.806640625,
+    "delivered": 78.7109375,
+    "violation": 21.044921875,
+    "rule_share": 43.469688296318054,
+    "planner_share": 68.46280097961426
+   },
+   {
+    "gen": 63,
+    "env_steps": 96265622,
+    "episodes": 131072,
+    "clean": 77.294921875,
+    "delivered": 79.150390625,
+    "violation": 21.09375,
+    "rule_share": 43.788889050483704,
+    "planner_share": 68.4129536151886
+   },
+   {
+    "gen": 64,
+    "env_steps": 97689790,
+    "episodes": 133120,
+    "clean": 78.3203125,
+    "delivered": 79.736328125,
+    "violation": 20.41015625,
+    "rule_share": 44.19675171375275,
+    "planner_share": 67.88412928581238
+   },
+   {
+    "gen": 65,
+    "env_steps": 99149232,
+    "episodes": 135168,
+    "clean": 78.076171875,
+    "delivered": 80.078125,
+    "violation": 20.654296875,
+    "rule_share": 42.98999011516571,
+    "planner_share": 69.07009482383728
+   },
+   {
+    "gen": 66,
+    "env_steps": 100596890,
+    "episodes": 137216,
+    "clean": 77.685546875,
+    "delivered": 79.58984375,
+    "violation": 20.80078125,
+    "rule_share": 42.62719452381134,
+    "planner_share": 69.04835104942322
+   },
+   {
+    "gen": 67,
+    "env_steps": 102038670,
+    "episodes": 139264,
+    "clean": 77.783203125,
+    "delivered": 79.4921875,
+    "violation": 20.1171875,
+    "rule_share": 42.77046322822571,
+    "planner_share": 68.93950700759888
+   },
+   {
+    "gen": 68,
+    "env_steps": 103483736,
+    "episodes": 141312,
+    "clean": 78.857421875,
+    "delivered": 80.56640625,
+    "violation": 19.23828125,
+    "rule_share": 42.63237714767456,
+    "planner_share": 68.52890849113464
+   },
+   {
+    "gen": 69,
+    "env_steps": 104918766,
+    "episodes": 143360,
+    "clean": 77.978515625,
+    "delivered": 80.078125,
+    "violation": 20.556640625,
+    "rule_share": 41.76163673400879,
+    "planner_share": 67.46172904968262
+   },
+   {
+    "gen": 70,
+    "env_steps": 106361620,
+    "episodes": 145408,
+    "clean": 78.369140625,
+    "delivered": 80.615234375,
+    "violation": 20.166015625,
+    "rule_share": 41.70997142791748,
+    "planner_share": 68.61401200294495,
+    "eval_clean": 79.248046875,
+    "eval_violation": 17.626953125,
+    "eval_sampled": 78.076171875,
+    "eval_mean": 78.3203125
+   },
+   {
+    "gen": 71,
+    "env_steps": 107784998,
+    "episodes": 147456,
+    "clean": 76.66015625,
+    "delivered": 79.4921875,
+    "violation": 21.826171875,
+    "rule_share": 40.57263731956482,
+    "planner_share": 67.54593849182129
+   },
+   {
+    "gen": 72,
+    "env_steps": 109222154,
+    "episodes": 149504,
+    "clean": 76.66015625,
+    "delivered": 79.00390625,
+    "violation": 21.826171875,
+    "rule_share": 41.76456928253174,
+    "planner_share": 67.93528199195862
+   },
+   {
+    "gen": 73,
+    "env_steps": 110654624,
+    "episodes": 151552,
+    "clean": 78.173828125,
+    "delivered": 80.322265625,
+    "violation": 20.41015625,
+    "rule_share": 41.80387556552887,
+    "planner_share": 68.04233193397522
+   },
+   {
+    "gen": 74,
+    "env_steps": 112097714,
+    "episodes": 153600,
+    "clean": 76.708984375,
+    "delivered": 78.271484375,
+    "violation": 21.728515625,
+    "rule_share": 41.13118350505829,
+    "planner_share": 68.14821362495422
+   },
+   {
+    "gen": 75,
+    "env_steps": 113523910,
+    "episodes": 155648,
+    "clean": 77.05078125,
+    "delivered": 79.39453125,
+    "violation": 21.484375,
+    "rule_share": 41.13417863845825,
+    "planner_share": 67.90357232093811
+   },
+   {
+    "gen": 76,
+    "env_steps": 114978848,
+    "episodes": 157696,
+    "clean": 77.783203125,
+    "delivered": 79.931640625,
+    "violation": 20.5078125,
+    "rule_share": 40.871983766555786,
+    "planner_share": 66.76064729690552
+   },
+   {
+    "gen": 77,
+    "env_steps": 116415440,
+    "episodes": 159744,
+    "clean": 79.296875,
+    "delivered": 80.712890625,
+    "violation": 18.896484375,
+    "rule_share": 41.172999143600464,
+    "planner_share": 66.79196357727051
+   },
+   {
+    "gen": 78,
+    "env_steps": 117857566,
+    "episodes": 161792,
+    "clean": 78.173828125,
+    "delivered": 79.98046875,
+    "violation": 19.43359375,
+    "rule_share": 39.940062165260315,
+    "planner_share": 66.1058783531189
+   },
+   {
+    "gen": 79,
+    "env_steps": 119298994,
+    "episodes": 163840,
+    "clean": 78.61328125,
+    "delivered": 80.908203125,
+    "violation": 19.921875,
+    "rule_share": 39.37525749206543,
+    "planner_share": 65.49296975135803
+   },
+   {
+    "gen": 80,
+    "env_steps": 120738662,
+    "episodes": 165888,
+    "clean": 79.052734375,
+    "delivered": 80.908203125,
+    "violation": 19.287109375,
+    "rule_share": 40.589913725852966,
+    "planner_share": 66.0803735256195,
+    "eval_clean": 79.39453125,
+    "eval_violation": 17.822265625,
+    "eval_sampled": 78.3203125,
+    "eval_mean": 81.103515625
+   },
+   {
+    "gen": 81,
+    "env_steps": 122167788,
+    "episodes": 167936,
+    "clean": 77.24609375,
+    "delivered": 78.7109375,
+    "violation": 21.240234375,
+    "rule_share": 40.71705639362335,
+    "planner_share": 64.86425995826721
+   },
+   {
+    "gen": 82,
+    "env_steps": 123610246,
+    "episodes": 169984,
+    "clean": 77.24609375,
+    "delivered": 79.443359375,
+    "violation": 20.947265625,
+    "rule_share": 41.19704067707062,
+    "planner_share": 66.09911918640137
+   },
+   {
+    "gen": 83,
+    "env_steps": 125042584,
+    "episodes": 172032,
+    "clean": 76.3671875,
+    "delivered": 78.61328125,
+    "violation": 21.728515625,
+    "rule_share": 40.32092988491058,
+    "planner_share": 65.20248651504517
+   },
+   {
+    "gen": 84,
+    "env_steps": 126473386,
+    "episodes": 174080,
+    "clean": 78.369140625,
+    "delivered": 80.810546875,
+    "violation": 20.361328125,
+    "rule_share": 40.223175287246704,
+    "planner_share": 64.42903876304626
+   },
+   {
+    "gen": 85,
+    "env_steps": 127902398,
+    "episodes": 176128,
+    "clean": 77.83203125,
+    "delivered": 80.322265625,
+    "violation": 20.361328125,
+    "rule_share": 40.3692901134491,
+    "planner_share": 65.56586027145386
+   },
+   {
+    "gen": 86,
+    "env_steps": 129358016,
+    "episodes": 178176,
+    "clean": 78.125,
+    "delivered": 80.078125,
+    "violation": 20.068359375,
+    "rule_share": 41.39506220817566,
+    "planner_share": 64.94671106338501
+   },
+   {
+    "gen": 87,
+    "env_steps": 130801820,
+    "episodes": 180224,
+    "clean": 79.6875,
+    "delivered": 81.298828125,
+    "violation": 18.9453125,
+    "rule_share": 40.622133016586304,
+    "planner_share": 64.97945785522461
+   },
+   {
+    "gen": 88,
+    "env_steps": 132242432,
+    "episodes": 182272,
+    "clean": 78.662109375,
+    "delivered": 80.76171875,
+    "violation": 19.677734375,
+    "rule_share": 39.895543456077576,
+    "planner_share": 65.06679058074951
+   },
+   {
+    "gen": 89,
+    "env_steps": 133680346,
+    "episodes": 184320,
+    "clean": 79.345703125,
+    "delivered": 81.34765625,
+    "violation": 18.75,
+    "rule_share": 39.297205209732056,
+    "planner_share": 64.13318514823914
+   },
+   {
+    "gen": 90,
+    "env_steps": 135093380,
+    "episodes": 186368,
+    "clean": 79.19921875,
+    "delivered": 80.6640625,
+    "violation": 19.580078125,
+    "rule_share": 37.79158890247345,
+    "planner_share": 64.61741328239441,
+    "eval_clean": 79.1015625,
+    "eval_violation": 18.359375,
+    "eval_sampled": 79.4921875,
+    "eval_mean": 78.759765625
+   },
+   {
+    "gen": 91,
+    "env_steps": 136517110,
+    "episodes": 188416,
+    "clean": 78.7109375,
+    "delivered": 80.322265625,
+    "violation": 19.873046875,
+    "rule_share": 37.57369816303253,
+    "planner_share": 64.52080011367798
+   },
+   {
+    "gen": 92,
+    "env_steps": 137943822,
+    "episodes": 190464,
+    "clean": 77.24609375,
+    "delivered": 79.296875,
+    "violation": 21.826171875,
+    "rule_share": 37.87842392921448,
+    "planner_share": 63.63442540168762
+   },
+   {
+    "gen": 93,
+    "env_steps": 139372274,
+    "episodes": 192512,
+    "clean": 78.857421875,
+    "delivered": 80.37109375,
+    "violation": 19.23828125,
+    "rule_share": 38.20975422859192,
+    "planner_share": 64.26481604576111
+   },
+   {
+    "gen": 94,
+    "env_steps": 140812172,
+    "episodes": 194560,
+    "clean": 78.61328125,
+    "delivered": 80.37109375,
+    "violation": 19.482421875,
+    "rule_share": 37.10179328918457,
+    "planner_share": 64.20857310295105
+   },
+   {
+    "gen": 95,
+    "env_steps": 142239990,
+    "episodes": 196608,
+    "clean": 77.587890625,
+    "delivered": 79.98046875,
+    "violation": 20.3125,
+    "rule_share": 37.507301568984985,
+    "planner_share": 63.946521282196045
+   },
+   {
+    "gen": 96,
+    "env_steps": 143660292,
+    "episodes": 198656,
+    "clean": 79.8828125,
+    "delivered": 81.591796875,
+    "violation": 18.75,
+    "rule_share": 37.68606781959534,
+    "planner_share": 63.45621943473816
+   },
+   {
+    "gen": 97,
+    "env_steps": 145081922,
+    "episodes": 200704,
+    "clean": 77.978515625,
+    "delivered": 79.98046875,
+    "violation": 20.361328125,
+    "rule_share": 36.73262596130371,
+    "planner_share": 63.37922215461731
+   },
+   {
+    "gen": 98,
+    "env_steps": 146514680,
+    "episodes": 202752,
+    "clean": 79.39453125,
+    "delivered": 81.54296875,
+    "violation": 18.45703125,
+    "rule_share": 37.74859607219696,
+    "planner_share": 63.97786736488342
+   },
+   {
+    "gen": 99,
+    "env_steps": 147919730,
+    "episodes": 204800,
+    "clean": 78.173828125,
+    "delivered": 80.810546875,
+    "violation": 20.21484375,
+    "rule_share": 38.341981172561646,
+    "planner_share": 64.22476172447205
+   },
+   {
+    "gen": 100,
+    "env_steps": 149330498,
+    "episodes": 206848,
+    "clean": 77.978515625,
+    "delivered": 80.810546875,
+    "violation": 19.7265625,
+    "rule_share": 40.10765850543976,
+    "planner_share": 65.55521488189697,
+    "eval_clean": 77.5390625,
+    "eval_violation": 19.580078125,
+    "eval_sampled": 79.19921875,
+    "eval_mean": 78.662109375
+   },
+   {
+    "gen": 101,
+    "env_steps": 150747704,
+    "episodes": 208896,
+    "clean": 77.63671875,
+    "delivered": 80.322265625,
+    "violation": 20.361328125,
+    "rule_share": 39.246660470962524,
+    "planner_share": 65.67612886428833
+   },
+   {
+    "gen": 102,
+    "env_steps": 152159794,
+    "episodes": 210944,
+    "clean": 75.29296875,
+    "delivered": 79.541015625,
+    "violation": 22.8515625,
+    "rule_share": 38.85035514831543,
+    "planner_share": 65.07843136787415
+   },
+   {
+    "gen": 103,
+    "env_steps": 153549374,
+    "episodes": 212992,
+    "clean": 75.68359375,
+    "delivered": 80.224609375,
+    "violation": 22.998046875,
+    "rule_share": 39.32526409626007,
+    "planner_share": 65.35701155662537
+   },
+   {
+    "gen": 104,
+    "env_steps": 154954252,
+    "episodes": 215040,
+    "clean": 79.345703125,
+    "delivered": 83.984375,
+    "violation": 19.287109375,
+    "rule_share": 38.918253779411316,
+    "planner_share": 65.1267945766449
+   },
+   {
+    "gen": 105,
+    "env_steps": 156366526,
+    "episodes": 217088,
+    "clean": 77.001953125,
+    "delivered": 81.640625,
+    "violation": 21.6796875,
+    "rule_share": 38.22473585605621,
+    "planner_share": 64.94107842445374
+   },
+   {
+    "gen": 106,
+    "env_steps": 157761830,
+    "episodes": 219136,
+    "clean": 77.05078125,
+    "delivered": 80.95703125,
+    "violation": 20.5078125,
+    "rule_share": 39.35199677944183,
+    "planner_share": 65.19912481307983
+   },
+   {
+    "gen": 107,
+    "env_steps": 159150890,
+    "episodes": 221184,
+    "clean": 77.5390625,
+    "delivered": 82.177734375,
+    "violation": 20.556640625,
+    "rule_share": 38.13586235046387,
+    "planner_share": 65.02915620803833
+   },
+   {
+    "gen": 108,
+    "env_steps": 160540334,
+    "episodes": 223232,
+    "clean": 80.224609375,
+    "delivered": 83.30078125,
+    "violation": 17.822265625,
+    "rule_share": 38.57787549495697,
+    "planner_share": 65.29532670974731
+   },
+   {
+    "gen": 109,
+    "env_steps": 161929006,
+    "episodes": 225280,
+    "clean": 78.076171875,
+    "delivered": 82.12890625,
+    "violation": 19.921875,
+    "rule_share": 38.73513638973236,
+    "planner_share": 65.28366804122925
+   },
+   {
+    "gen": 110,
+    "env_steps": 163329380,
+    "episodes": 227328,
+    "clean": 76.953125,
+    "delivered": 81.34765625,
+    "violation": 21.2890625,
+    "rule_share": 38.08682560920715,
+    "planner_share": 65.88082909584045,
+    "eval_clean": 76.611328125,
+    "eval_violation": 20.80078125,
+    "eval_sampled": 76.3671875,
+    "eval_mean": 78.41796875
+   },
+   {
+    "gen": 111,
+    "env_steps": 164721652,
+    "episodes": 229376,
+    "clean": 75.9765625,
+    "delivered": 79.736328125,
+    "violation": 22.265625,
+    "rule_share": 37.03615367412567,
+    "planner_share": 64.41643834114075
+   },
+   {
+    "gen": 112,
+    "env_steps": 166105644,
+    "episodes": 231424,
+    "clean": 77.099609375,
+    "delivered": 81.787109375,
+    "violation": 21.044921875,
+    "rule_share": 38.28447163105011,
+    "planner_share": 64.52667713165283
+   },
+   {
+    "gen": 113,
+    "env_steps": 167490894,
+    "episodes": 233472,
+    "clean": 77.34375,
+    "delivered": 83.203125,
+    "violation": 21.044921875,
+    "rule_share": 38.771918416023254,
+    "planner_share": 64.3706202507019
+   },
+   {
+    "gen": 114,
+    "env_steps": 168874124,
+    "episodes": 235520,
+    "clean": 77.685546875,
+    "delivered": 82.177734375,
+    "violation": 20.703125,
+    "rule_share": 38.11296820640564,
+    "planner_share": 64.41777348518372
+   },
+   {
+    "gen": 115,
+    "env_steps": 170267090,
+    "episodes": 237568,
+    "clean": 76.123046875,
+    "delivered": 81.0546875,
+    "violation": 22.509765625,
+    "rule_share": 37.669116258621216,
+    "planner_share": 65.18608331680298
+   },
+   {
+    "gen": 116,
+    "env_steps": 171646060,
+    "episodes": 239616,
+    "clean": 76.513671875,
+    "delivered": 82.71484375,
+    "violation": 22.119140625,
+    "rule_share": 36.36714518070221,
+    "planner_share": 64.31844234466553
+   },
+   {
+    "gen": 117,
+    "env_steps": 173032252,
+    "episodes": 241664,
+    "clean": 74.51171875,
+    "delivered": 79.8828125,
+    "violation": 23.193359375,
+    "rule_share": 37.421223521232605,
+    "planner_share": 63.870519399642944
+   },
+   {
+    "gen": 118,
+    "env_steps": 174411894,
+    "episodes": 243712,
+    "clean": 76.220703125,
+    "delivered": 82.177734375,
+    "violation": 22.265625,
+    "rule_share": 36.637622117996216,
+    "planner_share": 64.45179581642151
+   },
+   {
+    "gen": 119,
+    "env_steps": 175783872,
+    "episodes": 245760,
+    "clean": 75.390625,
+    "delivered": 81.34765625,
+    "violation": 23.046875,
+    "rule_share": 36.18294298648834,
+    "planner_share": 63.298100233078
+   },
+   {
+    "gen": 120,
+    "env_steps": 177164804,
+    "episodes": 247808,
+    "clean": 76.26953125,
+    "delivered": 82.03125,
+    "violation": 22.0703125,
+    "rule_share": 36.229878664016724,
+    "planner_share": 63.41731548309326,
+    "eval_clean": 76.025390625,
+    "eval_violation": 21.240234375,
+    "eval_sampled": 76.171875,
+    "eval_mean": 76.220703125
+   },
+   {
+    "gen": 121,
+    "env_steps": 178542680,
+    "episodes": 249856,
+    "clean": 77.197265625,
+    "delivered": 82.6171875,
+    "violation": 21.142578125,
+    "rule_share": 36.73363924026489,
+    "planner_share": 63.06445598602295
+   },
+   {
+    "gen": 122,
+    "env_steps": 179922916,
+    "episodes": 251904,
+    "clean": 74.853515625,
+    "delivered": 81.005859375,
+    "violation": 23.6328125,
+    "rule_share": 35.68882346153259,
+    "planner_share": 62.467724084854126
+   },
+   {
+    "gen": 123,
+    "env_steps": 181328626,
+    "episodes": 253952,
+    "clean": 77.63671875,
+    "delivered": 83.49609375,
+    "violation": 20.751953125,
+    "rule_share": 36.43084466457367,
+    "planner_share": 62.30858564376831
+   },
+   {
+    "gen": 124,
+    "env_steps": 182722242,
+    "episodes": 256000,
+    "clean": 74.853515625,
+    "delivered": 80.6640625,
+    "violation": 23.291015625,
+    "rule_share": 37.72158324718475,
+    "planner_share": 62.506312131881714
+   },
+   {
+    "gen": 125,
+    "env_steps": 184102292,
+    "episodes": 258048,
+    "clean": 76.26953125,
+    "delivered": 81.8359375,
+    "violation": 22.265625,
+    "rule_share": 37.0764821767807,
+    "planner_share": 62.07224130630493
+   },
+   {
+    "gen": 126,
+    "env_steps": 185495712,
+    "episodes": 260096,
+    "clean": 76.123046875,
+    "delivered": 81.8359375,
+    "violation": 22.265625,
+    "rule_share": 35.84977984428406,
+    "planner_share": 61.85429096221924
+   },
+   {
+    "gen": 127,
+    "env_steps": 186889138,
+    "episodes": 262144,
+    "clean": 75.830078125,
+    "delivered": 82.568359375,
+    "violation": 22.705078125,
+    "rule_share": 36.314234137535095,
+    "planner_share": 61.905258893966675
+   },
+   {
+    "gen": 128,
+    "env_steps": 188261616,
+    "episodes": 264192,
+    "clean": 76.171875,
+    "delivered": 81.4453125,
+    "violation": 22.021484375,
+    "rule_share": 36.82186305522919,
+    "planner_share": 61.92041039466858
+   },
+   {
+    "gen": 129,
+    "env_steps": 189654782,
+    "episodes": 266240,
+    "clean": 75.87890625,
+    "delivered": 82.177734375,
+    "violation": 22.705078125,
+    "rule_share": 36.312827467918396,
+    "planner_share": 61.74511909484863
+   },
+   {
+    "gen": 130,
+    "env_steps": 191045398,
+    "episodes": 268288,
+    "clean": 76.171875,
+    "delivered": 82.763671875,
+    "violation": 22.16796875,
+    "rule_share": 35.86540222167969,
+    "planner_share": 61.95628643035889,
+    "eval_clean": 74.90234375,
+    "eval_violation": 22.509765625,
+    "eval_sampled": 76.806640625,
+    "eval_mean": 76.904296875
+   },
+   {
+    "gen": 131,
+    "env_steps": 192445100,
+    "episodes": 270336,
+    "clean": 78.173828125,
+    "delivered": 83.642578125,
+    "violation": 19.53125,
+    "rule_share": 36.514341831207275,
+    "planner_share": 61.91146373748779
+   },
+   {
+    "gen": 132,
+    "env_steps": 193847956,
+    "episodes": 272384,
+    "clean": 77.34375,
+    "delivered": 83.935546875,
+    "violation": 21.240234375,
+    "rule_share": 37.521883845329285,
+    "planner_share": 62.23646402359009
+   },
+   {
+    "gen": 133,
+    "env_steps": 195227552,
+    "episodes": 274432,
+    "clean": 76.66015625,
+    "delivered": 82.32421875,
+    "violation": 22.0703125,
+    "rule_share": 38.36021423339844,
+    "planner_share": 61.98467016220093
+   },
+   {
+    "gen": 134,
+    "env_steps": 196610984,
+    "episodes": 276480,
+    "clean": 75.9765625,
+    "delivered": 82.763671875,
+    "violation": 22.412109375,
+    "rule_share": 38.282039761543274,
+    "planner_share": 62.520456314086914
+   },
+   {
+    "gen": 135,
+    "env_steps": 198009998,
+    "episodes": 278528,
+    "clean": 76.025390625,
+    "delivered": 82.12890625,
+    "violation": 22.4609375,
+    "rule_share": 38.01491558551788,
+    "planner_share": 62.29315400123596
+   },
+   {
+    "gen": 136,
+    "env_steps": 199401924,
+    "episodes": 280576,
+    "clean": 76.5625,
+    "delivered": 82.421875,
+    "violation": 22.314453125,
+    "rule_share": 38.64444196224213,
+    "planner_share": 62.168681621551514
+   },
+   {
+    "gen": 137,
+    "env_steps": 200792518,
+    "episodes": 282624,
+    "clean": 77.734375,
+    "delivered": 84.326171875,
+    "violation": 20.41015625,
+    "rule_share": 38.59401047229767,
+    "planner_share": 60.958123207092285
+   },
+   {
+    "gen": 138,
+    "env_steps": 202164656,
+    "episodes": 284672,
+    "clean": 76.904296875,
+    "delivered": 82.763671875,
+    "violation": 21.142578125,
+    "rule_share": 39.15349543094635,
+    "planner_share": 62.405234575271606
+   },
+   {
+    "gen": 139,
+    "env_steps": 203537538,
+    "episodes": 286720,
+    "clean": 78.22265625,
+    "delivered": 83.056640625,
+    "violation": 20.3125,
+    "rule_share": 40.19719064235687,
+    "planner_share": 63.56452703475952
+   },
+   {
+    "gen": 140,
+    "env_steps": 204924622,
+    "episodes": 288768,
+    "clean": 77.978515625,
+    "delivered": 83.10546875,
+    "violation": 20.263671875,
+    "rule_share": 40.02944529056549,
+    "planner_share": 64.21067714691162,
+    "eval_clean": 77.294921875,
+    "eval_violation": 20.5078125,
+    "eval_sampled": 76.806640625,
+    "eval_mean": 75.830078125
+   },
+   {
+    "gen": 141,
+    "env_steps": 206297204,
+    "episodes": 290816,
+    "clean": 74.365234375,
+    "delivered": 80.908203125,
+    "violation": 24.169921875,
+    "rule_share": 37.31623888015747,
+    "planner_share": 63.03929090499878
+   },
+   {
+    "gen": 142,
+    "env_steps": 207656260,
+    "episodes": 292864,
+    "clean": 76.806640625,
+    "delivered": 82.763671875,
+    "violation": 21.484375,
+    "rule_share": 36.87147498130798,
+    "planner_share": 61.90915107727051
+   },
+   {
+    "gen": 143,
+    "env_steps": 209054366,
+    "episodes": 294912,
+    "clean": 76.26953125,
+    "delivered": 81.591796875,
+    "violation": 22.119140625,
+    "rule_share": 37.36554980278015,
+    "planner_share": 61.96325421333313
+   },
+   {
+    "gen": 144,
+    "env_steps": 210438346,
+    "episodes": 296960,
+    "clean": 75.439453125,
+    "delivered": 82.2265625,
+    "violation": 22.900390625,
+    "rule_share": 36.84200644493103,
+    "planner_share": 60.75897216796875
+   },
+   {
+    "gen": 145,
+    "env_steps": 211823258,
+    "episodes": 299008,
+    "clean": 77.685546875,
+    "delivered": 84.08203125,
+    "violation": 20.80078125,
+    "rule_share": 37.16365993022919,
+    "planner_share": 60.43705344200134
+   },
+   {
+    "gen": 146,
+    "env_steps": 213199192,
+    "episodes": 301056,
+    "clean": 77.587890625,
+    "delivered": 83.740234375,
+    "violation": 21.142578125,
+    "rule_share": 38.780203461647034,
+    "planner_share": 60.615843534469604
+   },
+   {
+    "gen": 147,
+    "env_steps": 214573956,
+    "episodes": 303104,
+    "clean": 76.708984375,
+    "delivered": 82.958984375,
+    "violation": 21.97265625,
+    "rule_share": 39.240479469299316,
+    "planner_share": 61.17355227470398
+   },
+   {
+    "gen": 148,
+    "env_steps": 215937098,
+    "episodes": 305152,
+    "clean": 76.025390625,
+    "delivered": 82.12890625,
+    "violation": 22.265625,
+    "rule_share": 40.21165668964386,
+    "planner_share": 62.176793813705444
+   },
+   {
+    "gen": 149,
+    "env_steps": 217328206,
+    "episodes": 307200,
+    "clean": 77.24609375,
+    "delivered": 83.154296875,
+    "violation": 20.947265625,
+    "rule_share": 39.154112339019775,
+    "planner_share": 62.48515248298645
+   },
+   {
+    "gen": 150,
+    "env_steps": 218685860,
+    "episodes": 309248,
+    "clean": 77.490234375,
+    "delivered": 83.88671875,
+    "violation": 21.2890625,
+    "rule_share": 39.1569584608078,
+    "planner_share": 63.07615637779236,
+    "eval_clean": 77.490234375,
+    "eval_violation": 20.99609375,
+    "eval_sampled": 77.24609375,
+    "eval_mean": 77.5390625
+   },
+   {
+    "gen": 151,
+    "env_steps": 220052722,
+    "episodes": 311296,
+    "clean": 75.87890625,
+    "delivered": 81.73828125,
+    "violation": 23.095703125,
+    "rule_share": 39.62477743625641,
+    "planner_share": 63.18516731262207
+   },
+   {
+    "gen": 152,
+    "env_steps": 221427192,
+    "episodes": 313344,
+    "clean": 75.29296875,
+    "delivered": 81.396484375,
+    "violation": 22.802734375,
+    "rule_share": 38.49032819271088,
+    "planner_share": 62.291646003723145
+   },
+   {
+    "gen": 153,
+    "env_steps": 222796698,
+    "episodes": 315392,
+    "clean": 76.7578125,
+    "delivered": 82.373046875,
+    "violation": 22.119140625,
+    "rule_share": 37.95558512210846,
+    "planner_share": 63.15547823905945
+   },
+   {
+    "gen": 154,
+    "env_steps": 224168082,
+    "episodes": 317440,
+    "clean": 76.416015625,
+    "delivered": 82.51953125,
+    "violation": 21.923828125,
+    "rule_share": 38.528087735176086,
+    "planner_share": 62.940943241119385
+   },
+   {
+    "gen": 155,
+    "env_steps": 225538286,
+    "episodes": 319488,
+    "clean": 76.416015625,
+    "delivered": 82.6171875,
+    "violation": 21.875,
+    "rule_share": 38.66358697414398,
+    "planner_share": 63.09250593185425
+   },
+   {
+    "gen": 156,
+    "env_steps": 226919760,
+    "episodes": 321536,
+    "clean": 77.5390625,
+    "delivered": 83.447265625,
+    "violation": 21.337890625,
+    "rule_share": 39.60045576095581,
+    "planner_share": 62.42390275001526
+   },
+   {
+    "gen": 157,
+    "env_steps": 228292514,
+    "episodes": 323584,
+    "clean": 75.87890625,
+    "delivered": 82.32421875,
+    "violation": 22.36328125,
+    "rule_share": 40.266790986061096,
+    "planner_share": 63.07160258293152
+   },
+   {
+    "gen": 158,
+    "env_steps": 229652420,
+    "episodes": 325632,
+    "clean": 76.85546875,
+    "delivered": 83.447265625,
+    "violation": 21.484375,
+    "rule_share": 40.0652676820755,
+    "planner_share": 63.363200426101685
+   },
+   {
+    "gen": 159,
+    "env_steps": 231013718,
+    "episodes": 327680,
+    "clean": 76.708984375,
+    "delivered": 83.0078125,
+    "violation": 21.875,
+    "rule_share": 41.568708419799805,
+    "planner_share": 63.50894570350647
+   },
+   {
+    "gen": 160,
+    "env_steps": 232380804,
+    "episodes": 329728,
+    "clean": 77.392578125,
+    "delivered": 83.642578125,
+    "violation": 20.99609375,
+    "rule_share": 42.800673842430115,
+    "planner_share": 64.72994685173035,
+    "eval_clean": 77.63671875,
+    "eval_violation": 20.80078125,
+    "eval_sampled": 78.41796875,
+    "eval_mean": 77.9296875
+   },
+   {
+    "gen": 161,
+    "env_steps": 233760416,
+    "episodes": 331776,
+    "clean": 76.171875,
+    "delivered": 82.91015625,
+    "violation": 22.412109375,
+    "rule_share": 41.4359986782074,
+    "planner_share": 64.92549777030945
+   },
+   {
+    "gen": 162,
+    "env_steps": 235120350,
+    "episodes": 333824,
+    "clean": 76.708984375,
+    "delivered": 83.056640625,
+    "violation": 21.875,
+    "rule_share": 41.272297501564026,
+    "planner_share": 65.30464291572571
+   },
+   {
+    "gen": 163,
+    "env_steps": 236508950,
+    "episodes": 335872,
+    "clean": 75.9765625,
+    "delivered": 81.93359375,
+    "violation": 22.119140625,
+    "rule_share": 41.29482805728912,
+    "planner_share": 65.1549756526947
+   },
+   {
+    "gen": 164,
+    "env_steps": 237889158,
+    "episodes": 337920,
+    "clean": 76.611328125,
+    "delivered": 82.568359375,
+    "violation": 21.6796875,
+    "rule_share": 40.2010440826416,
+    "planner_share": 65.34319519996643
+   },
+   {
+    "gen": 165,
+    "env_steps": 239263472,
+    "episodes": 339968,
+    "clean": 76.46484375,
+    "delivered": 82.8125,
+    "violation": 22.0703125,
+    "rule_share": 41.5766716003418,
+    "planner_share": 66.01402759552002
+   },
+   {
+    "gen": 166,
+    "env_steps": 240643052,
+    "episodes": 342016,
+    "clean": 77.685546875,
+    "delivered": 83.203125,
+    "violation": 20.849609375,
+    "rule_share": 41.993215680122375,
+    "planner_share": 65.9883439540863
+   },
+   {
+    "gen": 167,
+    "env_steps": 242013104,
+    "episodes": 344064,
+    "clean": 76.220703125,
+    "delivered": 81.689453125,
+    "violation": 22.0703125,
+    "rule_share": 40.772902965545654,
+    "planner_share": 64.99709486961365
+   },
+   {
+    "gen": 168,
+    "env_steps": 243413400,
+    "episodes": 346112,
+    "clean": 76.66015625,
+    "delivered": 82.32421875,
+    "violation": 21.728515625,
+    "rule_share": 40.00254273414612,
+    "planner_share": 64.94941115379333
+   },
+   {
+    "gen": 169,
+    "env_steps": 244800552,
+    "episodes": 348160,
+    "clean": 76.46484375,
+    "delivered": 82.958984375,
+    "violation": 21.58203125,
+    "rule_share": 40.000519156455994,
+    "planner_share": 64.51953649520874
+   },
+   {
+    "gen": 170,
+    "env_steps": 246178658,
+    "episodes": 350208,
+    "clean": 76.26953125,
+    "delivered": 81.982421875,
+    "violation": 22.509765625,
+    "rule_share": 40.25263786315918,
+    "planner_share": 64.57239389419556,
+    "eval_clean": 76.66015625,
+    "eval_violation": 21.484375,
+    "eval_sampled": 78.466796875,
+    "eval_mean": 78.515625
+   },
+   {
+    "gen": 171,
+    "env_steps": 247561674,
+    "episodes": 352256,
+    "clean": 77.685546875,
+    "delivered": 82.861328125,
+    "violation": 20.60546875,
+    "rule_share": 40.09367823600769,
+    "planner_share": 64.94140625
+   },
+   {
+    "gen": 172,
+    "env_steps": 248936532,
+    "episodes": 354304,
+    "clean": 77.197265625,
+    "delivered": 83.0078125,
+    "violation": 21.337890625,
+    "rule_share": 39.518991112709045,
+    "planner_share": 64.38381671905518
+   },
+   {
+    "gen": 173,
+    "env_steps": 250309516,
+    "episodes": 356352,
+    "clean": 78.369140625,
+    "delivered": 83.642578125,
+    "violation": 20.068359375,
+    "rule_share": 40.26281237602234,
+    "planner_share": 65.1212215423584
+   },
+   {
+    "gen": 174,
+    "env_steps": 251672264,
+    "episodes": 358400,
+    "clean": 77.44140625,
+    "delivered": 83.935546875,
+    "violation": 21.38671875,
+    "rule_share": 38.746559619903564,
+    "planner_share": 65.65571427345276
+   },
+   {
+    "gen": 175,
+    "env_steps": 253047536,
+    "episodes": 360448,
+    "clean": 77.63671875,
+    "delivered": 84.08203125,
+    "violation": 20.556640625,
+    "rule_share": 40.98331332206726,
+    "planner_share": 65.70016741752625
+   },
+   {
+    "gen": 176,
+    "env_steps": 254424578,
+    "episodes": 362496,
+    "clean": 77.685546875,
+    "delivered": 83.49609375,
+    "violation": 20.751953125,
+    "rule_share": 43.03383827209473,
+    "planner_share": 66.3349449634552
+   },
+   {
+    "gen": 177,
+    "env_steps": 255794292,
+    "episodes": 364544,
+    "clean": 76.66015625,
+    "delivered": 83.056640625,
+    "violation": 21.826171875,
+    "rule_share": 42.71475672721863,
+    "planner_share": 66.14154577255249
+   },
+   {
+    "gen": 178,
+    "env_steps": 257173852,
+    "episodes": 366592,
+    "clean": 76.416015625,
+    "delivered": 82.6171875,
+    "violation": 21.97265625,
+    "rule_share": 44.30064857006073,
+    "planner_share": 66.4901852607727
+   },
+   {
+    "gen": 179,
+    "env_steps": 258547564,
+    "episodes": 368640,
+    "clean": 78.076171875,
+    "delivered": 83.349609375,
+    "violation": 20.458984375,
+    "rule_share": 43.625155091285706,
+    "planner_share": 65.4786467552185
+   },
+   {
+    "gen": 180,
+    "env_steps": 259922588,
+    "episodes": 370688,
+    "clean": 76.220703125,
+    "delivered": 82.763671875,
+    "violation": 22.36328125,
+    "rule_share": 42.86470711231232,
+    "planner_share": 65.50853252410889,
+    "eval_clean": 75.830078125,
+    "eval_violation": 22.4609375,
+    "eval_sampled": 77.685546875,
+    "eval_mean": 78.857421875
+   },
+   {
+    "gen": 181,
+    "env_steps": 261301886,
+    "episodes": 372736,
+    "clean": 76.708984375,
+    "delivered": 84.033203125,
+    "violation": 21.826171875,
+    "rule_share": 43.67062151432037,
+    "planner_share": 65.69979786872864
+   },
+   {
+    "gen": 182,
+    "env_steps": 262680914,
+    "episodes": 374784,
+    "clean": 76.953125,
+    "delivered": 83.203125,
+    "violation": 21.484375,
+    "rule_share": 44.95862126350403,
+    "planner_share": 66.04564785957336
+   },
+   {
+    "gen": 183,
+    "env_steps": 264051410,
+    "episodes": 376832,
+    "clean": 77.490234375,
+    "delivered": 82.91015625,
+    "violation": 21.19140625,
+    "rule_share": 47.45960533618927,
+    "planner_share": 67.67753958702087
+   },
+   {
+    "gen": 184,
+    "env_steps": 265425918,
+    "episodes": 378880,
+    "clean": 76.904296875,
+    "delivered": 83.544921875,
+    "violation": 21.337890625,
+    "rule_share": 49.54718351364136,
+    "planner_share": 69.26929354667664
+   },
+   {
+    "gen": 185,
+    "env_steps": 266814942,
+    "episodes": 380928,
+    "clean": 76.46484375,
+    "delivered": 82.51953125,
+    "violation": 21.484375,
+    "rule_share": 47.388237714767456,
+    "planner_share": 67.16572046279907
+   },
+   {
+    "gen": 186,
+    "env_steps": 268191958,
+    "episodes": 382976,
+    "clean": 76.708984375,
+    "delivered": 84.033203125,
+    "violation": 21.435546875,
+    "rule_share": 44.86745297908783,
+    "planner_share": 66.01332426071167
+   },
+   {
+    "gen": 187,
+    "env_steps": 269569368,
+    "episodes": 385024,
+    "clean": 76.416015625,
+    "delivered": 82.763671875,
+    "violation": 22.0703125,
+    "rule_share": 46.087366342544556,
+    "planner_share": 67.37383604049683
+   },
+   {
+    "gen": 188,
+    "env_steps": 270969222,
+    "episodes": 387072,
+    "clean": 76.7578125,
+    "delivered": 83.447265625,
+    "violation": 21.337890625,
+    "rule_share": 49.035972356796265,
+    "planner_share": 68.46256852149963
+   },
+   {
+    "gen": 189,
+    "env_steps": 272330310,
+    "episodes": 389120,
+    "clean": 75.634765625,
+    "delivered": 81.640625,
+    "violation": 23.046875,
+    "rule_share": 50.528693199157715,
+    "planner_share": 69.2116916179657
+   },
+   {
+    "gen": 190,
+    "env_steps": 273701474,
+    "episodes": 391168,
+    "clean": 77.1484375,
+    "delivered": 83.251953125,
+    "violation": 21.142578125,
+    "rule_share": 50.853437185287476,
+    "planner_share": 69.59167718887329,
+    "eval_clean": 77.099609375,
+    "eval_violation": 21.09375,
+    "eval_sampled": 77.783203125,
+    "eval_mean": 78.41796875
+   },
+   {
+    "gen": 191,
+    "env_steps": 275072622,
+    "episodes": 393216,
+    "clean": 75.29296875,
+    "delivered": 81.15234375,
+    "violation": 22.998046875,
+    "rule_share": 52.05419063568115,
+    "planner_share": 70.61338424682617
+   },
+   {
+    "gen": 192,
+    "env_steps": 276463614,
+    "episodes": 395264,
+    "clean": 76.708984375,
+    "delivered": 84.1796875,
+    "violation": 21.875,
+    "rule_share": 51.76277160644531,
+    "planner_share": 69.85834836959839
+   },
+   {
+    "gen": 193,
+    "env_steps": 277830344,
+    "episodes": 397312,
+    "clean": 77.1484375,
+    "delivered": 82.6171875,
+    "violation": 20.99609375,
+    "rule_share": 53.525859117507935,
+    "planner_share": 71.49722576141357
+   },
+   {
+    "gen": 194,
+    "env_steps": 279197186,
+    "episodes": 399360,
+    "clean": 75.634765625,
+    "delivered": 81.982421875,
+    "violation": 22.55859375,
+    "rule_share": 51.37360692024231,
+    "planner_share": 69.81216669082642
+   },
+   {
+    "gen": 195,
+    "env_steps": 280575566,
+    "episodes": 401408,
+    "clean": 78.61328125,
+    "delivered": 84.5703125,
+    "violation": 19.62890625,
+    "rule_share": 52.67589092254639,
+    "planner_share": 70.52960395812988
+   },
+   {
+    "gen": 196,
+    "env_steps": 281951010,
+    "episodes": 403456,
+    "clean": 76.220703125,
+    "delivered": 82.470703125,
+    "violation": 21.875,
+    "rule_share": 50.37500858306885,
+    "planner_share": 69.44564580917358
+   },
+   {
+    "gen": 197,
+    "env_steps": 283344236,
+    "episodes": 405504,
+    "clean": 77.392578125,
+    "delivered": 83.447265625,
+    "violation": 21.142578125,
+    "rule_share": 49.29537773132324,
+    "planner_share": 68.7177836894989
+   },
+   {
+    "gen": 198,
+    "env_steps": 284732376,
+    "episodes": 407552,
+    "clean": 76.171875,
+    "delivered": 82.177734375,
+    "violation": 21.923828125,
+    "rule_share": 46.95059359073639,
+    "planner_share": 66.83533191680908
+   },
+   {
+    "gen": 199,
+    "env_steps": 286111688,
+    "episodes": 409600,
+    "clean": 76.611328125,
+    "delivered": 82.958984375,
+    "violation": 21.77734375,
+    "rule_share": 44.62456703186035,
+    "planner_share": 65.35127758979797,
+    "eval_clean": 76.806640625,
+    "eval_violation": 21.240234375,
+    "eval_sampled": 77.9296875,
+    "eval_mean": 77.9296875
+   },
+   {
+    "kept_greedy": {
+     "gen": 80,
+     "validation": 79.39453125
+    },
+    "kept_sampled": {
+     "gen": 90,
+     "validation": 79.4921875
+    },
+    "kept_mean": {
+     "gen": 80,
+     "validation": 81.103515625
+    }
+   }
+  ],
+  "eval": {
+   "greedy": {
+    "clean": 78.2470703125,
+    "delivered": 79.6142578125,
+    "violation": 18.65234375,
+    "ceiling": 0.0,
+    "median_t": 158.25,
+    "vs_rule": [
+     4.6630859375,
+     1.380496148020029
+    ],
+    "vs_planner": [
+     5.1025390625,
+     1.1919623352587223
+    ]
+   },
+   "sampled": {
+    "clean": 79.443359375,
+    "delivered": 81.1767578125,
+    "violation": 18.8720703125,
+    "ceiling": 0.0,
+    "median_t": 161.25,
+    "vs_rule": [
+     5.859375,
+     1.4467963110655546
+    ],
+    "vs_planner": [
+     6.298828125,
+     1.4545415416359901
+    ]
+   },
+   "mean": {
+    "clean": 78.1982421875,
+    "delivered": 79.7607421875,
+    "violation": 19.9462890625,
+    "ceiling": 0.0,
+    "median_t": 162.75,
+    "vs_rule": [
+     4.6142578125,
+     1.4596736319363117
+    ],
+    "vs_planner": [
+     5.0537109375,
+     1.4630117267370224
+    ]
+   },
+   "last_greedy": {
+    "clean": 76.2939453125,
+    "delivered": 83.9599609375,
+    "violation": 21.7041015625,
+    "ceiling": 0.0,
+    "median_t": 153.25,
+    "vs_rule": [
+     2.7099609375,
+     1.5756588727235794
+    ],
+    "vs_planner": [
+     3.1494140625,
+     1.518624309450388
+    ]
+   },
+   "last_sampled": {
+    "clean": 76.708984375,
+    "delivered": 83.1787109375,
+    "violation": 21.38671875,
+    "ceiling": 0.0,
+    "median_t": 155.5,
+    "vs_rule": [
+     3.125,
+     1.5756647139787674
+    ],
+    "vs_planner": [
+     3.564453125,
+     1.5350190699100494
+    ]
+   },
+   "last_mean": {
+    "clean": 76.0498046875,
+    "delivered": 82.958984375,
+    "violation": 22.4609375,
+    "ceiling": 0.0,
+    "median_t": 154.5,
+    "vs_rule": [
+     2.4658203125,
+     1.5511334501206875
+    ],
+    "vs_planner": [
+     2.9052734375,
+     1.5548448376357555
+    ]
+   }
+  }
+ }
+}

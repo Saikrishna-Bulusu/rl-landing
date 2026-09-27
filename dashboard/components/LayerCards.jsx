@@ -1,0 +1,85 @@
+'use client';
+
+const LAYERS = [
+  { id: 'data',       name: 'Data layer',       prefix: 'DL' },
+  { id: 'processing', name: 'Processing layer', prefix: 'PL' },
+  { id: 'output',     name: 'Output layer',     prefix: 'OL' },
+];
+
+/**
+ * One card per layer, each showing its own step-code stream.
+ *
+ * They are separate cards rather than one merged log on purpose: the layers
+ * are independent processes, and the dashboard should make it obvious when one
+ * has died while the other two carry on.
+ */
+export default function LayerCards({ layers, logs, clockOffset = 0, replay = false }) {
+  return (
+    <div className="row">
+      {LAYERS.map((L) => {
+        const entry = layers?.[L.id];
+        const st = entry?.status;
+        // Board clock, not browser clock: st.t_unix was stamped on the Jetson.
+        // See the note in useTelemetry -- an unsynchronised board is the normal
+        // case here, and comparing the two clocks directly is how a dead layer
+        // keeps showing green.
+        //
+        // In replay the question does not apply: these timestamps are from a
+        // flight that is over, so "not fresh" would be true and meaningless.
+        // A recorded layer reports what it did, not whether it is breathing.
+        const fresh = replay ? false : (st ? Date.now() / 1000 + clockOffset - st.t_unix < 4 : false);
+        const counts = st?.counts || {};
+        const dev = counts.live_device_errors || 0;
+        const rows = (logs || []).filter((l) => l.layer === L.id).slice(-60).reverse();
+
+        // Tones are the shared .dot classes -- ok / warn / bad -- not a private
+        // live/stale vocabulary. They used to be, and the classes did not
+        // exist, so every dot on the Admin view rendered the same grey
+        // whatever the layer was doing.
+        let tone = 'bad';
+        if (replay) tone = st ? (counts.device_errors ? 'warn' : 'ok') : 'bad';
+        else if (fresh && dev === 0) tone = 'ok';
+        else if (fresh) tone = 'warn';
+
+        return (
+          <div className="panel logcard" key={L.id}>
+            <span className="marks" aria-hidden="true" />
+            <div className="head">
+              <span className={`dot ${tone}`} />
+              <span className="name">{L.name}</span>
+              <span className="code">{st?.last_code || `${L.prefix}-??`}</span>
+            </div>
+            <div className="tallies">
+              <span className="tally"><b>{counts.steps ?? 0}</b> steps</span>
+              <span className="tally err"><b>{counts.errors ?? 0}</b> errors</span>
+              <span className="tally dev"><b>{counts.device_errors ?? 0}</b> device</span>
+              <span style={{ marginLeft: 'auto' }}>
+                {!st ? 'no heartbeat'
+                  : replay ? `recorded · ${st.uptime_s ?? 0}s`
+                  : fresh ? `${st.rate_hz?.toFixed?.(2) ?? '0.00'} Hz`
+                  /* Silence is the signal this whole architecture exists to
+                     show, so say how long it has lasted rather than freezing
+                     on the last rate it reported. */
+                  : `silent ${Math.round(Date.now() / 1000 + clockOffset - st.t_unix)}s`}
+              </span>
+            </div>
+            <div className="codestream">
+              {rows.length === 0 && (
+                <div className="empty">
+                  {replay ? 'no codes recorded for this layer'
+                    : fresh ? 'no codes yet' : 'layer is not reporting'}
+                </div>
+              )}
+              {rows.map((l, i) => (
+                <div className="row" key={`${l.t_unix}-${i}`} title={l.description}>
+                  <span className={`c ${l.kind || 'step'}`}>{l.code}</span>
+                  <span className="m">{l.message}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}

@@ -1,0 +1,236 @@
+{
+ "_note": "GeoAnchor GNSS-denied deliveries in Gazebo (PX4 v1.16.2), 27 Sept 2026, one flight each. Errors against Gazebo's truth; medians and tails, never the mean. Films, PX4 logs and full records stay in gazebo_geo/<run>/ (not in git: the floor is Esri imagery).",
+ "flights": {
+  "geo_calm4": {
+   "command": "OUT=geo_calm4 WORLD=geo_clean INSTANCE=5 geo/geofly.sh /usr/bin/python3 -u wind/gz_windland.py --geo --episode 0 --w10 0 --decider rule --out gazebo_geo/geo_calm4/flights.jsonl --video gazebo_geo/geo_calm4/calm.mp4",
+   "geoanchor": {
+    "fixes": 3382,
+    "sent": 586,
+    "marker_fixes": 448,
+    "fixes_per_sim_s": 6.54,
+    "fix_err_m": {
+     "median": 2.13,
+     "p90": 4.95,
+     "max": 36.81
+    },
+    "fix_within_10m_pct": 98.5,
+    "latency_ms_wall_median": 40.1,
+    "rtf": 0.84,
+    "denied_s": 110.0,
+    "agp_on_after_denial_pct": 100.0,
+    "gnss_on_after_denial_pct": 0.0,
+    "est_err_m": {
+     "median": 2.32,
+     "p90": 3.89,
+     "max": 5.07
+    },
+    "gnss_restored_at": null,
+    "marker_skipped": 0
+   },
+   "landing": {
+    "episode": 0,
+    "w10": 0.0,
+    "decider": "rule",
+    "outcome": "landed",
+    "miss": 0.06454518709020521,
+    "t": 25.427999999999997,
+    "min_clear": 3.3185773529203297,
+    "tilt_max": 2.1745109581641326,
+    "sink": 0.7460562898958418,
+    "slide": 0.004864386227512185
+   }
+  },
+  "geo_wind10": {
+   "command": "OUT=geo_wind10 WORLD=geo_clean SERVER_CONFIG=gz_logan/geo_clean/geo_w9.config INSTANCE=5 geo/geofly.sh /usr/bin/python3 -u wind/gz_windland.py --geo --episode 0 --w10 9 --decider wind/runs/fly_hp_s0_best.npz --out gazebo_geo/geo_wind10/flights.jsonl --video gazebo_geo/geo_wind10/wind9.mp4",
+   "geoanchor": {
+    "fixes": 3621,
+    "sent": 521,
+    "marker_fixes": 563,
+    "fixes_per_sim_s": 6.53,
+    "fix_err_m": {
+     "median": 2.12,
+     "p90": 4.71,
+     "max": 169.8
+    },
+    "fix_within_10m_pct": 98.3,
+    "latency_ms_wall_median": 15.4,
+    "rtf": 0.76,
+    "denied_s": 117.3,
+    "agp_on_after_denial_pct": 100.0,
+    "gnss_on_after_denial_pct": 0.0,
+    "est_err_m": {
+     "median": 1.71,
+     "p90": 6.68,
+     "max": 10.41
+    },
+    "gnss_restored_at": null,
+    "marker_skipped": 0
+   },
+   "landing": {
+    "episode": 0,
+    "w10": 9.0,
+    "decider": "fly_hp_s0_best",
+    "outcome": "landed",
+    "miss": 0.19282143542935554,
+    "t": 32.22799999999998,
+    "min_clear": 3.5193327611900758,
+    "tilt_max": 20.007233098507974,
+    "sink": 0.8560578522652607,
+    "slide": 0.06881317667701434
+   }
+  },
+  "geo_obst4": {
+   "command": "CRANE_AT=147.33,-23.43 GEO_GOAL_OUT=90 OUT=geo_obst4 WORLD=geo_floor INSTANCE=5 geo/geofly.sh /usr/bin/python3 -u gz_learner.py --geo --decider rule --seed 1 --magpie none --voxel --local3d --video gazebo_geo/geo_obst4/obstacles.mp4   (before the weighted-A* planner: crashed)",
+   "geoanchor": {
+    "fixes": 2040,
+    "sent": 547,
+    "marker_fixes": 0,
+    "fixes_per_sim_s": 4.65,
+    "fix_err_m": {
+     "median": 2.22,
+     "p90": 5.21,
+     "max": 259.85
+    },
+    "fix_within_10m_pct": 98.2,
+    "latency_ms_wall_median": 102.9,
+    "rtf": 0.79,
+    "denied_s": 69.7,
+    "agp_on_after_denial_pct": 100.0,
+    "gnss_on_after_denial_pct": 0.0,
+    "est_err_m": {
+     "median": 2.6,
+     "p90": 4.19,
+     "max": 5.3
+    },
+    "gnss_restored_at": null,
+    "marker_skipped": 0
+   },
+   "landing": {
+    "decider": "rule",
+    "magpie": "none",
+    "outcome": "crashed",
+    "miss_m": 44.20554076673436,
+    "t_s": 15.891999999999996,
+    "swoops": 0,
+    "closest_bird_m": 1000000000.0,
+    "crane": [
+     147.33,
+     -23.43
+    ],
+    "crashed_into": "crane",
+    "closest_m": {
+     "crane": 0.4,
+     "light_1": 60.72,
+     "light_2": 50.95,
+     "light_3": 43.67,
+     "light_4": 61.17,
+     "traffic_light": 57.69,
+     "tree_1": 59.96,
+     "tree_2": 49.17,
+     "tree_3": 98.52,
+     "shed": 48.35
+    },
+    "rig": null
+   }
+  },
+  "geo_obst5": {
+   "command": "CRANE_AT=147.33,-23.43 GEO_GOAL_OUT=90 OUT=geo_obst5 WORLD=geo_floor INSTANCE=5 geo/geofly.sh /usr/bin/python3 -u gz_learner.py --geo --decider rule --seed 1 --magpie none --voxel --local3d --video gazebo_geo/geo_obst5/obstacles.mp4",
+   "geoanchor": {
+    "fixes": 4311,
+    "sent": 597,
+    "marker_fixes": 1072,
+    "fixes_per_sim_s": 10.07,
+    "fix_err_m": {
+     "median": 2.28,
+     "p90": 5.12,
+     "max": 19.49
+    },
+    "fix_within_10m_pct": 98.2,
+    "latency_ms_wall_median": 10.6,
+    "rtf": 0.76,
+    "denied_s": 117.3,
+    "agp_on_after_denial_pct": 100.0,
+    "gnss_on_after_denial_pct": 0.0,
+    "est_err_m": {
+     "median": 1.85,
+     "p90": 3.89,
+     "max": 5.5
+    },
+    "gnss_restored_at": null,
+    "marker_skipped": 0
+   },
+   "landing": {
+    "decider": "rule",
+    "magpie": "none",
+    "outcome": "landed",
+    "miss_m": 0.04048362176477339,
+    "t_s": 63.29599999999999,
+    "swoops": 0,
+    "closest_bird_m": 1000000000.0,
+    "crane": [
+     147.33,
+     -23.43
+    ],
+    "crashed_into": null,
+    "closest_m": {
+     "crane": 6.67,
+     "light_1": 10.73,
+     "light_2": 4.68,
+     "light_3": 12.55,
+     "light_4": 8.53,
+     "traffic_light": 3.91,
+     "tree_1": 6.2,
+     "tree_2": 4.57,
+     "tree_3": 57.31,
+     "shed": 10.5
+    },
+    "rig": null
+   }
+  },
+  "geo_magpie4": {
+   "command": "TREES_JSON=gz_logan/trees_logan.json RIG=v2 RIG_YOLO=gz_logan/rig_v2/yolo/run/weights/best.pt RIG_CALIB=urban/rig_calib_v2.json GEO_LAND_SPEED=0.1 OUT=geo_magpie4 WORLD=geo_magpie INSTANCE=5 geo/geofly.sh /usr/bin/python3 -u gz_learner.py --geo --decider learner --seed 0 --magpie hunter --sense rig --ckpt rl_corridor_eyes_lidar_gps_birds_hunter_rig_v2l_s0_mean.pt --video gazebo_geo/geo_magpie4/magpie.mp4",
+   "geoanchor": {
+    "fixes": 5231,
+    "sent": 986,
+    "marker_fixes": 1105,
+    "fixes_per_sim_s": 12.69,
+    "fix_err_m": {
+     "median": 2.27,
+     "p90": 5.01,
+     "max": 169.79
+    },
+    "fix_within_10m_pct": 97.9,
+    "latency_ms_wall_median": 49.4,
+    "rtf": 0.25,
+    "denied_s": 116.0,
+    "agp_on_after_denial_pct": 100.0,
+    "gnss_on_after_denial_pct": 0.0,
+    "est_err_m": {
+     "median": 1.86,
+     "p90": 3.75,
+     "max": 5.23
+    },
+    "gnss_restored_at": null,
+    "marker_skipped": 0
+   },
+   "landing": {
+    "decider": "learner",
+    "magpie": "hunter",
+    "outcome": "landed",
+    "miss_m": 0.09656485520918465,
+    "t_s": 35.66399999999999,
+    "swoops": 3,
+    "closest_bird_m": 1.875279111639778,
+    "rig": {
+     "sets": 707,
+     "dir_err_deg": 25.866358868233526,
+     "frame_check": "FAILED",
+     "found_within_40m": 0.43768115942028984,
+     "sets_within_40m": 690,
+     "track_err_m": 10.713765529176145,
+     "tracked_sets": 352
+    }
+   }
+  }
+ }
+}

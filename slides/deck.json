@@ -1,0 +1,107 @@
+{
+  "v": 4,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-09-22T09:40:00Z"
+  },
+  "title": "GeoAnchor Landing Study",
+  "cover": "cover",
+  "order": [
+    "cover",
+    "question",
+    "sigma",
+    "calibration",
+    "pipeline",
+    "flights",
+    "safety",
+    "headroom",
+    "null1",
+    "null2",
+    "rescue",
+    "spec",
+    "ceiling",
+    "matchers",
+    "deliver",
+    "marker",
+    "detector",
+    "forest",
+    "worked",
+    "next",
+    "lastmile",
+    "rules",
+    "ladder2",
+    "scratch",
+    "eyes",
+    "rlresult",
+    "rlwhy",
+    "lastnext",
+    "cranes",
+    "rig",
+    "coverage",
+    "landing",
+    "magpielive",
+    "simcost",
+    "gznext",
+    "windtwin",
+    "windladder",
+    "windgz",
+    "windnext",
+    "geofloor",
+    "georead",
+    "geomarkers",
+    "geoloop",
+    "geotraps",
+    "geofixes",
+    "geocalm",
+    "geowind",
+    "geoobst",
+    "geomagpie",
+    "geosum",
+    "geonext"
+  ],
+  "sections": {
+    "intro": {
+      "description": "What the study set out to answer and what sigma actually is",
+      "start": "cover"
+    },
+    "system": {
+      "description": "The pipeline on real firmware, and the guardrail",
+      "start": "pipeline"
+    },
+    "results": {
+      "description": "The method, what it refuted, and what replicated",
+      "start": "headroom"
+    },
+    "matcher": {
+      "description": "Localisation improved, and what that did not buy",
+      "start": "matchers"
+    },
+    "obstacles": {
+      "description": "Trees, and the cheapest thing that answered them",
+      "start": "marker"
+    },
+    "lastmile": {
+      "description": "The last kilometre in Logan under CASA rules: headroom, then a learner that beats the planner",
+      "start": "lastmile"
+    },
+    "gazebo": {
+      "description": "PX4 in Gazebo with real pictures: a crane the survey missed, one camera rig, a steady landing, the live magpie, and what limits the seeds",
+      "start": "cranes"
+    },
+    "wind": {
+      "description": "Learning to land in strong wind: a GPU twin of PX4, the scorecard, and what carried over to PX4",
+      "start": "windtwin"
+    },
+    "geoanchor": {
+      "description": "GeoAnchor flies Logan with GPS denied: what the matcher needs, the live loop, the traps, four deliveries",
+      "start": "geofloor"
+    }
+  },
+  "faces": {
+    "source-serif-4": {
+      "family": "Source Serif 4",
+      "href": "https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@300..700&display=swap"
+    }
+  },
+  "designSystems": []
+}

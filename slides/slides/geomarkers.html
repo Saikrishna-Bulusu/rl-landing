@@ -1,0 +1,19 @@
+<section id="geomarkers" data-transition="fade" style="background:#f7f6f2; color:#14181f; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:26px">
+  <h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:68px; font-weight:400; line-height:1.08">Why the pad has three markers</h2>
+  <img src="/_blob/4809f8a06f013a95606b12ad1b08112c" alt="Left: the 5 m landing mat as Gazebo paints it, three black-and-white markers side by side: id 2, 1.80 m on the left; id 1, 0.15 m in the centre, the touchdown point; id 0, 1.20 m on the right. Right: the heights each can be read from, on a log scale going down: id 2 from 28.6 m to 0.76 m, id 0 from 19 m to 0.51 m, id 1 from 2.4 m to 0.06 m. A dashed line at 30 m marks where the drop ends and the marker takes over." style="width:1664px; height:490px; object-fit:contain; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px">
+  <div style="display:flex; gap:24px">
+    <div style="flex:1; display:flex; flex-direction:column; gap:6px">
+      <h3 style="font-size:29px; font-weight:600; color:#b8620a">A ladder of sizes</h3>
+      <p style="font-size:25px; line-height:1.4; color:#3d444d">A marker reads only between two heights: too few pixels above, off the edge of the picture below. Three sizes overlap from 28.6&nbsp;m to 6&nbsp;cm.</p>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; gap:6px">
+      <h3 style="font-size:29px; font-weight:600; color:#1f7a4d">A name for the pad</h3>
+      <p style="font-size:25px; line-height:1.4; color:#3d444d">Ids 2, 1, 0 say &ldquo;our pad&rdquo;. The 15 neighbours carry ids 3&ndash;47 and are refused: the red boxes in the films.</p>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; gap:6px">
+      <h3 style="font-size:29px; font-weight:600; color:#2b6cb0">The touchdown point</h3>
+      <p style="font-size:25px; line-height:1.4; color:#3d444d">The small one sits at the mat's centre, the spot we score from. It is also a position fix for PX4 in the last metres.</p>
+    </div>
+  </div>
+  <aside>You asked what the three markers are for. They are one pad seen at three distances. A marker can only be read between two heights: from too high it is too few pixels to decode, and from too low it spills off the edge of the camera's picture. So the big 1.80 metre marker, id 2, is read from about 29 metres down to three quarters of a metre; the 1.20 metre one, id 0, from 19 metres to half a metre; and the tiny 15 centimetre one, id 1, from 2.4 metres down to 6 centimetres. Their ranges overlap, so at no height is there nothing to read. Second, the ids are the pad's name: ours are 2, 1 and 0, and the fifteen neighbouring pads use other ids, which is why the films box theirs in red and ignore them. Third, the tiny marker sits exactly at the mat's centre, which is the touchdown point the landing is scored against. Every read of any of the three is also turned into a position fix for PX4, which is what keeps it within ten centimetres once GeoAnchor fades below 50 metres. The picture is the mat as Gazebo paints it, our own texture, so this slide has no imagery restriction.</aside>
+</section>

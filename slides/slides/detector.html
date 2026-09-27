@@ -1,0 +1,30 @@
+<section id="detector" data-transition="fade" style="background:#14181f; color:#f7f6f2; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; padding:128px 128px 128px; display:flex; flex-direction:column; gap:28px">
+  <h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:68px; font-weight:400; line-height:1.08; color:#f7f6f2; ">The first version of that result was twice too big</h2>
+  <p style="font-size:31px; line-height:1.45; color:#a8b0bb; width:1664px">The model treated <b style="color:#f7f6f2">min_px&nbsp;=&nbsp;34</b> as a cliff: invisible below, perfect above. Flying the pad contradicted it, so the detection curve was re-flown &mdash; from 60&nbsp;m instead of 26&nbsp;m, which is why nothing below 25&nbsp;px had ever been sampled and everything under it was extrapolation.</p>
+
+  <div style="display:flex; gap:26px">
+    <div style="flex:1; background:#1e232c; border-radius:16px; padding:32px; display:flex; flex-direction:column; gap:14px">
+      <h3 style="font-size:30px; font-weight:600; color:#b8620a">Measured, not assumed</h3>
+      <table style="width:100%; border-collapse:collapse; font-size:27px; color:#a8b0bb">
+        <tr><td style="padding:6px 0">10&ndash;15 px</td><td style="padding:6px 0; text-align:right; color:#f7f6f2">0%</td></tr>
+        <tr><td style="padding:6px 0">15&ndash;20 px</td><td style="padding:6px 0; text-align:right; color:#f7f6f2">2%</td></tr>
+        <tr><td style="padding:6px 0">20&ndash;25 px</td><td style="padding:6px 0; text-align:right; color:#f7f6f2">38%</td></tr>
+        <tr><td style="padding:6px 0">25&ndash;30 px</td><td style="padding:6px 0; text-align:right; color:#f7f6f2">84%</td></tr>
+        <tr><td style="padding:6px 0">30&ndash;35 px</td><td style="padding:6px 0; text-align:right; color:#f7f6f2">100%</td></tr>
+      </table>
+      <p style="font-size:26px; line-height:1.4; color:#6a7179">A ramp, not a cliff. Detection is now sampled from it.</p>
+    </div>
+    <div style="flex:1.35; background:#1e232c; border-radius:16px; padding:32px; display:flex; flex-direction:column; gap:14px">
+      <h3 style="font-size:30px; font-weight:600; color:#b8620a">What that did to the claim</h3>
+      <table style="width:100%; border-collapse:collapse; font-size:28px">
+        <tr><td style="border-bottom:1px solid #39414e; padding:12px 0; color:#a8b0bb">1.20 &rarr; 2.40 m</td><td style="border-bottom:1px solid #39414e; padding:12px 0; text-align:right; color:#a8b0bb">delivered</td><td style="border-bottom:1px solid #39414e; padding:12px 0; text-align:right; color:#a8b0bb">crash</td></tr>
+        <tr><td style="border-bottom:1px solid #39414e; padding:12px 0; color:#f7f6f2">min_px cliff</td><td style="border-bottom:1px solid #39414e; padding:12px 0; text-align:right; color:#f7f6f2">+49.2 pp</td><td style="border-bottom:1px solid #39414e; padding:12px 0; text-align:right; color:#f7f6f2">&minus;49.2 pp</td></tr>
+        <tr><td style="padding:12px 0; color:#f7f6f2"><b>measured ramp</b></td><td style="padding:12px 0; text-align:right; color:#b8620a"><b>+17.2 pp</b></td><td style="padding:12px 0; text-align:right; color:#b8620a"><b>&minus;30.5 pp</b></td></tr>
+      </table>
+      <p style="font-size:27px; line-height:1.4; color:#a8b0bb">The effect survives at roughly half the size. And <b style="color:#f7f6f2">1.80&nbsp;m is enough</b>: with a realistic budget 1.80 and 2.40 both deliver 100%, while 1.20 plateaus at 69% however long you give it.</p>
+    </div>
+  </div>
+
+  <p style="font-size:30px; line-height:1.45; color:#f7f6f2">The cliff was not the conservative choice &mdash; it was wrong in <b>both</b> directions, calling a 1.20&nbsp;m marker invisible above 19&nbsp;m when it in fact decodes half the time at 27&nbsp;m, and certain below it when it is not.</p>
+  <p style="font-size:29px; line-height:1.4; color:#a8b0bb">The default was left on the cliff anyway. Under the measured curve the base environment's own guard fails &mdash; diving succeeds 100% at low sigma and 98% at high, so the sigma gap the study rests on disappears. A better detector makes that scenario trivial, and re-tuning it is a separate job with its own re-baselining.</p>
+</section>

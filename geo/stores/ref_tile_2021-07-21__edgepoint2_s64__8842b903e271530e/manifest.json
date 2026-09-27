@@ -1,0 +1,130 @@
+{
+  "store_id": "8842b903e271530e",
+  "source": "/home/sai/RL_projects/rl-landing/gz_logan/imagery/ref_tile_2021-07-21.tif",
+  "source_name": "ref_tile_2021-07-21.tif",
+  "method": "edgepoint2_s64",
+  "max_keypoints": 2048,
+  "tile_px": 1024,
+  "overlap_px": 128,
+  "n_tiles": 9,
+  "n_keypoints": 18432,
+  "tile_grid": [
+    3,
+    3
+  ],
+  "build_seconds": 1.12,
+  "descriptor_dim": 64,
+  "preview": "preview.png",
+  "tiles": [
+    {
+      "row": 0,
+      "col": 0,
+      "x0": 0,
+      "y0": 0,
+      "width": 1024,
+      "height": 1024,
+      "n_keypoints": 2048,
+      "file": "t_000_000.npz"
+    },
+    {
+      "row": 0,
+      "col": 1,
+      "x0": 896,
+      "y0": 0,
+      "width": 1024,
+      "height": 1024,
+      "n_keypoints": 2048,
+      "file": "t_000_001.npz"
+    },
+    {
+      "row": 0,
+      "col": 2,
+      "x0": 1792,
+      "y0": 0,
+      "width": 521,
+      "height": 1024,
+      "n_keypoints": 2048,
+      "file": "t_000_002.npz"
+    },
+    {
+      "row": 1,
+      "col": 0,
+      "x0": 0,
+      "y0": 896,
+      "width": 1024,
+      "height": 1024,
+      "n_keypoints": 2048,
+      "file": "t_001_000.npz"
+    },
+    {
+      "row": 1,
+      "col": 1,
+      "x0": 896,
+      "y0": 896,
+      "width": 1024,
+      "height": 1024,
+      "n_keypoints": 2048,
+      "file": "t_001_001.npz"
+    },
+    {
+      "row": 1,
+      "col": 2,
+      "x0": 1792,
+      "y0": 896,
+      "width": 521,
+      "height": 1024,
+      "n_keypoints": 2048,
+      "file": "t_001_002.npz"
+    },
+    {
+      "row": 2,
+      "col": 0,
+      "x0": 0,
+      "y0": 1792,
+      "width": 1024,
+      "height": 509,
+      "n_keypoints": 2048,
+      "file": "t_002_000.npz"
+    },
+    {
+      "row": 2,
+      "col": 1,
+      "x0": 896,
+      "y0": 1792,
+      "width": 1024,
+      "height": 509,
+      "n_keypoints": 2048,
+      "file": "t_002_001.npz"
+    },
+    {
+      "row": 2,
+      "col": 2,
+      "x0": 1792,
+      "y0": 1792,
+      "width": 521,
+      "height": 509,
+      "n_keypoints": 2048,
+      "file": "t_002_002.npz"
+    }
+  ],
+  "epsg": 32756,
+  "transform": [
+    0.26385028719164116,
+    0.0,
+    513720.4193950839,
+    0.0,
+    -0.26385028719164116,
+    6940742.826752395
+  ],
+  "width": 2313,
+  "height": 2301,
+  "gsd_m_px": 0.26385028719164116,
+  "bounds_wgs84": [
+    153.13910745116362,
+    -27.662860002268026,
+    153.1453021961791,
+    -27.65737275282941
+  ],
+  "store_version": 2,
+  "built_at": 1790412477.0316687
+}

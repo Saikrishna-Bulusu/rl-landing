@@ -1,0 +1,59 @@
+{
+ "calm": {
+  "flights": 10,
+  "on_pad": 10,
+  "outcomes": {
+   "landed": 10
+  },
+  "miss_m_median": 0.37295569745031487,
+  "first_read_alt_m_median": 50.719194412231445,
+  "tilt_deg_median_centring": 0.7997099849668229,
+  "t_sim_s_median": 72.76599999999996
+ },
+ "breeze": {
+  "flights": 10,
+  "on_pad": 10,
+  "outcomes": {
+   "landed": 10
+  },
+  "miss_m_median": 0.34702102489683595,
+  "first_read_alt_m_median": 50.6915283203125,
+  "tilt_deg_median_centring": 1.9150901849624513,
+  "t_sim_s_median": 74.584
+ },
+ "gusty": {
+  "flights": 10,
+  "on_pad": 10,
+  "outcomes": {
+   "landed": 10
+  },
+  "miss_m_median": 0.3542463745929285,
+  "first_read_alt_m_median": 50.8639030456543,
+  "tilt_deg_median_centring": 4.741399714147299,
+  "t_sim_s_median": 72.98199999999997
+ },
+ "mist": {
+  "flights": 10,
+  "on_pad": 9,
+  "outcomes": {
+   "landed": 9,
+   "abort": 1
+  },
+  "miss_m_median": 0.37976520443188166,
+  "first_read_alt_m_median": 50.57589912414551,
+  "tilt_deg_median_centring": 1.2202961282614533,
+  "t_sim_s_median": 100.632
+ },
+ "fog": {
+  "flights": 10,
+  "on_pad": 7,
+  "outcomes": {
+   "landed": 7,
+   "abort": 3
+  },
+  "miss_m_median": 0.37989021506703424,
+  "first_read_alt_m_median": 50.71173095703125,
+  "tilt_deg_median_centring": 0.540527302872894,
+  "t_sim_s_median": 78.49799999999999
+ }
+}

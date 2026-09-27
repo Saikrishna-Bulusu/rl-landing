@@ -1,0 +1,12 @@
+{
+ "corridor": {
+  "clean": 94.140625,
+  "violation": 2.8076171875,
+  "timeout": 3.22265625
+ },
+ "random": {
+  "clean": 94.287109375,
+  "violation": 2.8076171875,
+  "timeout": 3.076171875
+ }
+}

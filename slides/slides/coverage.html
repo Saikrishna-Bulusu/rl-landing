@@ -1,0 +1,20 @@
+<section id="coverage" data-transition="fade" style="background:#f7f6f2; color:#14181f; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:22px">
+  <h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:68px; font-weight:400; line-height:1.08">Seeing more sky did not stop strikes</h2>
+  <img src="/_blob/20735103d2526cd969d1a3b1b6ce8665" alt="Three bar charts. Left: share of directions a camera sees the magpie at 5-30 m, outside the propellers: old six-camera rig 100% above and below; v2 as built 41% above, 61% below; v2 with back tilted 44/52; v2 tilt plus up camera 82/52; v2 plus up camera 82/61. Middle: drones struck on flights with a magpie in the fast simulator, rule and planner: all rigs 35-39%, against 26-30% when handed the true position. Right: rig v2 with each fix given for free: truth 26/30, rig v2 37/36, sees every direction 38/40, exact distance 34/32, both 33/32." style="width:1664px; height:480px; object-fit:contain; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px">
+  <div style="display:flex; gap:24px">
+    <div style="flex:1; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:26px 30px; display:flex; flex-direction:column; gap:8px">
+      <h3 style="font-size:28px; font-weight:600; color:#b8620a">Twice the sky, same strikes</h3>
+      <p style="font-size:25px; line-height:1.38; color:#3d444d">The up camera took the view above from 41% to 82%. Struck: 37% before, 39% after.</p>
+    </div>
+    <div style="flex:1; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:26px 30px; display:flex; flex-direction:column; gap:8px">
+      <h3 style="font-size:28px; font-weight:600; color:#1f7a4d">Distance buys a third</h3>
+      <p style="font-size:25px; line-height:1.38; color:#3d444d">Given the bird's exact distance for free, the rig closes about a third of its gap to the truth.</p>
+    </div>
+    <div style="flex:1; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:26px 30px; display:flex; flex-direction:column; gap:8px">
+      <h3 style="font-size:28px; font-weight:600; color:#14181f">The rest is reaction time</h3>
+      <p style="font-size:25px; line-height:1.38; color:#3d444d">The tracker waits for two sightings of a moving bird before it believes one. A diving magpie uses that wait.</p>
+    </div>
+  </div>
+  <p style="position:absolute; left:128px; bottom:64px; font-size:24px; color:#6a7179">Fast simulator, hunter magpie, each rig's detection model calibrated on its own Gazebo pictures. 4,096 paired deliveries per bar (right: 2,048).</p>
+  <aside>Sai's question was whether the gimbal was a mistake, and whether another camera would help. So I built four versions of the rig and measured two things for each. Left chart: how much of the space around the drone a camera can see a magpie in, not counting the propellers. The old mast rig saw everything. Rig v2 as built saw only 41 percent of the sky above it. Adding the up camera doubled that to 82 percent. Middle chart: how often a drone gets struck on flights with a magpie, in the fast simulator, using each rig's measured detection model. They are all the same, 35 to 39 percent, whatever the coverage. The grey band is what happens when the drone is handed the magpie's true position: 26 to 30. So there is a real gap between the cameras and the truth, but coverage is not what causes it. Right chart: I gave rig v2 one perfect ability at a time. Seeing every direction: nothing. Knowing the exact distance to the bird: closes about a third of the gap. Both: about the same as distance alone. What is left is reaction time: the tracker needs two sightings of a moving bird before it reports one, and a diving magpie covers a lot of ground in that wait. The up camera stays on the drone anyway: the magpie model waits above and behind the drone before it dives, and that is where rig v2 was blind.</aside>
+</section>

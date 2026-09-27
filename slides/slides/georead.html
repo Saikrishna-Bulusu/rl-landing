@@ -1,0 +1,19 @@
+<section id="georead" data-transition="fade" style="background:#f7f6f2; color:#14181f; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:28px">
+  <h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:68px; font-weight:400; line-height:1.08">The pad reads from 30&nbsp;m, not 50</h2>
+  <div style="display:flex; gap:48px; align-items:flex-start">
+    <img src="/_blob/fd9c5193199c842bc9127924a647c5b0" alt="Percent of frames in which the pad's 1.80 m marker is read, hovering over the pad at heights from 60 down to 25 m: 1, 2, 14, 1, 9 and 6 percent between 60 and 35 m, then 88 percent at 30 m and 81 percent at 25 m." style="width:820px; height:520px; object-fit:contain; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px">
+    <div style="flex:1; display:flex; flex-direction:column; gap:26px">
+      <div style="display:flex; flex-direction:column; gap:2px">
+        <p style="font-size:26px; color:#3d444d">at 30&nbsp;m, 23 pixels across</p>
+        <p style="font-family:'Source Serif 4', Georgia, serif; font-size:52px; color:#1f7a4d">88% of frames</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:2px">
+        <p style="font-size:26px; color:#3d444d">at 50&nbsp;m, 13 pixels: 2 per cell</p>
+        <p style="font-family:'Source Serif 4', Georgia, serif; font-size:52px; color:#b8620a">13% of frames</p>
+      </div>
+      <p style="font-size:27px; line-height:1.45; color:#3d444d">So the drone cruises at 75&nbsp;m on GeoAnchor, starts down 50&nbsp;m out, and drops to <b style="color:#14181f">30&nbsp;m over the pad</b>. Below 50&nbsp;m GeoAnchor fades (its envelope is 50&ndash;100&nbsp;m) and the pad marker takes over.</p>
+    </div>
+  </div>
+  <p style="position:absolute; left:128px; bottom:64px; font-size:24px; color:#6a7179">PX4 in Gazebo, hovering over the pad; the landing camera (1280&times;720 over 2.0&nbsp;rad) and the landing code's own marker check, ~350 frames per height.</p>
+  <aside>You asked whether 50 metres is the height the drone starts to see the pad. I measured it instead of assuming: the drone hovered over the pad and stepped down five metres at a time, and at each height the landing camera's own marker check ran on every frame. The big 1.80 metre marker is read in 88 percent of frames at 30 metres but only 13 percent at 50. The reason is size: at 50 metres the marker is only 13 pixels across, about two pixels per square of its pattern, and it flickers between one and fourteen percent all the way from 55 down to 35. So the plan became: cruise at 75 metres on GeoAnchor, start down 50 metres before the pad, and drop to 30 metres over it, where the marker reads reliably. That hand-over matters because GeoAnchor itself works best from 50 to 100 metres; below that, the pad marker is the better position source.</aside>
+</section>

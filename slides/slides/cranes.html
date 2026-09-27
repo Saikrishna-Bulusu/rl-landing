@@ -1,0 +1,25 @@
+<section id="cranes" data-transition="fade" style="background:#f7f6f2; color:#14181f; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:24px">
+  <p style="font-size:30px; font-weight:600; color:#b8620a">Part three &middot; real flight software, real pictures</p>
+  <h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:68px; font-weight:400; line-height:1.08">A crane the survey never saw</h2>
+  <div style="display:flex; gap:36px; align-items:flex-start">
+    <img src="/_blob/019971908f189e24071194705e3b6ad4" alt="PX4 in Gazebo, 8.5 s into a delivery at 51 m. Left, the chase camera: the 58 m crane mast is covered in orange cubes, the voxel map built from the drone's depth camera, and a blue ribbon, the local 3D planner's path, bends right to pass it. Right, the overhead view of the same moment with the planned path curving round the crane." style="width:1040px; height:416px; object-fit:cover; border:1px solid #ddd8cc; border-radius:16px">
+    <div style="flex:1; display:flex; flex-direction:column; gap:20px">
+      <p style="font-size:25px; font-weight:600; color:#6a7179">10 crane positions on the way in</p>
+      <div style="display:flex; flex-direction:column; gap:2px">
+        <p style="font-size:26px; color:#3d444d">2023 survey only</p>
+        <p style="font-family:'Source Serif 4', Georgia, serif; font-size:46px; color:#b8620a">8 of 10 crashed</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:2px">
+        <p style="font-size:26px; color:#3d444d">+ voxel map, swerve on look-ahead</p>
+        <p style="font-family:'Source Serif 4', Georgia, serif; font-size:46px; color:#14181f">0 crashed, closest 1.0&nbsp;m</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:2px">
+        <p style="font-size:26px; color:#3d444d">+ local 3D planner</p>
+        <p style="font-family:'Source Serif 4', Georgia, serif; font-size:46px; color:#1f7a4d">0 crashed, closest 2.6&nbsp;m</p>
+      </div>
+    </div>
+  </div>
+  <p style="font-size:27px; line-height:1.45; color:#3d444d">The depth camera turns what it sees into half-metre cubes; a 3D path search on those cubes and the survey re-plans every step in about 0.05&nbsp;s (the blue ribbon). <b style="color:#14181f">What the map shows is planned, not learned:</b> learning is kept for what moves.</p>
+  <p style="position:absolute; left:128px; bottom:64px; font-size:24px; color:#6a7179">PX4 in Gazebo, rig v2, a 58&nbsp;m crane moved per seed onto the delivery line; clearance judged on Gazebo's true positions.</p>
+  <aside>Part three moves from the fast simulator to PX4, the real flight software, flying in Gazebo with real camera pictures. The first test is the obstacle the map cannot know about: a 58 metre tower crane put up after the 2023 survey, placed somewhere different on the delivery line for each of ten flights. Trusting the survey alone, the drone crashed into it eight times out of ten; the two passes were luck, half a metre and 0.8 metres. With the voxel map, the drone's depth camera turns what it sees into half-metre cubes, the orange ones on the mast in the picture, and the drone swerves when its look-ahead hits them: no crashes, but it passed as close as one metre. With the local 3D planner, a path search runs through those cubes and the survey every step, about 20 times a second, keeping two metres of padding: no crashes, and never closer than 2.6 metres. The blue ribbon is the path it plans. Sai's call from this was that static things should be planned, not learned: the planner is a hard layer under any decider, and learning is kept for the things that move, like the magpie. One open detail: with this drone the planner passes a little closer than with the old one, a median of 3.4 metres against 4.6, still outside its two-metre padding, and I have not pinned down why.</aside>
+</section>

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sdf version="1.9">
+  <world name="aruco">
+    <physics type="ode">
+      <max_step_size>0.004</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+      <real_time_update_rate>250</real_time_update_rate>
+    </physics>
+    <gravity>0 0 -9.8</gravity>
+    <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
+    <atmosphere type="adiabatic"/>
+    <scene>
+      <grid>false</grid>
+      <ambient>0.4 0.4 0.4 1</ambient>
+      <background>0.62 0.76 0.90 1</background>
+      <shadows>true</shadows>
+    </scene>
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>1 1</size>
+            </plane>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>1200 1200</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.30 0.42 0.22 1</ambient>
+            <diffuse>0.34 0.48 0.25 1</diffuse>
+            <specular>0.8 0.8 0.8 1</specular>
+          </material>
+        </visual>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>0 0 0 0 -0 0</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <light name="sunUTC" type="directional">
+      <pose>0 0 500 0 -0 0</pose>
+      <cast_shadows>true</cast_shadows>
+      <intensity>1</intensity>
+      <direction>0.001 0.625 -0.78</direction>
+      <diffuse>0.904 0.904 0.904 1</diffuse>
+      <specular>0.271 0.271 0.271 1</specular>
+      <attenuation>
+        <range>2000</range>
+        <linear>0</linear>
+        <constant>1</constant>
+        <quadratic>0</quadratic>
+      </attenuation>
+      <spot>
+        <inner_angle>0</inner_angle>
+        <outer_angle>0</outer_angle>
+        <falloff>0</falloff>
+      </spot>
+    </light>
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <world_frame_orientation>ENU</world_frame_orientation>
+      <latitude_deg>47.397971057728974</latitude_deg>
+      <longitude_deg> 8.546163739800146</longitude_deg>
+      <elevation>0</elevation>
+    </spherical_coordinates>
+
+    <include>
+      <uri>model://arucotag</uri>
+      <!-- 20 m north of the x500 spawn. With the tag AT the spawn the aircraft
+           decoded it during the climb and jumped straight to centring, so the
+           transit and search phases -- the whole point of the mission -- never
+           ran. -->
+      <pose>120 0 0.001 0 0 0</pose>
+    </include>
+
+    <!-- Overhead observer camera. Not part of the aircraft: it exists only so
+         a mission can be recorded to video. 45 m up, looking straight down,
+         90 deg FOV -> a 90 m square footprint, which covers the largest
+         GeoAnchor error in the pool (34 m) with room to spare. -->
+    
+    <include><uri>model://logan_roads</uri><pose>0 0 0 0 0 0</pose></include>
+    <include><uri>model://logan_buildings</uri><pose>0 0 0 0 0 0</pose></include>
+    <include><uri>model://logan_trees</uri><pose>0 0 0 0 0 0</pose></include>
+    <include><uri>model://logan_pad_1</uri><name>logan_pad_1</name><pose>126.00 -9.00 0.001 0 0 0</pose></include>
+    <include><uri>model://logan_pad_2</uri><name>logan_pad_2</name><pose>104.00 -19.00 0.001 0 0 0</pose></include>
+    <include><uri>model://logan_pad_3</uri><name>logan_pad_3</name><pose>83.00 -6.00 0.001 0 0 0</pose></include>
+    <include><uri>model://logan_pad_4</uri><name>logan_pad_4</name><pose>160.00 -5.00 0.001 0 0 0</pose></include>
+    <include><uri>model://logan_pad_5</uri><name>logan_pad_5</name><pose>167.00 -9.00 0.001 0 0 0</pose></include>
+    <include><uri>model://logan_pad_6</uri><name>logan_pad_6</name><pose>168.00 -30.00 0.001 0 0 0</pose></include>
+    <include><uri>model://logan_pad_7</uri><name>logan_pad_7</name><pose>176.00 -12.00 0.001 0 0 0</pose></include>
+    <include><uri>model://logan_pad_8</uri><name>logan_pad_8</name><pose>130.00 -78.00 0.001 0 0 0</pose></include>
+    <include><uri>model://logan_pad_9</uri><name>logan_pad_9</name><pose>124.00 80.00 0.001 0 0 0</pose></include>
+    <include><uri>model://logan_pad_10</uri><name>logan_pad_10</name><pose>153.00 75.00 0.001 0 0 0</pose></include>
+    <include><uri>model://logan_pad_11</uri><name>logan_pad_11</name><pose>109.00 -82.00 0.001 0 0 0</pose></include>
+    <include><uri>model://logan_pad_12</uri><name>logan_pad_12</name><pose>88.00 -78.00 0.001 0 0 0</pose></include>
+    <include><uri>model://logan_pad_13</uri><name>logan_pad_13</name><pose>103.00 83.00 0.001 0 0 0</pose></include>
+    <include><uri>model://logan_pad_14</uri><name>logan_pad_14</name><pose>75.00 -73.00 0.001 0 0 0</pose></include>
+    <include><uri>model://logan_pad_15</uri><name>logan_pad_15</name><pose>63.00 -66.00 0.001 0 0 0</pose></include>
+    <model name='magpie'><static>true</static><link name='link'><visual name='body'><pose>0 0 0 0 0 0</pose><cast_shadows>false</cast_shadows><geometry><ellipsoid><radii>0.2 0.06 0.06</radii></ellipsoid></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual><visual name='head'><pose>0.2 0 0.03 0 0 0</pose><cast_shadows>false</cast_shadows><geometry><sphere><radius>0.05</radius></sphere></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual><visual name='wings'><pose>0 0 0 0 0 0</pose><cast_shadows>false</cast_shadows><geometry><box><size>0.14 0.8 0.015</size></box></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual><visual name='patches'><pose>-0.02 0 0 0 0 0</pose><cast_shadows>false</cast_shadows><geometry><box><size>0.08 0.5 0.017</size></box></geometry><material><ambient>0.95 0.95 0.95 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse></material></visual><visual name='tail'><pose>-0.26 0 0 0 0 0</pose><cast_shadows>false</cast_shadows><geometry><box><size>0.16 0.08 0.01</size></box></geometry><material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.05 0.05 0.05 1</diffuse></material></visual></link></model>
+    <model name='magpie_nest'><static>true</static><link name='link'><visual name='n'><pose>0 0 0 0 0 0</pose><cast_shadows>false</cast_shadows><geometry><cylinder><radius>0.35</radius><length>0.2</length></cylinder></geometry><material><ambient>0.35 0.22 0.1 1</ambient><diffuse>0.35 0.22 0.1 1</diffuse></material></visual></link></model>
+    <include><uri>model://x500_unified_v2t</uri><name>rig</name><pose>0 0 0 0 0 0</pose><static>true</static></include>
+  </world>
+</sdf>

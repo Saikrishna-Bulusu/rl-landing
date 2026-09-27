@@ -1,0 +1,28 @@
+<section id="rig" data-transition="fade" style="background:#f7f6f2; color:#14181f; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:26px">
+  <h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:68px; font-weight:400; line-height:1.08">One camera rig for birds and obstacles</h2>
+  <div style="display:flex; gap:40px; align-items:center">
+    <img src="/_blob/8b7d487d45227c69a1460d1a75165752" alt="The rig v2 drone in Gazebo: an x500 quadcopter with an OAK-D depth camera at the front under the body plate, wide cameras on the left, right and back under the plate, a wide camera on the top plate looking up, and a camera on a gimbal below the body held straight down for landing" style="width:680px; height:471px; object-fit:cover; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px">
+    <div style="flex:1; display:flex; flex-direction:column; gap:20px">
+      <p style="font-size:28px; line-height:1.4; color:#3d444d"><b style="color:#14181f">Ahead: OAK-D Lite.</b> Its colour picture hunts birds; its depth picture builds the voxel map.</p>
+      <p style="font-size:28px; line-height:1.4; color:#3d444d"><b style="color:#14181f">Left, right, back: three wide cameras</b> under the body plate. The old mast is gone: it raised the target the magpie aims at.</p>
+      <p style="font-size:28px; line-height:1.4; color:#3d444d"><b style="color:#14181f">Up: one wide camera on the top plate.</b> Sees <b style="color:#1f7a4d">82%</b> of the sky above the drone instead of 41%.</p>
+      <p style="font-size:28px; line-height:1.4; color:#3d444d"><b style="color:#14181f">Down: the landing camera on PX4's gimbal</b>, held straight down while the drone tilts.</p>
+    </div>
+  </div>
+  <div style="display:flex; gap:24px">
+    <div style="flex:1; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:24px 28px; display:flex; flex-direction:column; gap:8px">
+      <h3 style="font-size:27px; font-weight:600; color:#1f7a4d">Camera model checked: 0.9&ndash;1.1&nbsp;px</h3>
+      <p style="font-size:24px; line-height:1.35; color:#3d444d">Where each camera says a bird is, against the picture, over thousands of sightings.</p>
+    </div>
+    <div style="flex:1; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:24px 28px; display:flex; flex-direction:column; gap:8px">
+      <h3 style="font-size:27px; font-weight:600; color:#b8620a">Propellers fill 26% of each side view</h3>
+      <p style="font-size:24px; line-height:1.35; color:#3d444d">The price of mounting under the plate. Detections there are ignored.</p>
+    </div>
+    <div style="flex:1; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:24px 28px; display:flex; flex-direction:column; gap:8px">
+      <h3 style="font-size:27px; font-weight:600; color:#b8620a">Gimbal vs fixed camera: a tie</h3>
+      <p style="font-size:24px; line-height:1.35; color:#3d444d">Six landings each: 0.37 vs 0.29&nbsp;m off centre. The gimbal did not pay for itself in simulation.</p>
+    </div>
+  </div>
+  <p style="position:absolute; left:128px; bottom:64px; font-size:24px; color:#6a7179">Rig v2 with the up camera (&ldquo;v2l&rdquo;): 6 cameras, 7 pictures (the OAK-D gives colour and depth). Landing A/B before the landing fix.</p>
+  <aside>This is the drone every Gazebo result from here on uses. One rig does both jobs, birds and obstacles. At the front, an OAK-D Lite: its colour camera is the best bird camera on the drone, and its depth camera feeds the voxel map. Three wide cameras look left, right and back from under the body plate. The first rig had its cameras on a mast above the propellers, but a mast makes the drone taller and gives the magpie a higher target, so they moved underneath. The camera on the top plate looking up was added after Sai asked about adding a camera: it doubles how much of the sky above the drone is seen, from 41 to 82 percent. The landing camera hangs on PX4's own gimbal and is held straight down. Three checks at the bottom. First, the camera model is right to about a pixel: I compared where each camera should see the bird with where it actually appears in the pictures. Second, the price of mounting under the plate: the spinning propellers fill about a quarter of each side picture, so detections there are thrown away. Third, Sai asked whether the gimbal was the wrong choice. In simulation it made no difference to landing accuracy: six landings each, 0.37 metres with the gimbal and 0.29 with a fixed downward camera, a tie within the wobble that the next slides fix. A real gimbal may still earn its keep in wind or vibration; the simulator cannot tell us that.</aside>
+</section>

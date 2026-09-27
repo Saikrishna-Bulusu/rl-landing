@@ -1,0 +1,26 @@
+<section id="rlwhy" data-transition="fade" style="background:#f7f6f2; color:#14181f; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:26px">
+  <h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:68px; font-weight:400; line-height:1.08">What it learned: managing time, not dodging</h2>
+  <table style="width:1664px; border-collapse:collapse">
+    <tr><th style="border-bottom:1px solid #d9d6cd; width:824px; text-align:left; font-size:27px; font-weight:600; color:#6a7179; padding:12px 12px">first reason a flight failed, % of test flights</th><th style="border-bottom:1px solid #d9d6cd; width:420px; text-align:right; font-size:27px; font-weight:600; color:#6a7179; padding:12px 12px">corridor: planner &rarr; RL</th><th style="border-bottom:1px solid #d9d6cd; width:420px; text-align:right; font-size:27px; font-weight:600; color:#6a7179; padding:12px 12px">random: planner &rarr; RL</th></tr>
+    <tr><td style="border-bottom:1px solid #d9d6cd; font-size:27px; padding:12px 12px">ran out of time, people waiting at the pad</td><td style="border-bottom:1px solid #d9d6cd; font-size:27px; text-align:right; padding:12px 12px">2.86 &rarr; <b>2.28</b></td><td style="border-bottom:1px solid #d9d6cd; font-size:27px; text-align:right; padding:12px 12px">2.29 &rarr; <b style="color:#1f7a4d">0.85</b></td></tr>
+    <tr><td style="border-bottom:1px solid #d9d6cd; font-size:27px; padding:12px 12px">ran out of time giving way to a helicopter</td><td style="border-bottom:1px solid #d9d6cd; font-size:27px; text-align:right; padding:12px 12px">0.49 &rarr; <b style="color:#1f7a4d">0.06</b></td><td style="border-bottom:1px solid #d9d6cd; font-size:27px; text-align:right; padding:12px 12px">0.83 &rarr; <b style="color:#1f7a4d">0.04</b></td></tr>
+    <tr><td style="border-bottom:1px solid #d9d6cd; font-size:27px; padding:12px 12px">broke a rule, near miss, or missed the pad</td><td style="border-bottom:1px solid #d9d6cd; font-size:27px; text-align:right; padding:12px 12px">1.39 &rarr; <b style="color:#b8620a">1.58</b></td><td style="border-bottom:1px solid #d9d6cd; font-size:27px; text-align:right; padding:12px 12px">1.08 &rarr; <b style="color:#b8620a">1.44</b></td></tr>
+    <tr><td style="font-size:27px; padding:12px 12px"><b>failed in total</b></td><td style="font-size:27px; text-align:right; padding:12px 12px"><b>4.74 &rarr; 3.92</b></td><td style="font-size:27px; text-align:right; padding:12px 12px"><b>4.20 &rarr; 2.33</b></td></tr>
+  </table>
+  <div style="display:flex; gap:24px">
+    <div style="flex:1; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:30px; display:flex; flex-direction:column; gap:10px">
+      <h3 style="font-size:29px; font-weight:600; color:#b8620a">A trade, not a free win</h3>
+      <p style="font-size:26px; line-height:1.4; color:#3d444d">Far less time wasted, but a rule broken slightly more often: +0.2 and +0.4 points. A safety case has to weigh that.</p>
+    </div>
+    <div style="flex:1; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:30px; display:flex; flex-direction:column; gap:10px">
+      <h3 style="font-size:29px; font-weight:600; color:#b8620a">Why the oracle lost</h3>
+      <p style="font-size:26px; line-height:1.4; color:#3d444d">It knows the future but plans 20&nbsp;s ahead. Running out of mission time is a minutes-long problem, so &ldquo;3% unavoidable&rdquo; was wrong.</p>
+    </div>
+    <div style="flex:1; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:30px; display:flex; flex-direction:column; gap:10px">
+      <h3 style="font-size:29px; font-weight:600; color:#b8620a">What it leans on</h3>
+      <p style="font-size:26px; line-height:1.4; color:#3d444d">A 300&nbsp;s mission limit and people leaving the pad within 30&ndash;240&nbsp;s are my assumptions. Not yet tested against others.</p>
+    </div>
+  </div>
+  <p style="position:absolute; left:128px; bottom:64px; font-size:24px; color:#6a7179">RL: each seed's read-out chosen on tuning flights, mean of 3 seeds; 4,096 test flights per world.</p>
+  <aside>What did practice actually change? I broke every failed test flight down by the first thing that went wrong, for the planner and for the trained policy. The big wins are not dodging. They are time. When a helicopter comes in, Australian rules make the drone clear out of its way; the planner flees too far and runs out of its 300-second mission before it can get back, and the trained policy learned to give way efficiently and return. That failure nearly disappears. It also wastes less time elsewhere, so it has more slack to wait for people to leave the pad. But be straight about the third row: it breaks a rule, has a near miss or misses the pad slightly more often than the planner, by 0.2 to 0.4 points. So this is a trade, not a free win, and a safety reviewer would want to see that. This also explains how it beat the oracle: the oracle knows exactly what will happen but only thinks 20 seconds ahead, and running out of time is a problem that plays out over minutes. Finally, the gains depend on two of my assumptions, the 300-second limit and how long people linger at the pad, and I have not yet tested other values.</aside>
+</section>

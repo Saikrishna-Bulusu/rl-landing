@@ -1,0 +1,23 @@
+<section id="geoobst" data-transition="fade" style="background:#f7f6f2; color:#14181f; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:24px">
+  <h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:68px; font-weight:400; line-height:1.08">Obstacles: past a crane nobody mapped</h2>
+  <div style="display:flex; gap:36px; align-items:flex-start">
+    <img src="/_blob/a7b6c2c0f11728965c59a2b98dc763a3" data-video="/_blob/0753b4965c344a527eb62fb1bf2a1f98" alt="Film of the whole delivery. The cruise at 75 m flies the corner through; 90 m out the local planner takes over and starts down. Left, the chase camera: a 58 m crane on the way in, wrapped in red voxel cubes from the depth camera, and the blue ribbon, the planned path, now drawn from the drone itself, swinging 14 m to the side of the crane. Then straight down over the pad on the marker." style="width:1184px; height:666px; object-fit:contain; background:#14181f; border-radius:16px">
+    <div style="flex:1; display:flex; flex-direction:column; gap:22px">
+      <div style="display:flex; flex-direction:column; gap:2px">
+        <p style="font-size:24px; color:#6a7179">touchdown</p>
+        <p style="font-family:'Source Serif 4', Georgia, serif; font-size:40px; color:#1f7a4d">0.04&nbsp;m from centre</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:2px">
+        <p style="font-size:24px; color:#6a7179">the crane, on the path</p>
+        <p style="font-family:'Source Serif 4', Georgia, serif; font-size:40px; color:#14181f">passed at 6.7&nbsp;m</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:2px">
+        <p style="font-size:24px; color:#6a7179">GPS denied</p>
+        <p style="font-family:'Source Serif 4', Georgia, serif; font-size:40px; color:#14181f">117&nbsp;s, to touchdown</p>
+      </div>
+      <p style="font-size:24px; line-height:1.4; color:#3d444d">75&nbsp;m until 90&nbsp;m out, then the planner takes it down and steps 14&nbsp;m aside for the crane. The first try hit it: each plan took 2&nbsp;s; now 0.1&nbsp;s.</p>
+    </div>
+  </div>
+  <p style="position:absolute; left:128px; bottom:64px; font-size:24px; color:#b8620a">INTERNAL: the floor is Esri Wayback imagery (measurement use). Keep this slide inside the team.</p>
+  <aside>The obstacle flight, re-flown with three changes you asked about. First, it holds the 75 metre cruise until 90 metres from the pad instead of starting down 135 metres out; there the local 3D planner takes over and brings it down. Second, the blue ribbon is now drawn from the drone itself: before, it was drawn where PX4 believed the drone was, two to seven metres off, so the drone never seemed to follow it. Third, the planner no longer twitches: it used to re-join its old path at a point GeoAnchor's corrections had moved, and the command swung by up to 90 degrees. On the way down it meets a 58 metre crane nobody mapped; the depth camera wraps it in red cubes and the planner steps 14 metres to the side, passing at 6.7 metres. Honest note: the first re-flight hit the crane. With the new, higher approach the crane came into view only two and a half seconds out, and each plan took two seconds, so the answer came too late. A faster search, weighted A-star, brought a plan down to a tenth of a second, and the next flight passed cleanly. It landed 4 centimetres from the centre with GPS denied for 117 seconds.</aside>
+</section>

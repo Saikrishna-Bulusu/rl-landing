@@ -1,0 +1,290 @@
+#!/usr/bin/env python3
+"""
+land_env.py -- the last 30 m of a delivery into a Logan back yard, in gusty wind, on the GPU: x500_mjx's drone and
+PX4, the wind of gz_winddrag (the same model Gazebo now flies in), a yard with a house and often a tree, and today's
+landing rule to measure learners against.
+
+  yard     pad at the origin; a house (10 x 8 m, 4-7 m tall) whose nearest wall is 2.5-8 m from the pad centre; a tree
+           (canopy radius 1.5-3 m, 5-12 m tall, its edge 1.5-4.5 m from the pad) in 60% of yards (Logan LiDAR: 58%)
+  wind     W10 (m/s at 10 m) from the curriculum, any direction; log profile (z0 0.3 m), MIL-F-8785C turbulence,
+           1-cosine gusts (1 per 15 s, 0.2-0.6 W10, 1.5-5 s)
+  start    30 m up, 15-25 m from the pad, hovering, nose along a random heading (held: PX4 keeps it)
+  rule     gz_learner's landing: Mission._approach to the pad estimate (lead 0.69 s, sqrt(2 A d) and K_LIN d laws,
+           5 m/s far, 2.5 within 3 m); over the pad (within 2 m) descend as urban_agents.Rule does -- 2.5 m/s (PX4
+           caps it at 1.5) above 8 m, 0.8 below -- and below 6 m only when centred (0.3 m + 0.1 m per m above 3 m) and
+           still (< 0.3 m/s; < 0.1 below 2 m), gz_learner's gate
+  sensing  the pad estimate: marker noise 0.03 + 0.004 h m and a 0.05 m bias per flight; velocity noise 0.05 m/s
+  outcome  landed: touchdown within 0.75 m of the centre, sinking < 1 m/s, sliding < 0.5 m/s; crashed: within 0.35 m
+           of the house or tree, or down off the pad; timeout 90 s
+A learner acts through the same channel Gazebo offers PX4 (MAVLink velocity + acceleration setpoints):
+  flying     acceleration feed-forward added to the rule's velocity setpoint, |a| <= 3 m/s^2 per axis
+  deciding   the vertical command, all the way in: the rule's own / descend 1.5 / descend 0.6 / hold / climb 1.0 m/s
+             (coming down early leaves the stronger wind aloft, near the house). The learner starts as the rule (its
+             'rule' option favoured, no feed-forward) and learns where to leave it: copy the teacher first.
+"""
+import math
+
+import jax
+import jax.numpy as jnp
+import numpy as np
+
+import x500_mjx as X
+
+DT_C = X.DT * X.N_SUB                     # 0.04 s per decision
+T_MAX = 90.0
+Z0 = 0.3
+GUST_RATE = 1.0 / 15.0
+PAD_R, R_DRONE, Z_TOUCH = 0.75, 0.35, 0.25
+V_SINK_OK, V_SLIDE_OK = 1.0, 0.5
+A_FF = 3.0
+MODES = jnp.array([0.0, -1.5, -0.6, 0.0, 1.0])  # the deciding head: 0 = the rule's own vertical, then m/s (up +)
+TAU_LAT, A_MAX, K_LIN = 0.69, 1.5, 0.8     # px4_mission
+N_HIST = 4
+CRASH_R, HARD_R = -15.0, -10.0   # a crash's price (ppo.py --crash-r): a lost drone costs far more than a failed delivery
+
+
+# ---- wind: gz_winddrag/WindDrag.cc, updated once per decision (statistically the same process) ---------------------------
+def wind_new(key, w10):
+    th = jax.random.uniform(key, (), minval=0.0, maxval=2 * math.pi)
+    return dict(w10=w10, th=th, uvw=jnp.zeros(3), gt=jnp.array(-1.0), gT=jnp.array(1.0), gA=jnp.array(0.0), gth=th)
+
+
+def wind_step(ws, h, key):
+    k1, k2, k3 = jax.random.split(key, 3)
+    w10, th = ws["w10"], ws["th"]
+    hm = jnp.maximum(h, 1.0)
+    wm = w10 * jnp.log(hm / Z0) / math.log(10.0 / Z0)
+    hf = jnp.maximum(h, 3.0) * 3.281
+    den = 0.177 + 0.000823 * hf
+    sw = 0.1 * w10
+    su = sw / den ** 0.4
+    lu, lw, V = hf / den ** 1.2 / 3.281, jnp.maximum(h, 3.0), jnp.maximum(wm, 1.0)
+    a = jnp.exp(-V * DT_C / jnp.array([lu, lu, lw]))
+    sig = jnp.array([su, su, sw])
+    uvw = a * ws["uvw"] + sig * jnp.sqrt(1 - a ** 2) * jax.random.normal(k1, (3,))
+    r = jax.random.uniform(k2, (4,))
+    start = (ws["gt"] < 0) & (w10 > 0) & (r[0] < GUST_RATE * DT_C)
+    gt = jnp.where(start, 0.0, ws["gt"])
+    gT = jnp.where(start, 1.5 + 3.5 * r[1], ws["gT"])
+    gA = jnp.where(start, w10 * (0.2 + 0.4 * r[2]), ws["gA"])
+    gth = jnp.where(start, th + r[3] - 0.5, ws["gth"])
+    amp = jnp.where(gt >= 0, gA * 0.5 * (1 - jnp.cos(2 * math.pi * gt / gT)), 0.0)
+    gt = jnp.where(gt >= 0, gt + DT_C, gt)
+    gt = jnp.where(gt > gT, -1.0, gt)
+    ea, ec = jnp.array([jnp.cos(th), jnp.sin(th), 0.0]), jnp.array([-jnp.sin(th), jnp.cos(th), 0.0])
+    wind = ea * (wm + uvw[0]) + ec * uvw[1] + jnp.array([0.0, 0.0, uvw[2]]) + amp * jnp.array([jnp.cos(gth), jnp.sin(gth), 0.0])
+    return dict(w10=w10, th=th, uvw=uvw, gt=gt, gT=gT, gA=gA, gth=gth), wind
+
+
+# ---- the yard ---------------------------------------------------------------------------------------------------------------------
+def yard_new(key):
+    k = jax.random.split(key, 8)
+    ang = jax.random.uniform(k[0], (), minval=0, maxval=2 * math.pi)
+    d_wall = jax.random.uniform(k[1], (), minval=2.5, maxval=8.0)
+    half = jnp.array([5.0, 4.0])
+    # house centre: nearest wall d_wall from the pad along ang (house axis-aligned in its own frame, rotated by ang)
+    centre = jnp.array([jnp.cos(ang), jnp.sin(ang)]) * (d_wall + half[1])
+    h_house = jax.random.uniform(k[2], (), minval=4.0, maxval=7.0)
+    t_ang = ang + jax.random.uniform(k[3], (), minval=0.8, maxval=2 * math.pi - 0.8)     # not behind the house
+    t_r = jax.random.uniform(k[5], (), minval=1.5, maxval=3.0)
+    t_d = t_r + jax.random.uniform(k[4], (), minval=1.5, maxval=4.5)   # canopy edge 1.5-4.5 m from the pad centre:
+                                                                       # pads are re-sited to the clearest spot
+    t_top = jax.random.uniform(k[6], (), minval=5.0, maxval=12.0)
+    has_tree = jax.random.uniform(k[7], ()) < 0.6
+    return dict(hc=centre, hang=ang, hhalf=half, hh=h_house, tc=jnp.array([jnp.cos(t_ang), jnp.sin(t_ang)]) * t_d,
+                tr=t_r, ttop=t_top, tree=has_tree)
+
+
+def clearance(y, p):
+    """Distance from the drone centre to the house box and the tree (canopy sphere + trunk), metres."""
+    c, s = jnp.cos(-y["hang"]), jnp.sin(-y["hang"])
+    rel = p[:2] - y["hc"]
+    loc = jnp.array([c * rel[0] - s * rel[1], s * rel[0] + c * rel[1]])        # house frame: x from the pad to its centre
+    q = jnp.abs(jnp.array([loc[1], loc[0]])) - y["hhalf"]                     # 10 m along the wall, 8 m deep
+    dz = p[2] - y["hh"]
+    out = jnp.linalg.norm(jnp.maximum(jnp.array([q[0], q[1], dz]), 0.0))
+    d_house = out + jnp.minimum(jnp.maximum(jnp.maximum(q[0], q[1]), dz), 0.0)
+    cz = y["ttop"] - y["tr"]
+    d_can = jnp.linalg.norm(jnp.array([p[0] - y["tc"][0], p[1] - y["tc"][1], p[2] - cz])) - y["tr"]
+    d_trunk = jnp.where(p[2] < cz, jnp.linalg.norm(p[:2] - y["tc"]) - 0.2, 1e3)
+    d_tree = jnp.where(y["tree"], jnp.minimum(d_can, d_trunk), 1e3)
+    return d_house, d_tree
+
+
+# ---- the rule -------------------------------------------------------------------------------------------------------------------
+def approach(d, v, cap):
+    """Mission._approach: aim a lag-time ahead, arrive stopped (sqrt(2 A d)), proportional near (K_LIN d)."""
+    d_eff = d - v * TAU_LAT
+    n = jnp.linalg.norm(d_eff)
+    return jnp.where(n > 1e-3, d_eff / jnp.maximum(n, 1e-6) * jnp.minimum(jnp.minimum(cap, jnp.sqrt(2 * A_MAX * n)), K_LIN * n), 0.0)
+
+
+def gate(d_h, h, v_est):
+    """The rule's gate as the learner sees it: would it hold, and how far and how fast against its limits."""
+    tol = 0.3 + 0.1 * jnp.maximum(h - 3.0, 0.0)
+    v_ok = jnp.where(h < 2.0, 0.1, 0.3)
+    r_d, r_v = jnp.linalg.norm(d_h) / tol, jnp.linalg.norm(v_est[:2]) / v_ok
+    hold = (h < 6.0) & ((r_d > 1.0) | (r_v > 1.0))
+    return jnp.array([hold * 1.0, jnp.minimum(r_d, 3.0) / 3.0, jnp.minimum(r_v, 3.0) / 3.0])
+
+
+def rule_cmd(d_h, h, v_est):
+    """The rule's velocity setpoint (ENU) and whether it is in the landing phase."""
+    near = jnp.linalg.norm(d_h) < 3.0
+    over = jnp.linalg.norm(d_h) < 2.0
+    v_h = approach(d_h, v_est[:2], jnp.where(near, 2.5, 5.0))
+    tol = 0.3 + 0.1 * jnp.maximum(h - 3.0, 0.0)
+    v_ok = jnp.where(h < 2.0, 0.1, 0.3)
+    hold = (h < 6.0) & ((jnp.linalg.norm(d_h) > tol) | (jnp.linalg.norm(v_est[:2]) > v_ok))
+    vz = jnp.where(over, jnp.where(hold, 0.0, jnp.where(h > 8.0, -2.5, -0.8)), 0.0)
+    return jnp.concatenate([v_h, vz[None]]), near
+
+
+# ---- the episode --------------------------------------------------------------------------------------------------------------------
+def reset(key, w10):
+    k = jax.random.split(key, 6)
+    b = jax.random.uniform(k[0], (), minval=0, maxval=2 * math.pi)
+    r0 = jax.random.uniform(k[1], (), minval=15.0, maxval=25.0)
+    yaw = jax.random.uniform(k[2], (), minval=-math.pi, maxval=math.pi)
+    s = X.init_state(jnp.array([r0 * jnp.cos(b), r0 * jnp.sin(b), 30.0]), yaw=yaw)
+    return dict(sim=s, yaw=yaw, wind=wind_new(k[3], w10), yard=yard_new(k[4]),
+                bias=0.05 * jax.random.normal(k[5], (2,)), t=jnp.array(0.0), key=k[5],
+                prev_act=jnp.zeros(7), hist=jnp.zeros((N_HIST, 5)), done=jnp.array(False), ff_slow=jnp.zeros(2),
+                outcome=jnp.array(0), miss=jnp.array(0.0))
+
+
+def estimates(st, key):
+    p, v = st["sim"]["d"].qpos[:3], st["sim"]["d"].qvel[:3]
+    k1, k2 = jax.random.split(key)
+    sd = 0.03 + 0.004 * p[2]
+    p_est = p.at[:2].add(st["bias"] + sd * jax.random.normal(k1, (2,)))
+    v_est = v + 0.05 * jax.random.normal(k2, (3,))
+    return p_est, v_est
+
+
+def observe(st, p_est, v_est, cmd):
+    """What the learner sees: the pad estimate, its velocity, its lean (the wind shows there), the rule's setpoint, the
+    house and tree relative to it (survey + voxel map), its last action, and the last N_HIST (velocity, lean)."""
+    q = st["sim"]["d"].qpos[3:7]
+    lean = X.qrot(q)[:2, 2]
+    y = st["yard"]
+    p = p_est
+    rel_h = y["hc"] - p[:2]
+    rel_t = jnp.where(y["tree"], y["tc"] - p[:2], jnp.array([30.0, 30.0]))
+    dh, dt_ = clearance(y, p)
+    # near the pad a 0.5 m offset is 0.05 of -p/10: the learner also gets it on a fine scale, and the rule's gate
+    return jnp.concatenate([-p[:2] / 10, p[2:] / 10, v_est / 3, lean * 5, cmd / 3, rel_h / 10, rel_t / 10,
+                            jnp.array([jnp.minimum(dh, 10) / 5, jnp.minimum(dt_, 10) / 5, y["tree"] * 1.0]),
+                            st["prev_act"], st["hist"].ravel(), jnp.tanh(-p[:2] / 0.5), gate(-p[:2], p[2], v_est)])
+
+
+OBS_DIM = 2 + 1 + 3 + 2 + 3 + 2 + 2 + 3 + 7 + N_HIST * 5 + 2 + 3
+
+
+def shield_block(d_h, h, v_est, k):
+    """The safety layer (k > 0): below 6 m no descent unless within k times the rule's centring and stillness limits."""
+    tol = k * (0.3 + 0.1 * jnp.maximum(h - 3.0, 0.0))
+    v_ok = k * jnp.where(h < 2.0, 0.1, 0.3)
+    return (k > 0) & (h < 6.0) & ((jnp.linalg.norm(d_h) > tol) | (jnp.linalg.norm(v_est[:2]) > v_ok))
+
+
+def step(st, act, key, fly=True, decide=True, shield=0.0, hp_tau=0.0):
+    """One decision. act: (a_x, a_y in [-1, 1], mode logits... as an index in act[2]). Returns the new state, the reward,
+    the observation. fly/decide off -> the rule's own choice for that part."""
+    k1, k2, k3 = jax.random.split(key, 3)
+    p_est, v_est = estimates(st, k1)
+    d_h = -p_est[:2]
+    cmd, near = rule_cmd(d_h, p_est[2], v_est)
+    # hp_tau > 0: the push's slow part is taken out (a first-order high-pass): PX4's velocity integral cancels any
+    # steady push anyway (26 Sept: a fixed push of 0-3 m/s^2 changed nothing), so the learner's range goes to reacting
+    raw = jnp.clip(act[:2], -2, 2)
+    a_ff = jnp.where(fly, jnp.clip(raw - st["ff_slow"] * (hp_tau > 0), -1, 1) * A_FF, 0.0)
+    ff_slow = st["ff_slow"] + (DT_C / jnp.maximum(hp_tau, DT_C)) * (raw - st["ff_slow"])
+    mode = act[2].astype(jnp.int32)
+    vz = jnp.where(decide & (mode > 0), MODES[mode], cmd[2])
+    vz = jnp.where(shield_block(d_h, p_est[2], v_est, shield), jnp.maximum(vz, 0.0), vz)
+    vel_sp = cmd.at[2].set(vz)
+    ws, wind = wind_step(st["wind"], st["sim"]["d"].qpos[2], k2)
+    sim = X.control_step(st["sim"], vel_sp, jnp.array([a_ff[0], a_ff[1], 0.0]), st["yaw"], wind)
+    p, v = sim["d"].qpos[:3], sim["d"].qvel[:3]
+    t = st["t"] + DT_C
+    dh, dtr = clearance(st["yard"], p)
+    tilt = jnp.arccos(jnp.clip(X.qrot(sim["d"].qpos[3:7])[2, 2], -1, 1))
+    miss = jnp.linalg.norm(p[:2])
+    down = p[2] <= Z_TOUCH
+    hit = (jnp.minimum(dh, dtr) < R_DRONE) | (tilt > 1.2)
+    ok = down & (miss <= PAD_R) & (-v[2] < V_SINK_OK) & (jnp.linalg.norm(v[:2]) < V_SLIDE_OK)
+    timeout = t >= T_MAX
+    outcome = jnp.where(hit, 2, jnp.where(ok, 1, jnp.where(down, 3, jnp.where(timeout, 4, 0))))   # 1 landed 2 crash 3 hard/off 4 timeout
+    done = outcome > 0
+    # reward: the goal priced first; shaping small and potential-based
+    phi = lambda pp: -(jnp.linalg.norm(pp[:2]) + 0.3 * pp[2]) / 10.0
+    r = 0.997 * phi(p) - phi(st["sim"]["d"].qpos[:3]) - 0.002 - 0.01 * jnp.sum(a_ff ** 2) / A_FF ** 2
+    # a hard or off-pad touchdown is a failed delivery that may break something: as bad as missing the chance; a crash
+    # worse; giving up (timeout) returns the parcel safely
+    r = r + jnp.where(outcome == 1, 10.0 + 5.0 * (1 - miss / PAD_R), 0.0) + jnp.where(outcome == 2, CRASH_R, 0.0) \
+        + jnp.where(outcome == 3, HARD_R, 0.0) + jnp.where(outcome == 4, -5.0, 0.0)
+    lean = X.qrot(sim["d"].qpos[3:7])[:2, 2]
+    hist = jnp.concatenate([st["hist"][1:], jnp.concatenate([v_est / 3, lean * 5])[None]], axis=0)
+    prev = jnp.concatenate([a_ff / A_FF, jax.nn.one_hot(mode, 5)])
+    st = dict(st, sim=sim, wind=ws, t=t, prev_act=prev, hist=hist, done=done, outcome=outcome, miss=miss, key=k3, ff_slow=ff_slow)
+    return st, r, done
+
+
+def obs_of(st, key):
+    p_est, v_est = estimates(st, key)
+    cmd, _ = rule_cmd(-p_est[:2], p_est[2], v_est)
+    return observe(st, p_est, v_est, cmd)
+
+
+def rule_action(st, key):
+    """The rule itself as an action: no feed-forward, and the gate's vertical choice (decide=False does that)."""
+    return jnp.array([0.0, 0.0, 0.0])
+
+
+def evaluate(policy_fn, w10, n=1024, seed=0, fly=True, decide=True, t_max=T_MAX, shield=0.0, hp_tau=0.0):
+    """n flights at wind w10 (paired: the same yards, starts and wind seeds for every policy). Returns outcome counts,
+    miss distances of landed flights, times."""
+    keys = jax.random.split(jax.random.PRNGKey(seed), n)
+    st = jax.vmap(lambda k: reset(k, w10))(keys)
+
+    def one(carry, k):
+        st = carry
+        ks = jax.random.split(k, n * 2).reshape(n, 2, 2)
+        obs = jax.vmap(obs_of)(st, ks[:, 0])
+        act = policy_fn(obs, st)
+        new, r, done = jax.vmap(lambda s, a, kk: step(s, a, kk, fly, decide, shield, hp_tau))(st, act, ks[:, 1])
+        keep = lambda a, b: jnp.where(st["done"].reshape((-1,) + (1,) * (a.ndim - 1)), a, b)
+        st = jax.tree_util.tree_map(keep, st, new)
+        return st, None
+
+    n_steps = int(t_max / DT_C) + 1
+    run = jax.jit(lambda s, ks: jax.lax.scan(one, s, ks)[0])
+    st = run(st, jax.random.split(jax.random.PRNGKey(seed + 1), n_steps))
+    out = np.array(st["outcome"])
+    return dict(w10=float(w10), n=n, landed=float((out == 1).mean()), crashed=float((out == 2).mean()),
+                hard=float((out == 3).mean()), timeout=float(((out == 4) | (out == 0)).mean()),
+                miss_landed=float(np.median(np.array(st["miss"])[out == 1])) if (out == 1).any() else float("nan"),
+                t_mean=float(np.array(st["t"]).mean()),
+                first40=dict(outcome=out[:40].tolist(), miss=np.array(st["miss"])[:40].round(3).tolist(),
+                             t=np.array(st["t"])[:40].round(2).tolist()))     # episode i = Gazebo's yard i
+
+
+if __name__ == "__main__":
+    import argparse, json, time
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--rule-ladder", action="store_true", help="today's landing rule from calm to 18 m/s")
+    ap.add_argument("--n", type=int, default=1024)
+    ap.add_argument("--seed", type=int, default=10_000, help="ppo.py evaluates on seed 10000: the same yards, starts, winds")
+    ap.add_argument("--out", default=f"{X.R}/gazebo_wind/rule_ladder.json")
+    a = ap.parse_args()
+    if a.rule_ladder:
+        rule = lambda obs, st: jnp.tile(jnp.array([0.0, 0.0, 0.0]), (obs.shape[0], 1))
+        res = []
+        for w in (0, 3, 6, 9, 12, 15, 18):
+            t0 = time.time()
+            r = evaluate(rule, float(w), n=a.n, seed=a.seed, fly=False, decide=False)
+            r["wall_s"] = round(time.time() - t0, 1)
+            res.append(r)
+            print(json.dumps(r), flush=True)
+        json.dump(res, open(a.out, "w"), indent=1)

@@ -1,0 +1,19 @@
+<section id="lastnext" data-transition="fade" style="background:#14181f; color:#f7f6f2; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:26px">
+  <h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:68px; font-weight:400; line-height:1.08; color:#f7f6f2">Where part two stands</h2>
+  <div style="display:flex; gap:24px">
+    <div style="flex:1; background:#1e232c; border-radius:16px; padding:32px; display:flex; flex-direction:column; gap:12px">
+      <h3 style="font-size:31px; font-weight:600; color:#1f7a4d">Shown</h3>
+      <p style="font-size:26px; color:#a8b0bb; line-height:1.4">Given the planner's forecast and time to practise, a learner beats the same-sensor planner on unseen flights: <b style="color:#f7f6f2">+0.9 points</b> (corridor) and <b style="color:#f7f6f2">+1.9</b> (random), three seeds each, by managing mission time.</p>
+    </div>
+    <div style="flex:1; background:#1e232c; border-radius:16px; padding:32px; display:flex; flex-direction:column; gap:12px">
+      <h3 style="font-size:31px; font-weight:600; color:#b8620a">Not shown</h3>
+      <p style="font-size:26px; color:#a8b0bb; line-height:1.4">That it learns <b style="color:#f7f6f2">patterns</b>: the random world gained more than the corridor. That it is <b style="color:#f7f6f2">safer</b>: rule breaks rose slightly. That the gain survives other assumptions about time and people.</p>
+    </div>
+    <div style="flex:1; background:#1e232c; border-radius:16px; padding:32px; display:flex; flex-direction:column; gap:12px">
+      <h3 style="font-size:31px; font-weight:600; color:#f7f6f2">Next</h3>
+      <p style="font-size:26px; color:#a8b0bb; line-height:1.4">Rebuild Logan from the 2023 LiDAR survey: a strip of houses our map lacked, and a tree over 5&nbsp;m beside <b style="color:#f7f6f2">58% of pads</b>. Pads move to the clearest spot in each yard. Then honest sensors, then Gazebo with PX4.</p>
+    </div>
+  </div>
+  <p style="font-size:31px; line-height:1.45; color:#f7f6f2"><b style="color:#b8620a">Method that earned its keep.</b> Before blaming the learner, copy the planner into the same network. One GPU minute split &ldquo;cannot find the answer&rdquo; from &ldquo;cannot see it&rdquo; &mdash; and both turned out to be true.</p>
+  <aside>Three things to leave the room with. What is shown: once the learner is given the planner's own forecast and allowed to practise, it beats the best same-sensor planner on flights it has never seen, by about one point in the corridor world and two in the random world, and it does it by managing mission time. What is not shown: first, that it learns patterns across flights; the idea was that it should gain most in the corridor world, where the helicopter always comes the same way, and it gained more in the random world instead. Second, that it is safer; it breaks rules slightly more often than the planner. Third, that the gain survives different assumptions about the mission time limit and how long people stay at the pad. What is next: the LiDAR survey of Logan arrived and already showed that our map is missing a whole southern strip of houses (the building file stopped at a tile edge), and that most back-yard pads have a tree right beside them. Everywhere else our building outlines check out: 98.5% are confirmed by the survey. So the world gets rebuilt from the survey before anything else, with each pad moved to the clearest spot in its yard and only houses with enough clear sky taking deliveries, then realistic sensors, then the same suburb in Gazebo with real PX4 flight software. The method point is the copy test: one minute of GPU time told us that the first failure had two causes, a learner that could not find a good policy and inputs that could not show it one.</aside>
+</section>

@@ -1,0 +1,19 @@
+<section id="gznext" data-transition="fade" style="background:#14181f; color:#f7f6f2; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; padding:128px; display:flex; flex-direction:column; gap:26px">
+  <h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:68px; font-weight:400; line-height:1.08; color:#f7f6f2">Where part three stands</h2>
+  <div style="display:flex; gap:24px">
+    <div style="flex:1; background:#1e232c; border-radius:16px; padding:32px; display:flex; flex-direction:column; gap:12px">
+      <h3 style="font-size:31px; font-weight:600; color:#1f7a4d">Shown</h3>
+      <p style="font-size:26px; color:#a8b0bb; line-height:1.4">On PX4 with real pictures: the voxel map and a local 3D planner passed <b style="color:#f7f6f2">all 10 cranes</b> the survey missed. Landings <b style="color:#f7f6f2">4&nbsp;cm</b> from centre, facing one way. A rig that points at the magpie within 3&deg;.</p>
+    </div>
+    <div style="flex:1; background:#1e232c; border-radius:16px; padding:32px; display:flex; flex-direction:column; gap:12px">
+      <h3 style="font-size:31px; font-weight:600; color:#b8620a">Not shown</h3>
+      <p style="font-size:26px; color:#a8b0bb; line-height:1.4">That the learner beats the planner live: <b style="color:#f7f6f2">5 of 9 each</b>, far too few flights. That the fast simulator's bird numbers hold in Gazebo: lingering phantom birds and hesitation only showed up live.</p>
+    </div>
+    <div style="flex:1; background:#1e232c; border-radius:16px; padding:32px; display:flex; flex-direction:column; gap:12px">
+      <h3 style="font-size:31px; font-weight:600; color:#f7f6f2">Next</h3>
+      <p style="font-size:26px; color:#a8b0bb; line-height:1.4">Cheaper pictures, then <b style="color:#f7f6f2">20 seeds per decider</b> on the same nests in both simulators. Then the learner's real job: when to commit to the last metres with a magpie about.</p>
+    </div>
+  </div>
+  <p style="font-size:31px; line-height:1.45; color:#f7f6f2"><b style="color:#b8620a">Method that earned its keep.</b> Judge on the simulator's truth, not the drone's own estimate. PX4 assumed a GPS delay Gazebo does not have, and its estimate ran <b style="color:#f7f6f2">0.9&nbsp;m ahead</b> of the drone at 8&nbsp;m/s, so every clearance judged on it was off by up to a metre.</p>
+  <aside>Three things to leave the room with. Shown: on the real flight software with real camera pictures, the voxel map and local planner got past all ten cranes that the survey knew nothing about; landings now touch down about four centimetres from the centre with the nose held in one direction; and the camera rig points at the magpie to within three degrees. Not shown: that the learner beats the planner in live flights. Both delivered five of nine, which says nothing either way at that sample size. And not shown that the fast simulator's bird numbers carry over to Gazebo: live, the drone sometimes tracked phantom birds that lingered and hesitated because of them, which the fast simulator's model of false alarms does not reproduce. Next: make the picture pipeline cheaper, which the previous slide measured, then fly twenty seeds per decider on the same nests in both simulators, so we can say where the fast simulator can be trusted. Then give the learner the job it is suited to: deciding when to commit to the last few metres when a magpie is around. The method point: always score against the simulator's ground truth. PX4 was configured for a real GPS receiver's delay that Gazebo's GPS does not have, so its position estimate ran almost a metre ahead of the real drone at cruise speed, and any clearance judged on that estimate was off by up to a metre.</aside>
+</section>

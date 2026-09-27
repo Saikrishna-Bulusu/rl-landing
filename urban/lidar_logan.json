@@ -1,0 +1,9 @@
+{
+ "shift_applied_m": [
+  2.5,
+  -0.5
+ ],
+ "iou_as_converted": 0.4990031656579006,
+ "iou_best": 0.5734425402949112,
+ "roof_diff_median_m": -0.388671875
+}

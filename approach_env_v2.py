@@ -102,7 +102,7 @@ class ApproachEnvV2(ApproachEnv):
 
         self.sigma = float(sc["sigma"][i]) * self.sigma_scale
         mag = float(sc["err"][i]) * self.sigma_scale
-        self._bearing += self.rng.normal(0.0, 0.02)
+        self._bearing += self.rng.normal(0.0, self.BEARING_STEP)
         self.err_xy = mag * np.array([np.cos(self._bearing),
                                       np.sin(self._bearing)])
         self.t_fix = 0.0

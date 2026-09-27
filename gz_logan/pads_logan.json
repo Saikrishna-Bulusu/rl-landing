@@ -1,0 +1,210 @@
+[
+ {
+  "name": "arucotag",
+  "enu": [
+   120.0,
+   0.0
+  ],
+  "ids": [
+   2,
+   1,
+   0
+  ],
+  "ours": true
+ },
+ {
+  "name": "logan_pad_1",
+  "enu": [
+   126.0,
+   -9.0
+  ],
+  "ids": [
+   5,
+   4,
+   3
+  ],
+  "ours": false
+ },
+ {
+  "name": "logan_pad_2",
+  "enu": [
+   104.0,
+   -19.0
+  ],
+  "ids": [
+   8,
+   7,
+   6
+  ],
+  "ours": false
+ },
+ {
+  "name": "logan_pad_3",
+  "enu": [
+   83.0,
+   -6.0
+  ],
+  "ids": [
+   11,
+   10,
+   9
+  ],
+  "ours": false
+ },
+ {
+  "name": "logan_pad_4",
+  "enu": [
+   160.0,
+   -5.0
+  ],
+  "ids": [
+   14,
+   13,
+   12
+  ],
+  "ours": false
+ },
+ {
+  "name": "logan_pad_5",
+  "enu": [
+   167.0,
+   -9.0
+  ],
+  "ids": [
+   17,
+   16,
+   15
+  ],
+  "ours": false
+ },
+ {
+  "name": "logan_pad_6",
+  "enu": [
+   168.0,
+   -30.0
+  ],
+  "ids": [
+   20,
+   19,
+   18
+  ],
+  "ours": false
+ },
+ {
+  "name": "logan_pad_7",
+  "enu": [
+   176.0,
+   -12.0
+  ],
+  "ids": [
+   23,
+   22,
+   21
+  ],
+  "ours": false
+ },
+ {
+  "name": "logan_pad_8",
+  "enu": [
+   130.0,
+   -78.0
+  ],
+  "ids": [
+   26,
+   25,
+   24
+  ],
+  "ours": false
+ },
+ {
+  "name": "logan_pad_9",
+  "enu": [
+   124.0,
+   80.0
+  ],
+  "ids": [
+   29,
+   28,
+   27
+  ],
+  "ours": false
+ },
+ {
+  "name": "logan_pad_10",
+  "enu": [
+   153.0,
+   75.0
+  ],
+  "ids": [
+   32,
+   31,
+   30
+  ],
+  "ours": false
+ },
+ {
+  "name": "logan_pad_11",
+  "enu": [
+   109.0,
+   -82.0
+  ],
+  "ids": [
+   35,
+   34,
+   33
+  ],
+  "ours": false
+ },
+ {
+  "name": "logan_pad_12",
+  "enu": [
+   88.0,
+   -78.0
+  ],
+  "ids": [
+   38,
+   37,
+   36
+  ],
+  "ours": false
+ },
+ {
+  "name": "logan_pad_13",
+  "enu": [
+   103.0,
+   83.0
+  ],
+  "ids": [
+   41,
+   40,
+   39
+  ],
+  "ours": false
+ },
+ {
+  "name": "logan_pad_14",
+  "enu": [
+   75.0,
+   -73.0
+  ],
+  "ids": [
+   44,
+   43,
+   42
+  ],
+  "ours": false
+ },
+ {
+  "name": "logan_pad_15",
+  "enu": [
+   63.0,
+   -66.0
+  ],
+  "ids": [
+   47,
+   46,
+   45
+  ],
+  "ours": false
+ }
+]

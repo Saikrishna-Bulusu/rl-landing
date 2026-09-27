@@ -1,0 +1,27 @@
+<section id="geoloop" data-transition="fade" style="background:#f7f6f2; color:#14181f; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:28px">
+  <h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:68px; font-weight:400; line-height:1.08">One delivery with GPS denied, end to end</h2>
+  <div style="display:flex; gap:16px; align-items:center">
+    <div style="flex:1; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:20px 24px; display:flex; flex-direction:column; gap:6px">
+      <h3 style="font-size:27px; font-weight:600">Downward camera</h3>
+      <p style="font-size:24px; color:#6a7179; line-height:1.3">on the gimbal, 75&nbsp;m up</p>
+    </div>
+    <x-shape kind="arrow-right" style="background:#b8620a; width:48px; height:24px"></x-shape>
+    <div style="flex:1; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:20px 24px; display:flex; flex-direction:column; gap:6px">
+      <h3 style="font-size:27px; font-weight:600">GeoAnchor</h3>
+      <p style="font-size:24px; color:#6a7179; line-height:1.3">its own three layers, the 2021 map, its gate</p>
+    </div>
+    <x-shape kind="arrow-right" style="background:#b8620a; width:48px; height:24px"></x-shape>
+    <div style="flex:1; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:20px 24px; display:flex; flex-direction:column; gap:6px">
+      <h3 style="font-size:27px; font-weight:600">PX4's estimator</h3>
+      <p style="font-size:24px; color:#6a7179; line-height:1.3">fuses each fix as a position aid</p>
+    </div>
+    <x-shape kind="arrow-left" style="background:#1f7a4d; width:48px; height:24px"></x-shape>
+    <div style="flex:1; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:20px 24px; display:flex; flex-direction:column; gap:6px">
+      <h3 style="font-size:27px; font-weight:600">Pad marker + rangefinder</h3>
+      <p style="font-size:24px; color:#6a7179; line-height:1.3">take over below 50&nbsp;m</p>
+    </div>
+  </div>
+  <img src="/_blob/259830881a76411a8931b67426d2d0ae" alt="One delivery, 170 s. PX4's position error against the truth (blue) and height (dark line). On GPS for the first 47 s the error is near zero; with GPS denied and GeoAnchor navigating from 47 to 133 s it wanders between 1 and 8 m, peaking at 10 m at the hand-over; with the pad marker from 133 s it falls to about 0.1 m down to touchdown." style="width:1664px; height:440px; object-fit:contain; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px">
+  <p style="position:absolute; left:128px; bottom:64px; font-size:24px; color:#6a7179">The obstacle flight of 27 Sept: GPS on for the climb, then denied to touchdown. GeoAnchor unmodified; PX4 v1.16.2 in Gazebo.</p>
+  <aside>How the pieces fit in one flight. The drone climbs on GPS, and once GeoAnchor's fixes are arriving steadily over the suburb, GPS is switched off for the rest of the flight. From then on the downward camera's pictures go through GeoAnchor, its own unmodified pipeline and its accept-or-reject gate, and every accepted fix goes into PX4's position estimator as an auxiliary position. Below 50 metres GeoAnchor fades, so the pad marker takes its place as the position source, and a downward rangefinder gives the height. The chart is one real flight. Blue is how far PX4's own estimate was from where the drone really was. On GPS it is near zero. On GeoAnchor it wanders between one and eight metres, median about 2.7. The spike to 10 metres is the hand-over at 50 metres, just before the marker comes into view. Once the marker is read the error drops to about ten centimetres and stays there to touchdown.</aside>
+</section>

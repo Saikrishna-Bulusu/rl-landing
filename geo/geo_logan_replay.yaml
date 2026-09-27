@@ -1,0 +1,105 @@
+session:
+  tag: logan_replay
+  runs_dir: /home/sai/RL_projects/rl-landing/geo/runs
+bus:
+  data_pub: ipc:///tmp/geoanchor_rl/data.sock
+  processing_pub: ipc:///tmp/geoanchor_rl/processing.sock
+  output_pub: ipc:///tmp/geoanchor_rl/output.sock
+  data_ctl: ipc:///tmp/geoanchor_rl/data.ctl
+  processing_ctl: ipc:///tmp/geoanchor_rl/processing.ctl
+  output_ctl: ipc:///tmp/geoanchor_rl/output.ctl
+data_layer:
+  map:
+    source: /home/sai/RL_projects/rl-landing/gz_logan/imagery/ref_tile_2021-07-21.tif
+    store_dir: /home/sai/RL_projects/rl-landing/geo/stores
+    method: edgepoint2_s64
+    tile_px: 1024
+    overlap_px: 128
+    max_keypoints: 2048
+    rebuild: false
+  feed:
+    type: file
+    path: /home/sai/RL_projects/rl-landing/gazebo_geo/floor/flight.mp4
+    sidecar: /home/sai/RL_projects/rl-landing/gazebo_geo/floor/flight_gt.jsonl
+    fps: auto
+    fps_margin: 1.15
+    fps_bounds:
+    - 0.5
+    - 10
+    loop: false
+    realtime: true                # paced to the matcher (fps: auto); false publishes unpaced and the matcher drops frames
+    device: 0
+    width: 1280
+    height: 720
+    fourcc: MJPG
+    frame_px: 512
+    jpeg_quality: 80
+    intrinsics:
+      fx_px: 410.94
+      fy_px: 410.94
+      cx_px: 640.0
+      cy_px: 360.0
+      dist: null
+  gps:
+    source: replay
+    endpoint: udpin:0.0.0.0:14550
+    baud: 921600
+    stale_after_s: 3.0
+    heartbeat_timeout_s: 5.0
+  envelope:
+    agl_min_m: 50
+    agl_max_m: 100
+processing_layer:
+  method: edgepoint2_s64
+  max_keypoints: 2048
+  min_keypoints: 30
+  min_matches: 12
+  inlier_gate: 8
+  ransac_reproj_px: 3.0
+  rectify: true
+  latency_budget_ms: 250
+  search:
+    use_prior: true
+    prior_max_age_s: 5.0
+    prior_radius_m: 100
+    cold_start_max_tiles: 9
+  covariance:
+    backend: gate_only
+    fixed_sigma_m: 8.0
+    clamp_m:
+    - 0.1
+    - 100.0
+    model_path: null
+output_layer:
+  pair_window_s: 0.5
+  loss: nll
+  alarm_error_m: 50.0
+  export:
+    flush_every: 20
+    min_flush_interval_s: 20.0
+    max_records: 200000
+    include_logs: true
+    max_log_rows: 4000
+    embed_basemap: true
+  fc:
+    enabled: false
+    loop_mode: open
+    firmware: ardupilot
+    controller: pixhawk6c
+    endpoint: udpout:127.0.0.1:14551
+    baud: 921600
+    message: ODOMETRY
+    min_quality_inliers: 40
+    require_no_device_errors: true
+  qgc:
+    enabled: false
+    endpoint: udpout:127.0.0.1:14550
+    system_id: 2
+    label: GeoAnchor
+    send_origin: false
+    origin: null
+api:
+  host: 0.0.0.0
+  port: 8010
+  cors_origins:
+  - '*'

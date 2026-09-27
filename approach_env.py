@@ -55,6 +55,49 @@ import gymnasium as gym
 from gymnasium import spaces
 
 
+def decode_curve(path="detect_curve_60m.json", marker="0"):
+    """
+    p(decode) against apparent marker size, FITTED TO THE MEASURED COUNTS.
+
+    MIN_PX = 34 is a cliff: below it the marker is invisible, above it perfect.
+    The measured curve is a ramp, not a cliff -- 0% at 10-15 px, 2% at 15-20,
+    38% at 20-25, 84% at 25-30, 100% by 35 px.
+
+    detect_curve.json could not show that: it was flown from 26 m, so 25 px was
+    its floor and everything below was extrapolation. detect_curve_60m.json is
+    the same flight from 60 m, which actually samples the tail.
+
+    KNOWN LIMITATION. These rates are measured within 2 m of directly overhead.
+    In flight the 1.20 m marker decodes at 14 px when it sits near the edge of
+    the frame, where a 99.7 deg rectilinear projection stretches it. So this
+    curve understates detection off-axis, and the env's footprint is a circle
+    of uniform detectability inside it.
+
+    So fit a logistic to the binomial counts in detect_curve.json rather than
+    threshold on them. The 400-2000 px bin is excluded: its 45% is the marker
+    OUTGROWING the frame on short final, a different failure that the real
+    aircraft answers with the finer marker in its ladder and that this
+    single-marker env does not model.
+
+    Returns (x0, s) for p(px) = 1 / (1 + exp(-(px - x0) / s)).
+    """
+    import json
+    from scipy.optimize import minimize
+
+    bins = [b for b in json.load(open(path))[marker] if b["px_hi"] <= 400]
+    x = np.array([0.5 * (b["px_lo"] + b["px_hi"]) for b in bins], float)
+    n = np.array([b["n"] for b in bins], float)
+    k = np.round(np.array([b["rate"] for b in bins], float) * n)
+
+    def nll(th):
+        p = 1.0 / (1.0 + np.exp(-(x - th[0]) / max(abs(th[1]), 1e-3)))
+        p = np.clip(p, 1e-9, 1 - 1e-9)
+        return -float(np.sum(k * np.log(p) + (n - k) * np.log(1 - p)))
+
+    r = minimize(nll, [30.0, 1.5], method="Nelder-Mead")
+    return float(r.x[0]), float(abs(r.x[1]))
+
+
 class ApproachEnv(gym.Env):
     metadata = {"render_modes": []}
 
@@ -66,16 +109,61 @@ class ApproachEnv(gym.Env):
 
     # ---- vehicle (sub-1 kg delivery quad) -------------------------------
     VZ_MAX = 2.0         # commanded descent/climb, m/s
+    SEARCH_R_MAX = 25.0  # a[1] maps to 0..this, metres
     VXY_MAX = 5.0        # lateral speed cap, m/s
-    TAU = (0.30, 0.80)   # first-order velocity lag, randomized per episode
+    # FIRST-ORDER VELOCITY LAG, MEASURED ON THE REAL FIRMWARE.
+    #
+    # measure_tau.py commanded PX4 in Gazebo a velocity step and timed the 63.2%
+    # crossing (px4_response.json):
+    #
+    #     lateral  0.69 s, settling at 2.02 m/s against a 2.00 m/s command
+    #     vertical 0.23 s, settling at 1.52 m/s against a 1.50 m/s command
+    #
+    # Two things were wrong before. The lag was a single number for both axes,
+    # but the real aircraft changes descent rate THREE TIMES faster than it
+    # changes ground speed -- it only has to change thrust, not tilt the whole
+    # airframe -- so the env was making vertical decisions look more sluggish
+    # and lateral ones less sluggish than they are. And it was drawn uniformly
+    # from 0.30-0.80, whose mean of 0.55 is a noticeably more agile aircraft
+    # than the 0.69 we actually fly.
+    TAU_LAT = 0.69
+    TAU_VER = 0.23
+
+    # How fast the ERROR DIRECTION wanders between fixes. 0.02 rad makes the
+    # direction effectively fixed for a whole episode, which is what v1-v3
+    # assumed; v4 overrides it with the value measured from GeoAnchor's own
+    # per-frame error vectors. Left here so earlier results reproduce exactly.
+    BEARING_STEP = 0.02
 
     # ---- camera ---------------------------------------------------------
     # These lines set the whole difficulty of the task. Do not tune them to make
     # training easier -- they are the physics of seeing a 1 m marker.
-    FOV_DEG = 60.0
-    PX = 640
-    MIN_PX = 20.0        # marker needs ~20 px across to decode reliably
-    PAD_SIZE = 1.0       # marker edge length (m)
+    # CAMERA, matched to the x500_mono_cam_down actually flown in Gazebo
+    # (intrinsics read off the camera_info topic, not assumed: fx = 539.94).
+    FOV_DEG = 99.7
+    PX = 1280
+    MIN_PX = 34.0        # 20 px is where decoding BEGINS to fail; 34 is where
+                         # it is reliable, measured against this camera
+    PAD_SIZE = 1.20      # the COARSE marker -- the one acquisition depends on
+
+    # How detection is modelled. "threshold" is the original cliff at MIN_PX;
+    # "curve" samples from the logistic fitted to the measured counts.
+    #
+    # "curve" IS THE MEASURED ONE AND THE DEFAULT IS STILL "threshold". That
+    # needs justifying. The cliff is wrong in both directions -- it says a
+    # 1.20 m marker is invisible above 19.1 m when it in fact decodes half the
+    # time at 27.2 m, and certain below it when it is not -- and re-running
+    # bigger_marker.py under both, the crash reduction credited to a 2.40 m pad
+    # fell from 49.2 pp to 30.5 pp. So "curve" should win.
+    #
+    # It cannot be flipped as a one-liner. Under "curve" this env's own demo()
+    # guard fails: diving succeeds 100% at low sigma and 98% at high, so the
+    # sigma-dependent gap the whole study rests on disappears at these defaults.
+    # A more capable detector makes the v1 scenario trivial, and the fix is to
+    # retune its altitudes -- a separate job with its own re-baselining, not a
+    # default change smuggled in here. v4/v5 configure their own difficulty and
+    # pass "curve" explicitly, which is how the marker sweep was run.
+    DETECT = "threshold"
 
     # ---- episode --------------------------------------------------------
     DT = 0.2             # control period (s) -> 5 Hz decisions
@@ -92,7 +180,24 @@ class ApproachEnv(gym.Env):
         touch the camera constants, which are physics.
         """
         super().__init__()
-        assert arm in ("none", "staleness", "sigma"), arm
+        # "truesigma" is not a system anyone could build -- it hands the policy
+        # the EXACT magnitude of the error on the current fix, which requires
+        # the ground truth the aircraft is trying to find. It exists to settle
+        # one question: our sigma predictor is only about 31% accurate (ENCE
+        # 0.313), so a null result for sigma could always be blamed on the
+        # predictor rather than on the idea. If a PERFECT uncertainty number
+        # also gives no benefit, that excuse is gone and the null is final.
+        # "qNN" is truesigma DEGRADED to a known rank-correlation NN/100 with
+        # the real error -- q100 is perfect ordering, q40 is badly noisy. It
+        # exists because the obvious way to ask "how good must sigma be?" --
+        # building pools whose sigma column is re-coupled to the error -- also
+        # changes WHICH ERRORS the environment draws, since episodes are
+        # sampled by sigma decile. That silently changes the task along with
+        # the information and the comparison means nothing. Degrading the
+        # OBSERVED CHANNEL instead holds the pool, the errors and the episode
+        # distribution fixed, exactly as the truesigma arm does.
+        assert (arm in ("none", "staleness", "sigma", "truesigma")
+                or (arm.startswith("q") and arm[1:].isdigit())), arm
         self.arm = arm
         self.lam = lam
         self.sigma_scale = sigma_scale
@@ -128,9 +233,28 @@ class ApproachEnv(gym.Env):
 
         fov = np.radians(self.FOV_DEG)
         self.fov_tan = np.tan(fov / 2.0)
-        # Above this altitude the marker is smaller than MIN_PX and cannot be
-        # decoded no matter where the drone is. ~30 m for a 1 m pad at 640 px.
-        self.h_detect = self.PAD_SIZE * self.PX / (fov * self.MIN_PX)
+        # Above this altitude the marker spans fewer than MIN_PX and cannot be
+        # decoded no matter where the drone is.
+        #
+        # This used to divide by the FOV in radians, a small-angle
+        # approximation. At the old 60 deg that was 10% optimistic and did not
+        # matter; at the real camera's 99.7 deg it is 37% optimistic, which
+        # would have told the policy it could acquire the pad from 26 m when
+        # the aircraft actually loses it at 19 m. Use the tangent.
+        self.h_detect = self.PAD_SIZE * self.PX / (2.0 * self.fov_tan
+                                                   * self.MIN_PX)
+        # Focal length in pixels, so apparent size is PAD_SIZE * F_PX / h.
+        # Same 539.94 that was read off the camera_info topic in Gazebo.
+        self.f_px = self.PX / (2.0 * self.fov_tan)
+        self._curve = decode_curve() if self.DETECT == "curve" else None
+        if self._curve is not None:
+            # h_detect is what the RULE is designed around -- "descend until you
+            # can reliably see". Leaving it at the MIN_PX value while the physics
+            # became a ramp would handicap the rule for a reason that has nothing
+            # to do with the question, so move it to the altitude where the
+            # measured curve reaches 90%.
+            x0, sc = self._curve
+            self.h_detect = self.PAD_SIZE * self.f_px / (x0 - sc * np.log(1/0.9 - 1))
 
         # a[0] vertical velocity, a[1] search radius, a[2] chase gain.
         #
@@ -169,7 +293,7 @@ class ApproachEnv(gym.Env):
         u = 0.5 * (1.0 + math.erf(self._z / np.sqrt(2.0)))
         e = self._bin_err
         mag = float(e[int(round(u * (len(e) - 1)))]) * self.sigma_scale
-        self._bearing += self.rng.normal(0.0, 0.02)
+        self._bearing += self.rng.normal(0.0, self.BEARING_STEP)
         self.err_xy = mag * np.array([np.cos(self._bearing),
                                       np.sin(self._bearing)])
         self.t_fix = 0.0
@@ -197,9 +321,14 @@ class ApproachEnv(gym.Env):
         inside the camera footprint. Neither alone is sufficient, which is what
         makes altitude a real decision rather than 'always descend'.
         """
-        if self.h > self.h_detect:
+        # Inside the camera footprint is necessary under either model.
+        if np.linalg.norm(self.pad - self.xy) > self.h * self.fov_tan:
             return False
-        return np.linalg.norm(self.pad - self.xy) <= self.h * self.fov_tan
+        if self._curve is None:
+            return self.h <= self.h_detect
+        x0, sc = self._curve
+        span = self.PAD_SIZE * self.f_px / max(self.h, 1e-6)
+        return self._roll < 1.0 / (1.0 + np.exp(-(span - x0) / sc))
 
     def _visual_target(self):
         """
@@ -223,10 +352,15 @@ class ApproachEnv(gym.Env):
         self.xy = self.pad + r.normal(0, 15.0, 2)
         self.vz = 0.0
         self.vxy = np.zeros(2)
-        self.tau = float(r.uniform(*self.TAU))
+        self.tau = self.TAU_LAT          # kept: the guidance law uses it
         self.t = 0.0
         self.phase = r.uniform(0, 2 * np.pi)   # search spiral phase
         self.was_acquired = False
+        # ONE draw per step, not one per call. _acquired() is asked three times
+        # a step (the observation, the reward, the termination check); drawing
+        # separately would let the marker be visible to the reward and invisible
+        # to the observation in the same instant.
+        self._roll = float(r.random())
 
         # Pick this episode's conditions: one sigma decile, held for the episode.
         b = int(r.integers(len(self.sigma_bins)))
@@ -247,6 +381,10 @@ class ApproachEnv(gym.Env):
         # The three arms differ ONLY in this channel.
         if self.arm == "sigma":
             unc = self.sigma / 50.0
+        elif self.arm == "truesigma":
+            unc = float(np.linalg.norm(self.err_xy)) / 50.0
+        elif self.arm.startswith("q"):
+            unc = self._degraded_sigma() / 50.0
         elif self.arm == "staleness":
             unc = float(np.exp(-self.lam * self.t_fix))
         else:
@@ -264,7 +402,7 @@ class ApproachEnv(gym.Env):
     def step(self, action):
         a = np.clip(np.asarray(action, float), -1, 1)
         vz_cmd = a[0] * self.VZ_MAX
-        search_r = (a[1] + 1.0) * 0.5 * 25.0    # 0..25 m
+        search_r = (a[1] + 1.0) * 0.5 * self.SEARCH_R_MAX
         chase = (a[2] + 1.0) * 0.5              # 0..1
 
         # --- lateral guidance: a controller, not the policy -----------------
@@ -291,11 +429,7 @@ class ApproachEnv(gym.Env):
             target = self._visual_target()
             self.target = target.copy()
         else:
-            self.phase += 0.9 * self.DT
-            raw = self._believed_pad() + search_r * np.array(
-                [np.cos(self.phase), np.sin(self.phase)])
-            self.target = (1.0 - chase) * self.target + chase * raw
-            target = self.target
+            target = self._search_target(a, search_r, chase)
 
         # ponytail: plain P controller with a velocity cap. A full PID adds an
         # integral term that only matters for steady-state offset against wind,
@@ -305,13 +439,13 @@ class ApproachEnv(gym.Env):
         if n > self.VXY_MAX:
             v_des *= self.VXY_MAX / n
 
-        # First-order velocity lag, same shape as WaveLander's low-level tracker
-        k = self.DT / self.tau
-        self.vxy += k * (v_des - self.vxy)
-        self.vz += k * (vz_cmd - self.vz)
+        # First-order velocity lag, per axis, from the measured firmware.
+        self.vxy += (self.DT / self.TAU_LAT) * (v_des - self.vxy)
+        self.vz += (self.DT / self.TAU_VER) * (vz_cmd - self.vz)
         self.xy = np.clip(self.xy + self.vxy * self.DT, -self.AREA, self.AREA)
         self.h = float(np.clip(self.h + self.vz * self.DT, 0.0, 120.0))
 
+        self._roll = float(self.rng.random())
         self.t += self.DT
         self.t_fix += self.DT
         if self.t_fix >= self.FIX_DT:
@@ -333,6 +467,36 @@ class ApproachEnv(gym.Env):
                 "sigma_m": float(self.sigma), "h_m": self.h, "t_s": self.t,
                 "success": bool(terminated and miss <= self.PAD_R)}
         return self._obs(), float(r), terminated, truncated, info
+
+    def _degraded_sigma(self):
+        """
+        The true error, pushed through a Gaussian copula so its RANK agrees
+        with the truth only `rho` of the time, then mapped onto the real
+        sigma distribution's own quantiles so the number the policy sees has
+        a realistic scale whatever its quality.
+        """
+        from scipy.stats import norm
+        rho = int(self.arm[1:]) / 100.0
+        e = float(np.linalg.norm(self.err_xy))
+        u = float(np.clip(np.mean(self.pool_err < e), 1e-4, 1 - 1e-4))
+        z = rho * norm.ppf(u) + np.sqrt(max(1 - rho ** 2, 0.0)) * self.rng.normal()
+        return float(np.quantile(self.pool_sigma,
+                                 float(np.clip(norm.cdf(z), 1e-4, 1 - 1e-4))))
+
+    def _search_target(self, a, search_r, chase):
+        """
+        Where to look when the marker is NOT in view.
+
+        A hook, because this is the decision under study and subclasses need to
+        replace it without copying the whole guidance block around it. The base
+        behaviour is a fixed-rate spiral offset from the newest fix, damped by
+        a[2]; v4 replaces the fixed spiral with a bearing the policy chooses.
+        """
+        self.phase += 0.9 * self.DT
+        raw = self._believed_pad() + search_r * np.array(
+            [np.cos(self.phase), np.sin(self.phase)])
+        self.target = (1.0 - chase) * self.target + chase * raw
+        return self.target
 
     def _reward(self, acq, miss):
         """
@@ -390,7 +554,12 @@ def demo(pool=None):
 
     # The detection ceiling is what makes this a decision problem. If it drifts
     # above the spawn altitude the task becomes trivial.
-    assert 25.0 < e.h_detect < 35.0, e.h_detect
+    # Was "25 < h_detect < 35", which stopped being true when the small-angle
+    # approximation was replaced by the tangent and h_detect fell to 19.1 m. It
+    # had been failing under every detector since. What it meant to check is
+    # that the marker is NOT visible from the spawn altitude -- that is the next
+    # line -- and that the number is physical rather than degenerate.
+    assert 5.0 < e.h_detect < 60.0, e.h_detect
     assert e.h_detect < e.H0[0], "marker visible from spawn -- task is trivial"
 
     obs, _ = e.reset(seed=1)

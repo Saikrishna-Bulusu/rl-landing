@@ -1,0 +1,24 @@
+<section id="eyes" data-transition="fade" style="background:#f7f6f2; color:#14181f; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:26px">
+  <h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:68px; font-weight:400; line-height:1.08">The fix: hand it the planner's eyes, then let it practise</h2>
+  <div style="display:flex; gap:24px">
+    <div style="flex:1; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:30px; display:flex; flex-direction:column; gap:10px">
+      <h3 style="font-size:29px; font-weight:600; color:#b8620a">1 &middot; See what it sees</h3>
+      <p style="font-size:26px; line-height:1.4; color:#3d444d">For each of the 14 manoeuvres, the planner's 20-second forecast of rule breaks, progress and lateness, and its pick.</p>
+    </div>
+    <div style="flex:1; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:30px; display:flex; flex-direction:column; gap:10px">
+      <h3 style="font-size:29px; font-weight:600; color:#b8620a">2 &middot; Start as a copy</h3>
+      <p style="font-size:26px; line-height:1.4; color:#3d444d">Taught by imitation, it matches the planner on <b>100%</b> of decisions (it was 48% without the forecast): 95.3%.</p>
+    </div>
+    <div style="flex:1; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:30px; display:flex; flex-direction:column; gap:10px">
+      <h3 style="font-size:29px; font-weight:600; color:#b8620a">3 &middot; Practise, keep the best</h3>
+      <p style="font-size:26px; line-height:1.4; color:#3d444d">PPO for 410,000 flights. Every 10 rounds, score it on separate tuning flights; keep the best version.</p>
+    </div>
+  </div>
+  <table style="width:1664px; border-collapse:collapse">
+    <tr><td style="border-bottom:1px solid #d9d6cd; width:380px; font-size:27px; font-weight:600; color:#1f7a4d; padding:12px 12px; vertical-align:top">Identical options drift</td><td style="border-bottom:1px solid #d9d6cd; width:1284px; font-size:26px; line-height:1.4; color:#3d444d; padding:12px 12px">In open sky three manoeuvres are the same command. It drifted to &ldquo;land anyway&rdquo; and kept the habit near people: violations 0.1% &rarr; 2.5%. Now it only sees distinct options.</td></tr>
+    <tr><td style="border-bottom:1px solid #d9d6cd; width:380px; font-size:27px; font-weight:600; color:#1f7a4d; padding:12px 12px; vertical-align:top">An anchor stops learning</td><td style="border-bottom:1px solid #d9d6cd; width:1284px; font-size:26px; line-height:1.4; color:#3d444d; padding:12px 12px">Pulling it back toward the planner held it still: 60 rounds at exactly the copy's score. So it roams, and the best version is kept.</td></tr>
+    <tr><td style="width:380px; font-size:27px; font-weight:600; color:#1f7a4d; padding:12px 12px; vertical-align:top">One policy, three read-outs</td><td style="width:1284px; font-size:26px; line-height:1.4; color:#3d444d; padding:12px 12px">Its <b>top choice</b>, its <b>dice</b>, or the odds-weighted <b>average command</b>. The dice blend moves that are not on the menu &mdash; 8% &ldquo;climb&rdquo; among &ldquo;hold&rdquo; is a gentle climb &mdash; and the average keeps that without randomness.</td></tr>
+  </table>
+  <p style="position:absolute; left:128px; bottom:64px; font-size:24px; color:#6a7179">Everything the planner sees, the drone has: no information from the future reaches the policy.</p>
+  <aside>This is the fix, in three steps. First, instead of making the network re-invent the planner's 20-second look-ahead, we hand it the planner's forecast for every manoeuvre: how many rule breaks each option leads to, how much progress it makes, whether it will be late, and which one the planner would pick. That is still only what the drone's own sensors support; nothing from the future. Second, it starts life as a copy of the planner, and with the forecast the copy matches the planner on every single decision. Third, it practises by trial and error, and every 10 rounds we test it on a separate set of tuning flights and keep the best version. Three lessons made practice work. One: when three buttons do the same thing, the policy's preference between them drifts, and it drifted to "land anyway", which bit it when someone stood at the pad; now it only sees options that are actually different. Two: tying it tightly to the planner stopped the drift but also stopped all learning. Three: a trained policy gives odds, not one answer, and there are three ways to fly it. The dice version can blend options to make a speed the menu does not have, like a gentle climb, and flying the odds-weighted average keeps that benefit without any randomness.</aside>
+</section>

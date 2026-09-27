@@ -1,0 +1,7 @@
+magpie distance | Gazebo (real detector): samples, tracked, pos err, dir err | fast sim (model): samples, tracked, pos err, dir err
+    0- 10 m |   184   77.7%    2.7 m  13.4 deg |  23186   91.9%    1.9 m   1.9 deg
+   10- 20 m |   153   81.7%    6.5 m   5.5 deg |  29199   85.2%    3.9 m   2.3 deg
+   20- 40 m |    41   19.5%    3.5 m   1.6 deg |  10253   77.3%    6.9 m   2.4 deg
+   40- 60 m |   173   31.8%   53.0 m  96.4 deg |   7676   43.5%   15.2 m   2.3 deg
+   60-100 m |   145   19.3%   98.9 m 125.8 deg |  11917   35.7%   20.1 m   2.7 deg
+  100-999 m |    91   70.3%  115.2 m  95.2 deg | 111373    4.1%  506.2 m  98.9 deg

@@ -1,0 +1,40 @@
+<section id="simcost" data-transition="fade" style="background:#f7f6f2; color:#14181f; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:24px">
+  <h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:68px; font-weight:400; line-height:1.08">Why only three seeds, and how to fly many</h2>
+  <div style="display:flex; gap:48px">
+    <div style="flex:1.1; display:flex; flex-direction:column; gap:14px">
+      <p style="font-size:25px; font-weight:600; color:#6a7179">Laptop seconds per simulated second: <span style="color:#b8620a">today</span> and <span style="color:#1f7a4d">on the GPU</span></p>
+      <div style="display:flex; flex-direction:column; gap:5px">
+        <p style="font-size:24px; color:#3d444d">Making 5 HD pictures look like a real camera, 20 times a second</p>
+        <div style="display:flex; align-items:center; gap:12px"><div style="width:507px; height:26px; background:#b8620a; border-radius:5px"></div><p style="font-size:24px; font-weight:600">1.95&nbsp;s</p></div>
+        <div style="display:flex; align-items:center; gap:12px"><div style="width:78px; height:26px; background:#1f7a4d; border-radius:5px"></div><p style="font-size:24px; font-weight:600; color:#1f7a4d">0.30&nbsp;s</p></div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:5px">
+        <p style="font-size:24px; color:#3d444d">Bird detector on those pictures (half precision on the GPU)</p>
+        <div style="display:flex; align-items:center; gap:12px"><div style="width:304px; height:26px; background:#b8620a; border-radius:5px"></div><p style="font-size:24px; font-weight:600">1.17&nbsp;s</p></div>
+        <div style="display:flex; align-items:center; gap:12px"><div style="width:179px; height:26px; background:#1f7a4d; border-radius:5px"></div><p style="font-size:24px; font-weight:600; color:#1f7a4d">0.69&nbsp;s</p></div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:5px">
+        <p style="font-size:24px; color:#3d444d">Drawing the 7 pictures (6 cameras; the OAK-D gives two), and sending them on</p>
+        <div style="display:flex; align-items:center; gap:12px"><div style="width:68px; height:26px; background:#6a7179; border-radius:5px"></div><p style="font-size:24px; font-weight:600">0.26&nbsp;s</p></div>
+      </div>
+      <p style="font-size:24px; color:#3d444d">Physics + PX4: <b style="color:#1f7a4d">never the limit</b> (5&ndash;8 copies ran side by side at full speed)</p>
+      <p style="font-size:26px; line-height:1.42; color:#14181f; margin-top:4px">MuJoCo or PyBullet would replace the part that is <b style="color:#1f7a4d">already cheap</b>. Pictures and the detector cost the same in any simulator.</p>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; gap:16px">
+      <div style="background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:22px 28px; display:flex; flex-direction:column; gap:8px">
+        <h3 style="font-size:28px; font-weight:600; color:#1f7a4d">1 &middot; Cheaper pictures, still honest</h3>
+        <p style="font-size:23px; line-height:1.38; color:#3d444d">3.4 &rarr; 1.3 laptop seconds per simulated second, and the magpie is found just as often: <b style="color:#14181f">90.0% vs 90.5%</b> of 369 held-out magpies, same false alarms. 20 seeds per decider: ~7 hours today, an estimated 1&ndash;2 with 3 copies at once.</p>
+      </div>
+      <div style="background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:22px 28px; display:flex; flex-direction:column; gap:8px">
+        <h3 style="font-size:28px; font-weight:600; color:#1f7a4d">2 &middot; Many seeds fast, checked slowly</h3>
+        <p style="font-size:23px; line-height:1.38; color:#3d444d">The fast GPU simulator flies 4,096 deliveries in minutes, with PX4's measured lag. Fly the same nests in both; trust it where they agree, fix it where not.</p>
+      </div>
+      <div style="background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:22px 28px; display:flex; flex-direction:column; gap:8px">
+        <h3 style="font-size:28px; font-weight:600; color:#6a7179">3 &middot; MuJoCo only if step 2 says so</h3>
+        <p style="font-size:23px; line-height:1.38; color:#3d444d">Its GPU version (MJX) is installed. Worth building only if the fast simulator's flying, not its seeing, is what disagrees. PyBullet: CPU-only, slower.</p>
+      </div>
+    </div>
+  </div>
+  <p style="position:absolute; left:128px; bottom:64px; font-size:24px; color:#6a7179">RTX 5070 Laptop (8&nbsp;GB), 32 CPU threads, idle machine. Magpie flights so far: 0.1&times; real time, ~10 minutes of laptop time each.</p>
+  <aside>Sai asked why we can only fly a handful of seeds, and whether MuJoCo or PyBullet would fix it. I timed every step on an idle laptop. Every simulated second the drone takes twenty sets of five HD pictures. Making each set look like a real camera, with noise, blur and JPEG, costs about two seconds of laptop time per simulated second, on the CPU. The bird detector costs another 1.2 seconds. Drawing the seven pictures, which come from six cameras because the OAK-D gives both a colour and a depth picture, and passing them along is about a quarter of a second, and physics plus PX4 is never the limit: five to eight copies ran side by side at full speed in the crane flights. So swapping Gazebo's physics for MuJoCo or PyBullet would speed up the part that is already cheap; if the bird is still known only through pictures, those pictures and that detector cost the same in any simulator. What does help, measured: the camera realism on the GPU, and the detector in half precision. Together that is 3.4 down to 1.3 seconds of work per simulated second, and on 369 held-out magpie pictures the detector finds the bird just as often, 90.0 against 90.5 percent, with the same false alarm rate. Running three copies at once, twenty seeds for each decider should take one to two hours instead of about seven; that is an estimate until it is flown. Step two is to use the fast GPU simulator for the thousands of flights and Gazebo to check it on the same nests. Step three, MuJoCo on the GPU, only if that check shows the fast simulator's flying is what is wrong. PyBullet runs only on the CPU and is slower than MuJoCo, so it is not worth it here.</aside>
+</section>

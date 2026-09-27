@@ -1,0 +1,28 @@
+<section id="landing" data-transition="fade" style="background:#f7f6f2; color:#14181f; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; padding:128px 128px 160px; display:flex; flex-direction:column; gap:22px">
+  <h2 style="font-family:'Source Serif 4', Georgia, serif; font-size:68px; font-weight:400; line-height:1.08">Landing: centred, still, facing one way</h2>
+  <img src="/_blob/cee0f44a55ed8abd5c2c95172cf80224" alt="Two charts of the same delivery flown before and after the landing fix, measured on Gazebo's true position. Left, seen from above over the last 8 m of descent: before, the drone circles the pad centre about 25-30 cm out, a loop about 55 cm across, touching down 0.27 m off; after, it stays within about 7 cm and touches down 6 cm off. Right, distance from the pad centre against height from 10 m down: before, it swings between 21 and 34 cm all the way down; after, it drifts from 7 cm to about 2 cm." style="width:1664px; height:410px; object-fit:contain; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px">
+  <div style="display:flex; gap:24px">
+    <div style="flex:1; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:24px 26px; display:flex; flex-direction:column; gap:6px">
+      <p style="font-size:24px; font-weight:600; color:#6a7179">Off centre at touchdown</p>
+      <p style="font-family:'Source Serif 4', Georgia, serif; font-size:48px; color:#1f7a4d">0.33 &rarr; 0.04 m</p>
+      <p style="font-size:22px; line-height:1.35; color:#3d444d">Steers on where the drone will be, 0.7&nbsp;s ahead: it answers that late.</p>
+    </div>
+    <div style="flex:1; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:24px 26px; display:flex; flex-direction:column; gap:6px">
+      <p style="font-size:24px; font-weight:600; color:#6a7179">Circling, last 8 m down</p>
+      <p style="font-family:'Source Serif 4', Georgia, serif; font-size:48px; color:#1f7a4d">55 &rarr; 5 cm</p>
+      <p style="font-size:22px; line-height:1.35; color:#3d444d">Brakes in proportion near the centre; the old square-root rule flipped the command.</p>
+    </div>
+    <div style="flex:1; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:24px 26px; display:flex; flex-direction:column; gap:6px">
+      <p style="font-size:24px; font-weight:600; color:#6a7179">Nose turning, final descent</p>
+      <p style="font-family:'Source Serif 4', Georgia, serif; font-size:48px; color:#1f7a4d">65&deg; &rarr; 2&deg;</p>
+      <p style="font-size:22px; line-height:1.35; color:#3d444d">Heading frozen when the pad's marker is first read.</p>
+    </div>
+    <div style="flex:1; background:#ffffff; border:1px solid #ddd8cc; border-radius:16px; padding:24px 26px; display:flex; flex-direction:column; gap:6px">
+      <p style="font-size:24px; font-weight:600; color:#6a7179">Touchdown speed</p>
+      <p style="font-family:'Source Serif 4', Georgia, serif; font-size:48px; color:#1f7a4d">0.4 &rarr; 0.03 m/s</p>
+      <p style="font-size:22px; line-height:1.35; color:#3d444d">Magpie flights. Below 6&nbsp;m it descends only when centred and still.</p>
+    </div>
+  </div>
+  <p style="position:absolute; left:128px; bottom:64px; font-size:24px; color:#6a7179">PX4 in Gazebo, judged on Gazebo's true position. Before: 12 landings (fixed and gimbal camera). After: 12 calm landings; worst 0.07&nbsp;m.</p>
+  <aside>Sai asked for two things: no wobble, and the drone facing one direction while it lands. Left chart: the same delivery seen from above over the last eight metres, before and after. Before, the drone circled the pad about 25 to 30 centimetres out, all the way to the ground. After, it stays within a few centimetres. Right chart: distance from the pad centre against height. The orange line swings the whole way down; the green one drifts in to about two centimetres. Four numbers, each with the change that fixed it. One: the drone answers a command about 0.7 seconds late, so the controller now steers on where the drone will be, not where it is. Two: the old speed rule, square root of distance, is infinitely steep right at the centre, so the command kept flipping from side to side; near the centre it now slows down in proportion to the distance. Together these took the landing error from a third of a metre to four centimetres. Three: the nose used to follow the direction of travel, so it kept turning while centring. Now the heading is frozen the moment the landing camera first reads the pad's marker, and turning is wound down between 60 and 35 metres out, so the freeze never catches the drone mid-turn. Heading changes during the descent went from about 65 degrees to about 2. Four: in the magpie flights a low dodge could put the drone down while still moving sideways, and it slid about a metre. Below 6 metres it now descends only when centred and nearly still, so touchdown speed dropped from 0.4 to 0.03 metres per second.</aside>
+</section>
