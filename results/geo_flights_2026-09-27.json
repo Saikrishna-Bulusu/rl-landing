@@ -320,6 +320,61 @@
     "sink": 0.8030215742728086,
     "slide": 0.003055621368993857
    }
+  },
+  "geo_magpie6": {
+   "command": "TREES_JSON=gz_logan/trees_logan.json RIG=v2l RIG_YOLO=gz_logan/rig_v2/yolo/run_geo/weights/best.pt RIG_CALIB=urban/rig_calib_v2l.json GEO_LAND_SPEED=0.1 OUT=geo_magpie6 WORLD=geo_magpie_v2l INSTANCE=5 geo/geofly.sh /usr/bin/python3 -u gz_learner.py --geo --decider learner --seed 0 --magpie hunter --sense rig --ckpt rl_corridor_eyes_lidar_gps_birds_hunter_rig_v2l_s0_mean.pt --video gazebo_geo/geo_magpie6/magpie.mp4   (rig v2l: + the up camera)",
+   "geoanchor": {
+    "fixes": 5286,
+    "sent": 1077,
+    "marker_fixes": 1051,
+    "fixes_per_sim_s": 13.0,
+    "fix_err_m": {
+     "median": 2.17,
+     "p90": 5.11,
+     "max": 206.39
+    },
+    "fix_within_10m_pct": 97.9,
+    "latency_ms_wall_median": 41.2,
+    "rtf": 0.27,
+    "denied_s": 115.6,
+    "agp_on_after_denial_pct": 100.0,
+    "gnss_on_after_denial_pct": 0.0,
+    "est_err_m": {
+     "median": 1.44,
+     "p90": 3.52,
+     "max": 4.76
+    },
+    "gnss_restored_at": null,
+    "marker_skipped": 0
+   },
+   "landing": {
+    "decider": "learner",
+    "magpie": "hunter",
+    "outcome": "landed",
+    "miss_m": 0.07513323138040859,
+    "t_s": 34.168000000000006,
+    "swoops": 3,
+    "closest_bird_m": 1.9141691858547036,
+    "rig": {
+     "sets": 678,
+     "dir_err_deg": 5.504190793751839,
+     "frame_check": "ok",
+     "found_within_40m": 0.28355957767722473,
+     "sets_within_40m": 663,
+     "track_err_m": 5.207717259206979,
+     "tracked_sets": 235
+    }
+   },
+   "tracker": {
+    "phantoms_share_of_alarms": 0.11,
+    "truly_seen_within_40m": 0.31,
+    "truly_seen_bird_above_within_40m": 0.4,
+    "_vs_geo_magpie5_rig_v2": {
+     "phantoms": 0.18,
+     "truly_seen_within_40m": 0.22,
+     "bird_above": 0.2
+    }
+   }
   }
  },
  "detector_retrain": {
@@ -342,6 +397,12 @@
    "new": {
     "found": 0.89,
     "false_per_picture": 0.004
+   }
+  },
+  "up_camera_pictures_rig_v2l": {
+   "new": {
+    "found": 0.9,
+    "false_per_picture": 0.0
    }
   }
  }

@@ -764,7 +764,8 @@ def fly(kind, seed, video, tmax=300.0, magpie="straight", sense="omni", ckpt=Non
         import geo_cruise as GC
         from geo_film import GeoFilm
         from px4_steps import TruthLog
-        who = ("learner (trained with birds)" if kind == "learner" else kind) + (", magpie seen by rig v2" if sense == "rig" else "")
+        who = ("learner (trained with birds)" if kind == "learner" else kind) + (f", magpie seen by rig {os.environ.get('RIG', 'v2')}" + (" (up camera)" if os.environ.get("RIG") == "v2l" else "")
+                                                     if sense == "rig" else "")
         who += (", local 3D planner on the voxel map" if local3d else "") if stage3 else ""
         gfilm = None if fast else GeoFilm(video, f"GeoAnchor + {who}" + (", unmapped obstacles" if stage3 else ", magpie"),
                                           pad_gz, [(0, 0), *GC.ROUTE, tuple(pad_gz)], eye=mi.eye, rig=eye)

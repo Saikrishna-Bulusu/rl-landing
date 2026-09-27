@@ -97,6 +97,41 @@ def draped_model(name, textured, colour):
     return "    " + m
 
 
+# PX4's x500_lidar_down sensor, as a link on the drone: the rangefinder GNSS-free landings need (see world())
+LIDAR = ("<link name='lidar_sensor_link'><pose relative_to='base_link'>0 0 -0.05 0 1.57 0</pose><inertial><mass>0.001</mass>"
+         "<inertia><ixx>0.00001</ixx><iyy>0.00001</iyy><izz>0.00001</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia>"
+         "</inertial><sensor name='lidar' type='gpu_lidar'><pose>0 0 0 3.14 0 0</pose><update_rate>50</update_rate><ray><scan>"
+         "<horizontal><samples>1</samples><resolution>1</resolution><min_angle>0</min_angle><max_angle>0</max_angle>"
+         "</horizontal><vertical><samples>1</samples><resolution>1</resolution><min_angle>0</min_angle><max_angle>0</max_angle>"
+         "</vertical></scan><range><min>0.1</min><max>100.0</max><resolution>0.01</resolution></range></ray>"
+         "<always_on>1</always_on><visualize>false</visualize></sensor></link><joint name='lidar_sensor_joint' type='fixed'>"
+         "<parent>base_link</parent><child>lidar_sensor_link</child></joint>")
+
+
+def variant(var, src="geo_magpie"):
+    """A GeoAnchor world flown by another rig (gz_unified.VARIANTS, e.g. v2l: the up camera): that drone plus the
+    rangefinder -> gz_logan/models/<name>_rng, and src with its drone swapped -> gz_logan/<src>_<var>/ (floor linked)."""
+    import sys
+    sys.path.insert(0, R)
+    import gz_unified as GU
+    name = GU.model_name(var)
+    m = open(f"{R}/gz_logan/models/{name}/model.sdf").read()
+    assert m.count("</model>") == 1 and "lidar_sensor_link" not in m
+    d = f"{R}/gz_logan/models/{name}_rng"
+    os.makedirs(d, exist_ok=True)
+    open(f"{d}/model.sdf", "w").write(m.replace(f"<model name='{name}'>", f"<model name='{name}_rng'>").replace("</model>", LIDAR + "</model>"))
+    open(f"{d}/model.config", "w").write(open(f"{R}/gz_logan/models/{name}/model.config").read().replace(name, f"{name}_rng"))
+    w = open(f"{R}/gz_logan/{src}/aruco.sdf").read()
+    assert w.count("<uri>model://x500_unified_rng</uri>") == 1
+    g = f"{R}/gz_logan/{src}_{var}"
+    os.makedirs(g, exist_ok=True)
+    for sub in ("materials", "meshes"):
+        if not os.path.islink(f"{g}/{sub}"):
+            os.symlink(f"../{src}/{sub}", f"{g}/{sub}")
+    open(f"{g}/aruco.sdf", "w").write(w.replace("<uri>model://x500_unified_rng</uri>", f"<uri>model://{name}_rng</uri>"))
+    print(f"{d}/model.sdf, {g}/aruco.sdf")
+
+
 def world():
     import cv2
     tex, cov = floor_texture()
@@ -172,4 +207,8 @@ if __name__ == "__main__":
         assert abs(bx - xg) < 1e-6 and abs(by - yg) < 1e-6
     la, lo = gz_to_ll(120.0, 0.0)
     assert abs(la - -27.660121) < 2e-6 and abs(lo - 153.142424) < 2e-6, (la, lo)   # the pad, as computed before
-    world()
+    import sys
+    if "--variant" in sys.argv:                 # geo/geo_world.py --variant v2l: the magpie world with the up camera
+        variant(sys.argv[sys.argv.index("--variant") + 1])
+    else:
+        world()
