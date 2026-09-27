@@ -231,6 +231,118 @@
      "tracked_sets": 352
     }
    }
+  },
+  "geo_magpie5": {
+   "command": "TREES_JSON=gz_logan/trees_logan.json RIG=v2 RIG_YOLO=gz_logan/rig_v2/yolo/run_geo/weights/best.pt RIG_CALIB=urban/rig_calib_v2.json GEO_LAND_SPEED=0.1 OUT=geo_magpie5 WORLD=geo_magpie INSTANCE=5 geo/geofly.sh /usr/bin/python3 -u gz_learner.py --geo --decider learner --seed 0 --magpie hunter --sense rig --ckpt rl_corridor_eyes_lidar_gps_birds_hunter_rig_v2l_s0_mean.pt --video gazebo_geo/geo_magpie5/magpie.mp4   (the detector retrained on photo ground)",
+   "geoanchor": {
+    "fixes": 5243,
+    "sent": 1012,
+    "marker_fixes": 1078,
+    "fixes_per_sim_s": 12.75,
+    "fix_err_m": {
+     "median": 2.21,
+     "p90": 5.12,
+     "max": 179.82
+    },
+    "fix_within_10m_pct": 97.8,
+    "latency_ms_wall_median": 40.2,
+    "rtf": 0.26,
+    "denied_s": 115.6,
+    "agp_on_after_denial_pct": 100.0,
+    "gnss_on_after_denial_pct": 0.0,
+    "est_err_m": {
+     "median": 1.67,
+     "p90": 3.55,
+     "max": 4.98
+    },
+    "gnss_restored_at": null,
+    "marker_skipped": 0
+   },
+   "landing": {
+    "decider": "learner",
+    "magpie": "hunter",
+    "outcome": "landed",
+    "miss_m": 0.044043395227566805,
+    "t_s": 34.19999999999999,
+    "swoops": 3,
+    "closest_bird_m": 1.9786471850237037,
+    "rig": {
+     "sets": 679,
+     "dir_err_deg": 5.207444380712452,
+     "frame_check": "ok",
+     "found_within_40m": 0.2319277108433735,
+     "sets_within_40m": 664,
+     "track_err_m": 5.813686188570396,
+     "tracked_sets": 177
+    }
+   },
+   "tracker_phantoms": {
+    "old_detector_geo_magpie4": 0.54,
+    "retrained_geo_magpie5": 0.18,
+    "_note": "share of the landing's tracker alarms more than 10 m from the true magpie"
+   }
+  },
+  "mission_example_pad4": {
+   "command": "geo/fly_mission.sh geo/missions/example_pad4.json mission_example_pad4   (the dashboard's mission path: logan_pad_4, markers 14/13/12, the rule)",
+   "geoanchor": {
+    "fixes": 3392,
+    "sent": 579,
+    "marker_fixes": 461,
+    "fixes_per_sim_s": 6.7,
+    "fix_err_m": {
+     "median": 2.26,
+     "p90": 5.17,
+     "max": 167.43
+    },
+    "fix_within_10m_pct": 97.9,
+    "latency_ms_wall_median": 28.2,
+    "rtf": 0.89,
+    "denied_s": 107.0,
+    "agp_on_after_denial_pct": 100.0,
+    "gnss_on_after_denial_pct": 0.0,
+    "est_err_m": {
+     "median": 3.13,
+     "p90": 4.82,
+     "max": 6.07
+    },
+    "gnss_restored_at": null,
+    "marker_skipped": 0
+   },
+   "landing": {
+    "episode": 0,
+    "w10": 0.0,
+    "decider": "rule",
+    "outcome": "landed",
+    "miss": 0.04971210456205545,
+    "t": 25.304000000000002,
+    "min_clear": 4.7140814767667845,
+    "tilt_max": 9.95448876384793,
+    "sink": 0.8030215742728086,
+    "slide": 0.003055621368993857
+   }
+  }
+ },
+ "detector_retrain": {
+  "_note": "rig v2 YOLO, held-out places, threshold 0.5 (queue/yolo_photo.sh)",
+  "photo_ground": {
+   "old": {
+    "found": 0.75,
+    "false_per_picture": 0.572
+   },
+   "new": {
+    "found": 0.81,
+    "false_per_picture": 0.002
+   }
+  },
+  "plain_ground": {
+   "old": {
+    "found": 0.89,
+    "false_per_picture": 0.0
+   },
+   "new": {
+    "found": 0.89,
+    "false_per_picture": 0.004
+   }
   }
  }
 }

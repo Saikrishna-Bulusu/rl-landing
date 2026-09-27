@@ -109,11 +109,12 @@ OUT=geo_wind10 WORLD=geo_clean SERVER_CONFIG=gz_logan/geo_clean/geo_w9.config IN
 CRANE_AT=147.33,-23.43 GEO_GOAL_OUT=90 OUT=geo_obst5 WORLD=geo_floor INSTANCE=5 geo/geofly.sh /usr/bin/python3 -u \
   gz_learner.py --geo --decider rule --seed 1 --magpie none --voxel --local3d --video gazebo_geo/geo_obst5/obstacles.mp4
 
-# a hunter magpie, seen only through the camera rig; the learner trained with birds lands it (landing at 0.1x speed)
-TREES_JSON=gz_logan/trees_logan.json RIG=v2 RIG_YOLO=gz_logan/rig_v2/yolo/run/weights/best.pt \
-  RIG_CALIB=urban/rig_calib_v2.json GEO_LAND_SPEED=0.1 OUT=geo_magpie4 WORLD=geo_magpie INSTANCE=5 geo/geofly.sh \
+# a hunter magpie, seen only through the camera rig (detector retrained on photo ground: yolo/run_geo);
+# the learner trained with birds lands it (landing at 0.1x speed)
+TREES_JSON=gz_logan/trees_logan.json RIG=v2 RIG_YOLO=gz_logan/rig_v2/yolo/run_geo/weights/best.pt \
+  RIG_CALIB=urban/rig_calib_v2.json GEO_LAND_SPEED=0.1 OUT=geo_magpie5 WORLD=geo_magpie INSTANCE=5 geo/geofly.sh \
   /usr/bin/python3 -u gz_learner.py --geo --decider learner --seed 0 --magpie hunter --sense rig \
-  --ckpt rl_corridor_eyes_lidar_gps_birds_hunter_rig_v2l_s0_mean.pt --video gazebo_geo/geo_magpie4/magpie.mp4
+  --ckpt rl_corridor_eyes_lidar_gps_birds_hunter_rig_v2l_s0_mean.pt --video gazebo_geo/geo_magpie5/magpie.mp4
 ```
 
 Just the GeoAnchor part (no lander; holds 20 s over the pad at 30 m on the marker and reports):
@@ -140,9 +141,16 @@ Today's numbers are in `results/geo_flights_2026-09-27.json`:
 | wind 9 m/s | flying learner | 0.19 m | 117 s | 1.7 m | 0.76x |
 | obstacles (1st try) | rule + planner | crashed into the crane | | | 0.79x |
 | obstacles | rule + planner | 0.04 m, crane passed at 6.7 m | 117 s | 1.9 m | 0.76x |
-| magpie | learner with birds | 0.10 m, 3 swoops, closest 1.9 m | 116 s | 1.9 m | 0.25x (0.1x landing) |
+| magpie (old detector) | learner with birds | 0.10 m, 3 swoops, closest 1.9 m | 116 s | 1.9 m | 0.25x (0.1x landing) |
+| magpie (retrained detector) | learner with birds | 0.04 m, 3 swoops, closest 2.0 m | 116 s | 1.7 m | 0.26x |
+| mission to pad 4 (dashboard) | rule | 0.05 m from pad 4's centre | 107 s | | 0.89x |
 
 One flight each: a demonstration, not a rate.
+
+The rig's magpie detector was retrained on photo ground (`queue/yolo_photo.sh`: `gz_rig.py --photo-bench`, 800 new
+places with trees in view, fine-tuned 30 epochs on plain + photo pictures). Held-out pictures, threshold 0.5: magpie
+found 75% -> 81%, false boxes 0.57 -> 0.002 per picture over the photo floor; plain ground unchanged (89%). In the
+magpie landing, the tracker's phantom alarms fell from 54% to 18%. Weights: `gz_logan/rig_v2/yolo/run_geo/weights/best.pt`.
 
 Deck material from a flight:
 

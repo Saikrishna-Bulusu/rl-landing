@@ -57,7 +57,8 @@
 /gz_logan/models/logan_*/
 /gz_logan/rig*/data*/
 /gz_logan/rig*/cover*/
-/gz_logan/rig*/yolo/ds/
+/gz_logan/rig*/yolo/ds*/
+/gz_logan/rig*/yolo/ds*.yaml
 /gz_logan/rig*/yolo/*.pt
 /gz_logan/*/prop_mask*
 /gz_logan/**/gz.log
@@ -101,6 +102,9 @@ nohup.out
 !/gz_logan/rig_v2/yolo/run/
 !/gz_logan/rig_v2/yolo/run/weights/
 !/gz_logan/rig_v2/yolo/run/weights/best.pt
+!/gz_logan/rig_v2/yolo/run_geo/
+!/gz_logan/rig_v2/yolo/run_geo/weights/
+!/gz_logan/rig_v2/yolo/run_geo/weights/best.pt
 !/docs/figures/*.png
 
 # ---- tooling ---------------------------------------------------------------------------------------------------
