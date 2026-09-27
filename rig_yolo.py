@@ -51,13 +51,19 @@ def model(path):
     return YOLO(path)
 
 
-def train(epochs, imgsz=1280, batch=8, init="yolo26n.pt"):
+def train(epochs, imgsz=1280, batch=8, init="yolo26n.pt", sets=("ds",), name="run"):
     """init: the starting weights -- COCO's yolo26n.pt, or (rig v2) the first rig's fine-tune: the magpie is the same
     bird, only the cameras changed."""
     os.makedirs(Y, exist_ok=True); os.chdir(Y)     # the pretrained weights download here
     m = model(init)
     # scale 0.3 (default 0.5): mosaic already shrinks pictures, and the far magpie is only 5-10 px
-    m.train(data=f"{Y}/ds/data.yaml", epochs=epochs, imgsz=imgsz, batch=batch, project=Y, name="run", exist_ok=True,
+    data = f"{Y}/{sets[0]}/data.yaml"
+    if len(sets) > 1:                              # several sets (27 Sept: plain ground + the photo floor), one class
+        data = f"{Y}/{'_'.join(sets)}.yaml"
+        with open(data, "w") as f:
+            f.write("train: [" + ", ".join(f"{Y}/{s}/images/train" for s in sets) + "]\n"
+                    "val: [" + ", ".join(f"{Y}/{s}/images/val" for s in sets) + "]\nnames:\n  0: magpie\n")
+    m.train(data=data, epochs=epochs, imgsz=imgsz, batch=batch, project=Y, name=name, exist_ok=True,
             single_cls=True, scale=0.3, degrees=0.0, close_mosaic=10, patience=25, workers=6, seed=0, amp=True)
 
 
@@ -85,10 +91,13 @@ if __name__ == "__main__":
     ap.add_argument("--score", metavar="DIR")
     ap.add_argument("--weights", default=BEST)
     ap.add_argument("--op", type=float, default=0.5, help="operating threshold (score.json's by-size curves)")
+    ap.add_argument("--ds", default="ds", help="--data: the set to write under yolo/; --train: sets, comma-separated")
+    ap.add_argument("--name", default="run", help="--train: the run folder under yolo/ (run = the weights in use)")
+    ap.add_argument("--tag", default="_yolo", help="--score: names the output, score<tag>.json")
     a = ap.parse_args()
     if a.data:
-        build(a.data)
+        build(a.data, out=f"{Y}/{a.ds}")
     if a.train:
-        train(a.epochs, init=a.init)
+        train(a.epochs, init=a.init, sets=tuple(a.ds.split(",")), name=a.name)
     if a.score:
-        RD.score(a.score, thresholds=tuple(sorted({0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, a.op})), op=a.op, det=detector(a.weights), tag="_yolo")
+        RD.score(a.score, thresholds=tuple(sorted({0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, a.op})), op=a.op, det=detector(a.weights), tag=a.tag)

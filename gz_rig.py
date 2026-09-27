@@ -65,6 +65,7 @@ if V2.startswith("v2"):
     RIG = {n: (tuple(p), tuple(r)) for n, (p, r, w, h, hf) in GU.cams(V2).items()}          # as rig_link mounts them
     CAMSZ = {n: (w, h, (w / 2) / math.tan(hf / 2)) for n, (p, r, w, h, hf) in GU.cams(V2).items()}
     BENCH, PARTITION = f"rig_{V2}", {"v2": "rig2"}.get(V2, f"rig{V2}")
+BENCH = os.environ.get("RIG_BENCH", BENCH)           # e.g. rig_v2_geo: the photo-floor bench (--photo-bench)
 
 
 def prop_mask(r_blade=0.15, z_prop=0.05, grow=12):
@@ -111,6 +112,27 @@ def project(p, base, R_body, cam):
     if d[0] <= 0.05:
         return None
     return w / 2 - f * d[1] / d[0], h / 2 - f * d[2] / d[0]
+
+
+def photo_bench(src="geo_magpie", var="v2"):
+    """The magpie bench on the PHOTO floor (27 Sept, Sai: "the cameras kept detecting trees as magpies" -- every
+    training picture had been plain Gazebo ground): the GeoAnchor magpie world (2023 capture on the floor, roofs and
+    crowns draped with it, the magpie, its nest) with rig v2 standing static as "rig" in place of PX4's drone and no
+    chase camera. -> gz_logan/rig_<var>_geo/aruco.sdf (the floor's textures linked, never copied: Esri's pixels)."""
+    import gz_unified as GU
+    w = open(f"{HERE}/gz_logan/{src}/aruco.sdf").read()
+    w, n = re.subn(r"<include><uri>model://x500_unified_rng</uri><name>x500_mono_cam_down_0</name>.*?</include>",
+                   f"<include><uri>model://{GU.model_name(var)}</uri><name>rig</name><pose>0 0 0 0 0 0</pose>"
+                   "<static>true</static></include>", w, count=1, flags=re.S)
+    w, m = re.subn(r"<model name='chase_cam'>.*?</model>", "", w, count=1, flags=re.S)
+    assert n == 1 and m == 1, (n, m)
+    d = f"{HERE}/gz_logan/rig_{var}_geo"
+    os.makedirs(d, exist_ok=True)
+    for sub in ("materials", "meshes"):
+        if not os.path.exists(f"{d}/{sub}"):
+            os.symlink(f"../{src}/{sub}", f"{d}/{sub}")
+    open(f"{d}/aruco.sdf", "w").write(w)
+    print(f"{d}/aruco.sdf")
 
 
 def rig_link():
@@ -564,10 +586,13 @@ if __name__ == "__main__":
     ap.add_argument("--out", default=f"{HERE}/urban/rig_calib.json", help="--calib: where to write it")
     ap.add_argument("--negatives", metavar="DIR")
     ap.add_argument("--prop-mask", action="store_true", help="where each camera sees the propellers (gz_logan/<BENCH>)")
+    ap.add_argument("--photo-bench", action="store_true", help="build gz_logan/rig_v2_geo: the bench on the photo floor")
     a = ap.parse_args()
     os.environ["GZ_PARTITION"] = PARTITION               # before any gz transport node exists
     if a.setup:
         setup()
+    if a.photo_bench:
+        photo_bench()
     if a.bench:
         bench()
     if a.cover:
