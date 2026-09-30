@@ -56,9 +56,13 @@ json.dump(dict(seed=e, crane_at=[float(v) for v in crane.split(",")], wind_mean_
                commit=git("rev-parse", "HEAD"), dirty=git("status", "--porcelain", "--", *files[:-1]),
                sha256={f.replace(d + "/", ""): sha(f) for f in files}), open(f"{d}/manifest.json", "w"), indent=1)
 PY
+    # never on battery (30 Sept: the smoke run found the laptop unplugged; 4 h of Gazebo and YOLO drain it in under 1 h).
+    # rig_perceive.py runs in urban/, so RIG_YOLO and RIG_CALIB must be absolute (the smoke run died on a relative one)
+    if [ "$(cat /sys/class/power_supply/ADP0/online)" != 1 ]; then log "e$E waiting for AC power"
+        until [ "$(cat /sys/class/power_supply/ADP0/online)" = 1 ]; do sleep 60; done; log "AC back"; fi
     log "e$E start: crane $CRANE, wind 9 m/s, direction $DIR deg"
     T0=$(date +%s)
-    TREES_JSON=gz_logan/trees_logan.json RIG=v2l RIG_YOLO=$YOLO RIG_CALIB=urban/rig_calib_v2l.json GEO_LAND_SPEED=0.1 \
+    TREES_JSON=gz_logan/trees_logan.json RIG=v2l RIG_YOLO=$R/$YOLO RIG_CALIB=$R/urban/rig_calib_v2l.json GEO_LAND_SPEED=0.1 \
     GEO_GOAL_OUT=90 CRANE_AT=$CRANE SERVER_CONFIG=$D/wind.config OUT=$OUT WORLD=geo_stress_v2l INSTANCE=5 \
         timeout 3600 geo/geofly.sh /usr/bin/python3 -u gz_learner.py --geo --decider learner --seed $E --magpie hunter \
         --sense rig --voxel --local3d --ckpt $CKPT --video $D/stress.mp4

@@ -233,8 +233,8 @@ CRANE_AT=147.33,-23.43 GEO_GOAL_OUT=90 OUT=geo_obst5 WORLD=geo_floor INSTANCE=5 
 
 # a hunter magpie, seen only through rig v2l (with the up camera) and the retrained detector; the learner trained
 # with birds lands it (its landing runs at 0.1x speed, for the detector)
-TREES_JSON=gz_logan/trees_logan.json RIG=v2l RIG_YOLO=gz_logan/rig_v2/yolo/run_geo/weights/best.pt \
-  RIG_CALIB=urban/rig_calib_v2l.json GEO_LAND_SPEED=0.1 OUT=geo_magpie6 WORLD=geo_magpie_v2l INSTANCE=5 geo/geofly.sh \
+TREES_JSON=gz_logan/trees_logan.json RIG=v2l RIG_YOLO=$PWD/gz_logan/rig_v2/yolo/run_geo/weights/best.pt \
+  RIG_CALIB=$PWD/urban/rig_calib_v2l.json GEO_LAND_SPEED=0.1 OUT=geo_magpie6 WORLD=geo_magpie_v2l INSTANCE=5 geo/geofly.sh \
   /usr/bin/python3 -u gz_learner.py --geo --decider learner --seed 0 --magpie hunter --sense rig \
   --ckpt rl_corridor_eyes_lidar_gps_birds_hunter_rig_v2l_s0_mean.pt --video gazebo_geo/geo_magpie6/magpie.mp4
 ```
