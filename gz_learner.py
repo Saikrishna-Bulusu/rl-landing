@@ -813,6 +813,7 @@ def fly(kind, seed, video, tmax=300.0, magpie="straight", sense="omni", ckpt=Non
         mi.send(0, 0, 6.0 if short else 3.0); time.sleep(0.05)
 
     t0, t_dec, cmd, t_yaw, landing, yaw_locked = mi.t_boot, -1.0, np.zeros(3), 0.0, False, False
+    miss_declared = None
     ever, t_seen, mi.mark_ned, prev = False, -1e9, None, None
     outcome, d_bird, banner_t = "timeout", 1e9, None
     while True:
@@ -943,11 +944,14 @@ def fly(kind, seed, video, tmax=300.0, magpie="straight", sense="omni", ckpt=Non
             else:
                 mi.send(cmd[1], cmd[0], cmd[2])
             mi.gimbal_down()                                 # rig v2: keeps Gazebo's gimbal bridge tracking PX4
-        else:
+        elif outcome == "landed":                            # declared 0.35 m up (PX4's estimate): keep going down onto
+            mi.send(0, 0, -V_COMMIT)                         # the pad (30 Sept: holding zero velocity there hovered, and in
+        else:                                                # 9 m/s wind drifted 0.5-2 m in the 3 s before disarming)
             mi.send(0, 0, 0)
         inside = me[2] < Z_TERR and math.hypot(*(me[:2] - bird.nest[:2])) < R_TERR
         if p[2] < PM.TOUCHDOWN_ALT and outcome == "timeout":
             outcome, banner_t = "landed", t
+            miss_declared = float(np.linalg.norm((me if np.isnan(g[0]) else g)[:2] - pad_gz))   # where it was when declared
         banner = None if banner_t is None else ("DELIVERED" if outcome == "landed" and
                                                 np.linalg.norm(me[:2] - pad_gz) < 1.0 else
                                                 "STRUCK BY THE MAGPIE" if outcome == "struck" else
@@ -1006,7 +1010,7 @@ def fly(kind, seed, video, tmax=300.0, magpie="straight", sense="omni", ckpt=Non
                                         drone=me_.tolist(), bird=bp_.tolist())) + "\n")
     r = dict(decider=kind, seed=seed, magpie=magpie, sense=sense, rig=rig,
              outcome=outcome if outcome != "landed" or miss < 1.0 else "landed_off_pad",
-             miss_m=miss, miss_est_m=miss_est, swoops=bird.swoops, closest_bird_m=d_bird, t_s=t, nest=bird.nest.tolist(),
+             miss_m=miss, miss_est_m=miss_est, miss_declared_m=miss_declared, swoops=bird.swoops, closest_bird_m=d_bird, t_s=t, nest=bird.nest.tolist(),
              loop_hz_sim=n_iter / max(t, 1e-6), video_new_per_s=(film.n_img - 1) / max((film.s_last or 0) - (film.s_first or 0), 1e-6),
              video_worst_hold=film.hold, video_frames=getattr(film, "n", 0), video_errors=getattr(film, "errors", 0))
     if stage3:

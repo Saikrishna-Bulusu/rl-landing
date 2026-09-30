@@ -41,7 +41,7 @@ def flight(run, stem="stress"):
         + (["crane within 2 m"] if cl.get("crane", 1e9) < CLEAR_M else []) \
         + (["GNSS restored"] if geo.get("gnss_restored_at") is not None else [])
     return dict(run=run, seed=res["seed"], crane_at=man.get("crane_at"), wind_dir_deg=man.get("wind_dir_deg"),
-                outcome=out, miss_m=round(res["miss_m"], 3), miss_est_m=round(res["miss_est_m"], 3),
+                outcome=out, miss_m=round(res["miss_m"], 3), miss_est_m=round(res["miss_est_m"], 3), miss_declared_m=res.get("miss_declared_m"),
                 crane_clear_m=cl.get("crane"), clear_any_m=min(cl.values()) if cl else None, crashed_into=res.get("crashed_into"),
                 swoops=res["swoops"], closest_bird_m=round(res["closest_bird_m"], 2), violations=viol,
                 denied_s=geo["denied_s"], gnss_restored_at=geo.get("gnss_restored_at"),

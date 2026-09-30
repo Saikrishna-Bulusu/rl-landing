@@ -88,10 +88,17 @@ def headroom():
     save(fig, "headroom")
 
 
-def learning(h=2.25):
-    """Validation curves per condition, and the kept learners' gain over the planner they copied (test flights)."""
-    fig, (ax, bx) = plt.subplots(1, 2, figsize=(PAGE, h), width_ratios=[1.55, 1], layout="constrained")
-    gains = []
+def learning(h=2.1, wa=0.6 * PAGE, wb=0.38 * PAGE):
+    """Validation curves per condition (learning_a) and the kept learners' gain over the planner they copied on the
+    test flights (learning_b), as two figures: each panel its own diagram, its label below it in the paper (Sai,
+    30 Sept). The legend sits above (a), clear of the curves, and names the band (the seeds' range) and the dashes
+    (the copied planner). (b)'s bars carry the paper's combined 95% interval: the widest per-seed interval and a t
+    interval over the three seed gains, root-sum-square, as Table 2's."""
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
+    fa, ax = plt.subplots(figsize=(wa, h), layout="constrained")
+    fb, bx = plt.subplots(figsize=(wb, h), layout="constrained")
+    gains, hs = [], []
     for suf, name in CONDS:
         runs, base = learners(suf)
         curves = [[(x["episodes"], x[f"eval_{READ}"]) for x in r["log"] if f"eval_{READ}" in x] for r in runs]
@@ -99,26 +106,29 @@ def learning(h=2.25):
         x = np.array([e for e, _ in curves[0][:n]]) / 1000
         y = np.array([[v for _, v in c[:n]] for c in curves])
         ax.fill_between(x, y.min(0), y.max(0), color=CCOL[suf], alpha=0.15, lw=0)
-        ax.plot(x, y.mean(0), color=CCOL[suf], lw=1.3, label=name)
+        hs += ax.plot(x, y.mean(0), color=CCOL[suf], lw=1.3)
         ax.axhline(base["planner"], color=CCOL[suf], lw=0.8, ls=(0, (4, 2)), alpha=0.9)
-        g = np.array([r["eval"][READ]["vs_planner"] for r in runs])
-        gains.append((name, CCOL[suf], g))
+        gains.append((name, CCOL[suf], np.array([r["eval"][READ]["vs_planner"] for r in runs])))
+    hs += [Line2D([], [], color="0.35", lw=0.8, ls=(0, (4, 2))), Patch(color="0.35", alpha=0.25, lw=0)]
+    ax.legend(hs, [n for _, n in CONDS] + ["copied planner", "range of 3 seeds"], loc="lower left", bbox_to_anchor=(0, 1.02),
+              ncol=3, handlelength=1.6, columnspacing=1.0, borderaxespad=0, frameon=False)
     ax.set_xlabel("Training flights after copying the planner (thousands)")
     ax.set_ylabel(r"Clean deliveries (\%), validation")
     ax.set_xlim(0, None); ax.grid(alpha=0.4)
-    ax.legend(loc="center left", bbox_to_anchor=(0.03, 0.6), ncol=2, handlelength=1.4, columnspacing=1.0)
-    ax.text(0.01, 0.99, "(a)", transform=ax.transAxes, va="top", fontweight="bold")
+    t975 = 4.302652729911275                  # Student's t, 2 degrees of freedom
     for k, (name, col, g) in enumerate(gains):
-        bx.bar(k, g[:, 0].mean(), 0.62, color=col, alpha=0.85, yerr=g[:, 1].mean(), capsize=2.5,
-               error_kw=dict(lw=0.7, capthick=0.7))
+        ci = (g[:, 1].max() ** 2 + (t975 * g[:, 0].std(ddof=1) / np.sqrt(len(g))) ** 2) ** 0.5
+        bx.bar(k, g[:, 0].mean(), 0.62, color=col, alpha=0.85, yerr=ci, capsize=2.5, error_kw=dict(lw=0.7, capthick=0.7))
         bx.scatter(np.full(len(g), k) + np.linspace(-0.12, 0.12, len(g)), g[:, 0], s=5, color="black", zorder=3, lw=0)
-        bx.text(k, max(g[:, 0].mean() + g[:, 1].mean(), g[:, 0].max()) + 0.4, f"{g[:, 0].mean():+.1f}", ha="center", fontsize=6.5)
+        bx.text(k, max(g[:, 0].mean() + ci, g[:, 0].max()) + 0.4, f"{g[:, 0].mean():+.1f}", ha="center", fontsize=6.5)
+    eb = bx.errorbar([np.nan], [np.nan], yerr=[1.0], fmt="none", ecolor="black", capsize=2.5, lw=0.7, capthick=0.7)
+    bx.legend([Line2D([], [], marker="o", ls="", color="black", ms=2.2), eb], ["one seed", r"95\% interval"],
+              loc="upper left", handlelength=1.2, borderaxespad=0.3)
     bx.axhline(0, color="black", lw=0.6)
     bx.set_xticks(range(len(gains)), [n.replace(" ", "\n", 1) if len(n) > 12 else n for n, _, _ in gains])
     bx.set_ylabel("Gain over copied planner (points)")
     bx.grid(axis="y", alpha=0.4); bx.tick_params(axis="x", length=0)
-    bx.text(0.02, 0.99, "(b)", transform=bx.transAxes, va="top", fontweight="bold")
-    save(fig, "learning")
+    save(fa, "learning_a"); save(fb, "learning_b")
 
 
 def birds():

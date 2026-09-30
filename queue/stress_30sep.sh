@@ -58,7 +58,7 @@ json.dump(dict(seed=e, crane_at=[float(v) for v in crane.split(",")], wind_mean_
 PY
     # never on battery (30 Sept: the smoke run found the laptop unplugged; 4 h of Gazebo and YOLO drain it in under 1 h).
     # rig_perceive.py runs in urban/, so RIG_YOLO and RIG_CALIB must be absolute (the smoke run died on a relative one)
-    if [ "$(cat /sys/class/power_supply/ADP0/online)" != 1 ]; then log "e$E waiting for AC power"
+    if [ -z "$NO_AC_WAIT" ] && [ "$(cat /sys/class/power_supply/ADP0/online)" != 1 ]; then log "e$E waiting for AC power"   # NO_AC_WAIT=1: fly anyway
         until [ "$(cat /sys/class/power_supply/ADP0/online)" = 1 ]; do sleep 60; done; log "AC back"; fi
     log "e$E start: crane $CRANE, wind 9 m/s, direction $DIR deg"
     T0=$(date +%s)
