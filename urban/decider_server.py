@@ -97,8 +97,9 @@ def main():
     torch.set_num_threads(2)
     env = BridgeEnv(a.voxel, a.local3d)
     # the learner's inputs carry the magpie only if it trained with one (urban_rl.features); the stage-3
-    # learners (--voxel) trained without birds, on the unmapped world
-    R.MAP, R.NAV, R.BIRDS = MAP, "gps", not a.voxel
+    # learners (--voxel) trained without birds, on the unmapped world -- except the stress test's magpie learner
+    # (30 Sept: crane, magpie and wind in one flight), which flies the voxel map with its magpie inputs
+    R.MAP, R.NAV, R.BIRDS = MAP, "gps", not a.voxel or "birds" in a.ckpt
     if a.decider == "rule":                   # stage 3, static obstacles: the rule flying the local planner's path
         agent = A.Rule()
     elif a.decider == "planner":
@@ -116,7 +117,10 @@ def main():
     for line in sys.stdin:
         d = json.loads(line)
         env.see(d)
-        cmd = agent.act(obs_from(d))
+        o = obs_from(d)
+        cmd = agent.act(o)
+        if a.voxel and a.decider == "learner":   # the voxel map's look-ahead outside the learner, as the rule has it
+            cmd = agent.gen.obstacles(o, cmd)    # (Rule.safety): the local planner a hard layer for what stands still
         lp = getattr(agent, "local", None) or getattr(getattr(agent, "gen", None), "local", None)
         path = [[round(float(v), 2) for v in p] for p in lp.path] if lp is not None and lp.path is not None else None
         print(json.dumps({"cmd": [round(float(c), 4) for c in cmd[0]], "path": path}), flush=True)

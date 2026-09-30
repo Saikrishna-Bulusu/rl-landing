@@ -199,6 +199,24 @@ def world():
     print(f"{g}/aruco.sdf  geo_clean + the magpie and its nest")
 
 
+def stress():
+    """geo_stress_v2l (30 Sept, the full-stack stress test): geo_floor -- stage 3's crane, lights, trees and shed --
+    with the magpie and its nest, flown by rig v2l. Built from geo_floor's file, so the floor is not rebuilt."""
+    import sys
+    sys.path.insert(0, R)
+    from gz_learner import bird_sdf
+    w = open(f"{R}/gz_logan/geo_floor/aruco.sdf").read()
+    assert "name='crane'" in w and "name='magpie'" not in w and w.count("  </world>") == 1
+    g = f"{R}/gz_logan/geo_stress"
+    os.makedirs(g, exist_ok=True)
+    for sub in ("materials", "meshes"):
+        if not os.path.islink(f"{g}/{sub}"):
+            os.symlink(f"{R}/gz_logan/geo_floor/{sub}", f"{g}/{sub}")
+    magpie, nest = bird_sdf()
+    open(f"{g}/aruco.sdf", "w").write(w.replace("  </world>", f"    {magpie}\n    {nest}\n  </world>"))
+    variant("v2l", src="geo_stress")
+
+
 if __name__ == "__main__":
     # the conversion must round-trip, or floor and houses disagree
     for xg, yg in ((0.0, 0.0), (120.0, 0.0), (-100.0, 200.0), (350.0, -230.0)):
@@ -208,7 +226,9 @@ if __name__ == "__main__":
     la, lo = gz_to_ll(120.0, 0.0)
     assert abs(la - -27.660121) < 2e-6 and abs(lo - 153.142424) < 2e-6, (la, lo)   # the pad, as computed before
     import sys
-    if "--variant" in sys.argv:                 # geo/geo_world.py --variant v2l: the magpie world with the up camera
+    if "--stress" in sys.argv:                  # geo/geo_world.py --stress: crane + magpie, rig v2l
+        stress()
+    elif "--variant" in sys.argv:                 # geo/geo_world.py --variant v2l: the magpie world with the up camera
         variant(sys.argv[sys.argv.index("--variant") + 1])
     else:
         world()

@@ -1,0 +1,22 @@
+{
+ "gpu": "NVIDIA GeForce RTX 5070 Laptop GPU",
+ "sets": 100,
+ "imgsz": 1280,
+ "fp16": true,
+ "results": {
+  "4": {
+   "worsen_ms_median": 13.7,
+   "detect_ms_median": 40.4,
+   "set_ms_median": 54.4,
+   "set_ms_p95": 111.2,
+   "set_ms_max": 157.1
+  },
+  "5": {
+   "worsen_ms_median": 18.0,
+   "detect_ms_median": 48.0,
+   "set_ms_median": 65.1,
+   "set_ms_p95": 89.7,
+   "set_ms_max": 147.0
+  }
+ }
+}

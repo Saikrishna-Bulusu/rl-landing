@@ -59,10 +59,14 @@ CEIL, PEOPLE_R, HLS_R = 120.0, 30.0, 1400.0
 NMAC_H, NMAC_V, WC_H, WC_V = 152.4, 30.5, 609.6, 76.2
 # ---- assumed ------------------------------------------------------------------
 OVER_R, DRONE_SEP, GRACE = 10.0, 30.0, 3.0
+# SENSITIVITY RUNS ONLY (urban/sens.py): unset, every value below is the one the paper reports
+DRONE_SEP = float(os.environ.get("SENS_DRONE_SEP", DRONE_SEP))
 D_HELI, D_DRONE = 1000.0, 200.0
 HIT_DRONE, HIT_HELI = 3.0, 15.0
 CRUISE = 50.0
 DT, T_MAX, FIX_DT = 0.25, 300.0, 0.5
+T_MAX = float(os.environ.get("SENS_T_MAX", T_MAX))       # sensitivity runs only
+LEAVE = tuple(float(x) for x in os.environ.get("SENS_LEAVE", "30,240").split(","))   # people at the pad leave in this range (s)
 GPS_BIAS, GPS_JITTER = 1.2, 0.3   # m per axis: consumer GNSS, a per-flight offset plus per-fix noise
 LOST_S = 3.0      # px4_mission: a sighting is trusted this long after the marker drops out
 P_HELI, P_PEOPLE = 0.5, 0.5
@@ -170,7 +174,7 @@ class UrbanEnv:
     def __init__(self, n, world="corridor", seed=0, device=DEV,
                  map_path=f"{HERE}/logan_map.npz", pool=f"{HERE}/../sigma_pool.npz",
                  p_heli=P_HELI, p_people=P_PEOPLE, d_heli=D_HELI, d_drone=D_DRONE,
-                 leave=(30.0, 240.0), nav="geoanchor", p_swoop=0.0, p_fog=0.0, p_new=0.0,
+                 leave=LEAVE, nav="geoanchor", p_swoop=0.0, p_fog=0.0, p_new=0.0,
                  bird_sense="omni", magpie="straight"):
         assert world in ("corridor", "random")
         # nav: "geoanchor" replays GeoAnchor's measured error (~9-15 m); "gps" is GNSS-grade:

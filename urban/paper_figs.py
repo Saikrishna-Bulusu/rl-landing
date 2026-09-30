@@ -88,9 +88,9 @@ def headroom():
     save(fig, "headroom")
 
 
-def learning():
+def learning(h=2.25):
     """Validation curves per condition, and the kept learners' gain over the planner they copied (test flights)."""
-    fig, (ax, bx) = plt.subplots(1, 2, figsize=(PAGE, 2.25), width_ratios=[1.55, 1], layout="constrained")
+    fig, (ax, bx) = plt.subplots(1, 2, figsize=(PAGE, h), width_ratios=[1.55, 1], layout="constrained")
     gains = []
     for suf, name in CONDS:
         runs, base = learners(suf)
@@ -115,7 +115,7 @@ def learning():
         bx.text(k, max(g[:, 0].mean() + g[:, 1].mean(), g[:, 0].max()) + 0.4, f"{g[:, 0].mean():+.1f}", ha="center", fontsize=6.5)
     bx.axhline(0, color="black", lw=0.6)
     bx.set_xticks(range(len(gains)), [n.replace(" ", "\n", 1) if len(n) > 12 else n for n, _, _ in gains])
-    bx.set_ylabel("Learner $-$ copied planner (points)")
+    bx.set_ylabel("Gain over copied planner (points)")
     bx.grid(axis="y", alpha=0.4); bx.tick_params(axis="x", length=0)
     bx.text(0.02, 0.99, "(b)", transform=bx.transAxes, va="top", fontweight="bold")
     save(fig, "learning")
@@ -227,7 +227,7 @@ def world():
     ax.text(*tail, "air ambulance", color="#c0392b", fontsize=6.5, ha="center", va="bottom",
             bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.85))
     handles = [Line2D([], [], ls="", marker="o", ms=2.5, color="#e67e22", label=f"pads ({len(m['pads']):,})"),
-               Line2D([], [], ls="", marker="s", ms=4, color="#c0392b", label="hub"),
+               Line2D([], [], ls="", marker="s", ms=4, color="#c0392b", label="depot"),
                Line2D([], [], ls="", marker="P", ms=5, color="#e74c3c", label="hospital helipad")]
     ax.legend(handles=handles, loc="lower left", fontsize=6.5, borderpad=0.3, handletextpad=0.2, framealpha=0.9,
               frameon=True, edgecolor="none")

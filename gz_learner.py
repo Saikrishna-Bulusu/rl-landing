@@ -742,7 +742,8 @@ def fly(kind, seed, video, tmax=300.0, magpie="straight", sense="omni", ckpt=Non
     assert np.allclose(pad_gz, SITE), (pad_gz, SITE)
     trees = PM.TREES
     bird, mover = (NoBird if magpie == "none" else Hunter if magpie == "hunter" else Magpie)(seed, pad_gz, trees), Mover(asyn=True)
-    stage3 = magpie == "none"                                # gz_voxel.py's world: things the survey does not show
+    stage3 = magpie == "none" or voxel                       # gz_voxel.py's world: things the survey does not show
+                                                             # (--voxel with a magpie: the stress test, 30 Sept)
     if stage3:
         import gz_voxel as GV
         # depth trusted to 12 m (the OAK-D measures to 19 m; a 1.6 m mast still stands clear of the noise at 12)
@@ -767,7 +768,7 @@ def fly(kind, seed, video, tmax=300.0, magpie="straight", sense="omni", ckpt=Non
         who = ("learner (trained with birds)" if kind == "learner" else kind) + (f", magpie seen by rig {os.environ.get('RIG', 'v2')}" + (" (up camera)" if os.environ.get("RIG") == "v2l" else "")
                                                      if sense == "rig" else "")
         who += (", local 3D planner on the voxel map" if local3d else "") if stage3 else ""
-        gfilm = None if fast else GeoFilm(video, f"GeoAnchor + {who}" + (", unmapped obstacles" if stage3 else ", magpie"),
+        gfilm = None if fast else GeoFilm(video, f"GeoAnchor + {who}" + (", unmapped obstacles" if stage3 else "") + (", magpie" if magpie != "none" else ""),
                                           pad_gz, [(0, 0), *GC.ROUTE, tuple(pad_gz)], eye=mi.eye, rig=eye)
         cr = GC.Cruise(mi, TruthLog(), GC.Bridge(), gfilm)
     film = NoFilm() if fast or geo else Film(video, ("Learner" + ("" if stage3 else " (trained with birds)") if kind == "learner" else kind.capitalize())
