@@ -2,66 +2,41 @@
 # Everything a run produces, every dataset, and ALL Esri Wayback imagery (and anything rendered over it:
 # films, stills, texture tiles) stays out -- Esri's terms: measurement use only, never published.
 
-# ---- experiment outputs: one folder per run or sweep ------------------------------------------------------
-/gazebo_*/
-/px4run*/
-/runs*/
-/v2*/
-/v3*/
-/v4_phys/
-/v5/
-/v6/
-/cage_*/
-/ctrl_*/
-/sweep*/
-/final*/
-/match*/
-/fused/
-/sv2/
-/truesig/
-/rep/
-/qual/
-/chan/
-/rho08/
-/out_*/
-/overnight/
-/weather_*/
-/media/
-/weights/
-/deck/
-/report/*
-!/report/build_report.py
-/paper/*
-!/paper/build_figures.py
-/tello/*
-!/tello/*.py
-/urban/eyes_drift/
-/urban/first_try/
-/urban/from_scratch/
-/wind/runs/*
-!/wind/runs/*.json
-!/wind/runs/fly_hp_s0_best.npz
-!/wind/runs/stage2_c100_s0_best.npz
-/geo/runs/
-/geo/missions/
-/queue/*.log
-/queue/*.out
-/queue/*.done
+# ---- experiment outputs: ONE folder. Every run folder, log, film, scratch output and PX4 working dir lives in outputs/ ----
+# (replaces /gazebo_*/ /px4run*/ /runs*/ /v2*/ /v3*/ /v4_phys/ /v5/ /v6/ /cage_*/ /ctrl_*/ /sweep*/ /final*/ /match*/ /fused/
+#  /sv2/ /truesig/ /rep/ /qual/ /chan/ /rho08/ /out_*/ /overnight/ /weather_*/ /media/ /weights/ /geo/runs/ /geo/missions/
+#  /urban/eyes_drift/ /urban/first_try/ /urban/from_scratch/ /queue/*.log /queue/*.out /queue/*.done)
+/outputs/
+
+# ---- generated or snapshot folders that still sit inside a unit ----
+/papers/deck/project/
+/papers/report/*
+!/papers/report/build_report.py
+# the report builder's template was untracked, so a fresh clone could not rebuild the report (strike.jpg stays out: provenance unknown)
+!/papers/report/rig_report.template.html
+/papers/paper/*
+!/papers/paper/build_figures.py
+# the Tello cage's untracked outputs (cage_fig.json, cage_rl_*.json); flights/ and train.log now go to outputs/
+/archive/tello/*.json
+# fly.py falls back to it when layout.json is absent
+!/archive/tello/layout_example.json
+/conditions/wind/runs/*
+!/conditions/wind/runs/*.json
 
 # ---- the Logan world's generated assets and datasets (rebuilt by the scripts; see README) -----------------
-/gz_logan/imagery/
-/gz_logan/photo/
-/gz_logan/birds/
-/gz_logan/*/materials/
-/gz_logan/*/meshes/
-/gz_logan/models/logan_*/
-/gz_logan/rig*/data*/
-/gz_logan/rig*/cover*/
-/gz_logan/rig*/yolo/ds*/
-/gz_logan/rig*/yolo/ds*.yaml
-/gz_logan/rig*/yolo/*.pt
-/gz_logan/*/prop_mask*
-/gz_logan/**/gz.log
+/shared/px4_gazebo/gz_logan/imagery/
+/shared/px4_gazebo/gz_logan/photo/
+/shared/px4_gazebo/gz_logan/birds/
+/shared/px4_gazebo/gz_logan/*/materials/
+/shared/px4_gazebo/gz_logan/*/meshes/
+/shared/px4_gazebo/gz_logan/models/logan_*/
+/shared/px4_gazebo/gz_logan/rig*/data*/
+/shared/px4_gazebo/gz_logan/rig*/cover*/
+/shared/px4_gazebo/gz_logan/rig*/yolo/ds*/
+/shared/px4_gazebo/gz_logan/rig*/yolo/ds*.yaml
+/shared/px4_gazebo/gz_logan/rig*/yolo/*.pt
+/shared/px4_gazebo/gz_logan/*/prop_mask*
+/shared/px4_gazebo/gz_logan/**/gz.log
 
 # ---- binaries, media, logs ------------------------------------------------------------------------------------
 *.zip
@@ -95,17 +70,25 @@
 nohup.out
 
 # ...except the small ones a fresh clone needs to fly the films' deciders and the camera model
-!/cam_B.npy
-!/cam_to_ned.npy
-!/urban/rl_corridor_eyes_lidar_gps_birds_hunter_rig_v2l_s0_mean.pt
-!/urban/clone_corridor.pt
-!/gz_logan/rig_v2/yolo/run/
-!/gz_logan/rig_v2/yolo/run/weights/
-!/gz_logan/rig_v2/yolo/run/weights/best.pt
-!/gz_logan/rig_v2/yolo/run_geo/
-!/gz_logan/rig_v2/yolo/run_geo/weights/
-!/gz_logan/rig_v2/yolo/run_geo/weights/best.pt
-!/docs/figures/*.png
+!/shared/px4_gazebo/cam_B.npy
+!/shared/px4_gazebo/cam_to_ned.npy
+!/shared/fast_sim/rl_corridor_eyes_lidar_gps_birds_hunter_rig_v2l_s0_mean.pt
+!/shared/fast_sim/clone_corridor.pt
+!/shared/px4_gazebo/gz_logan/rig_v2/yolo/run/
+!/shared/px4_gazebo/gz_logan/rig_v2/yolo/run/weights/
+!/shared/px4_gazebo/gz_logan/rig_v2/yolo/run/weights/best.pt
+!/shared/px4_gazebo/gz_logan/rig_v2/yolo/run_geo/
+!/shared/px4_gazebo/gz_logan/rig_v2/yolo/run_geo/weights/
+!/shared/px4_gazebo/gz_logan/rig_v2/yolo/run_geo/weights/best.pt
+!/papers/docs/figures/*.png
+# four wind checkpoints (0.6 MB each): the two the old README names, the paper's decider and its frozen flyer (render.py's default).
+# The old exceptions sat BEFORE "*.npz" above, so they never worked (git check-ignore); here they come after it.
+!/conditions/wind/runs/fly_hp_s0_best.npz
+!/conditions/wind/runs/stage2_c100_s0_best.npz
+!/conditions/wind/runs/stage2_c100h100g_s0_best.npz
+!/conditions/wind/runs/fly_s0_best.npz
+# 26 KB GeoAnchor error pool; urban_env.py and every PX4 mission load it, a fresh clone cannot run the fast sim without it
+!/shared/fast_sim/sigma_pool.npz
 
 # ---- tooling ---------------------------------------------------------------------------------------------------
 __pycache__/
@@ -119,7 +102,6 @@ node_modules/
 # ---- survey data (the Queensland LiDAR tiles are 0.7 GB each; see README for where to get them) ---------------
 *.las
 *.laz
-/urban/lidar/
 build/
 
 # ---- LaTeX build files ---------------------------------------------------------------------------------------
