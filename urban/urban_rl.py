@@ -59,6 +59,19 @@ HUNTER = False                       # --hunter: the magpie comes from behind an
 RIG = False                          # --rig: the magpie as a six-camera rig's detector + tracker see it
 
 
+def clearml_log(task, it, pts):
+    """Live curves: pts = [(title, series, value)] at step it (a DAgger round or a PPO generation). Never stops a run."""
+    if task is None:
+        return
+    try:
+        lg = task.get_logger()
+        for t, sname, v in pts:
+            if v == v:                                           # NaN: not measured
+                lg.report_scalar(t, sname, float(v), it)
+    except Exception as e:
+        print("clearml: logging stopped:", e, flush=True)
+
+
 def world_env(n, world, seed):
     """Every world this script builds goes through here, so none falls back to the old map."""
     return U.UrbanEnv(n, world, seed=seed, nav=NAV, p_swoop=U.P_SWOOP if BIRDS else 0.0,
@@ -229,9 +242,10 @@ def gae(V, R, M):
     return adv, adv + V
 
 
-def ppo_update(net, opt, batch, epochs=4, mb=32768, clip=0.2, ent=0.01, vcoef=0.5, pg=1.0, ref=None, kl=0.0):
+def ppo_update(net, opt, batch, epochs=4, mb=32768, clip=0.2, ent=0.01, vcoef=0.5, pg=1.0, ref=None, kl=0.0, stats=None):
     """pg=0 fits the value alone (policy frozen). ref/kl: charge kl * KL(policy || ref) per decision,
-    so leaving ref's pick has to be paid for by advantage."""
+    so leaving ref's pick has to be paid for by advantage. stats: dict filled with the update's mean entropy,
+    value loss and (with ref) KL, for ClearML."""
     X, Aa, LP, V, R, M, D = batch
     adv, ret = gae(V, R, M)
     m = M.flatten()
@@ -239,6 +253,7 @@ def ppo_update(net, opt, batch, epochs=4, mb=32768, clip=0.2, ent=0.01, vcoef=0.
     rep = D.flatten(0, 1)[m]
     adv = (adv - adv.mean()) / (adv.std() + 1e-8)
     n = x.shape[0]
+    seen = []
     for _ in range(epochs):
         perm = torch.randperm(n, device=x.device)
         for i in range(0, n, mb):
@@ -252,14 +267,21 @@ def ppo_update(net, opt, batch, epochs=4, mb=32768, clip=0.2, ent=0.01, vcoef=0.
                 with torch.no_grad():
                     lq = torch.log_softmax(masked(ref(x[j].float())[0], rep[j]), -1)
                 lp_ = torch.log_softmax(logits, -1)
-                pl = pl + kl * (lp_.exp() * (lp_ - lq)).sum(-1).mean()
-            loss = pg * (pl - ent * d.entropy().mean()) + vcoef * (v - ret[j]).pow(2).mean()
+                k = (lp_.exp() * (lp_ - lq)).sum(-1).mean()
+                pl = pl + kl * k
+            H, vl = d.entropy().mean(), (v - ret[j]).pow(2).mean()
+            loss = pg * (pl - ent * H) + vcoef * vl
             opt.zero_grad(); loss.backward(); nn.utils.clip_grad_norm_(net.parameters(), 0.5); opt.step()
+            seen.append((H.detach(), vl.detach(), k.detach() if ref is not None else None))
+    if stats is not None:
+        stats["entropy"], stats["value loss"] = (torch.stack([t[i] for t in seen]).mean().item() for i in (0, 1))
+        if ref is not None:
+            stats["KL to the copy"] = torch.stack([t[2] for t in seen]).mean().item()
     return n
 
 
 # ---- imitation: a copy of the same-sensor planner ------------------------------------
-def fit(net, X, Y, epochs=8, mb=32768, smooth=0.0):
+def fit(net, X, Y, epochs=8, mb=32768, smooth=0.0, stats=None):
     opt = torch.optim.Adam(net.parameters(), lr=1e-3)
     for _ in range(epochs):
         perm = torch.randperm(len(X), device=DEV)
@@ -267,6 +289,8 @@ def fit(net, X, Y, epochs=8, mb=32768, smooth=0.0):
             j = perm[i:i + mb]
             loss = F.cross_entropy(net(X[j].float())[0], Y[j], label_smoothing=smooth)
             opt.zero_grad(); loss.backward(); opt.step()
+    if stats is not None:
+        stats["loss"] = loss.item()                  # the last minibatch of the last epoch
     with torch.no_grad():
         pred = torch.cat([net(X[i:i + mb].float())[0].argmax(-1) for i in range(0, len(X), mb)])
     dev = Y != 0                                     # the decisions where the planner overrides the rule
@@ -274,7 +298,7 @@ def fit(net, X, Y, epochs=8, mb=32768, smooth=0.0):
         100 * dev.float().mean().item()
 
 
-def copy_planner(world, net, eyes, betas=(1.0, 0.5, 0.25, 0.0, 0.0), n=2048, seed0=20_000, smooth=0.0, tag=""):
+def copy_planner(world, net, eyes, betas=(1.0, 0.5, 0.25, 0.0, 0.0), n=2048, seed0=20_000, smooth=0.0, tag="", task=None):
     """DAgger: each round flies a planner/copy mix (the planner flies a decision with
     chance beta), labels every visited decision with the planner's pick, and refits
     on everything so far -- so the copy also learns to recover from its own slips."""
@@ -298,7 +322,10 @@ def copy_planner(world, net, eyes, betas=(1.0, 0.5, 0.25, 0.0, 0.0), n=2048, see
             o = env.step(cmd)
         flown = 100 * env.summary()["clean"].float().mean().item()
         del env, gen; torch.cuda.empty_cache()
-        acc, acc_dev, share = fit(net, torch.cat(Xs), torch.cat(Ys), smooth=smooth)
+        st = {}
+        acc, acc_dev, share = fit(net, torch.cat(Xs), torch.cat(Ys), smooth=smooth, stats=st)
+        clearml_log(task, r, [("DAgger", "loss", st["loss"]), ("DAgger", "copies planner %", acc),
+                              ("DAgger", "copies planner on its overrides %", acc_dev), ("DAgger", "flown clean %", flown)])
         print(f"  [{tag}] copy round {r}  planner flies {beta:4.0%}  flown clean {flown:5.1f}%  "
               f"data {sum(len(x) for x in Xs):>9,}  copies planner {acc:5.1f}%  "
               f"on its overrides ({share:4.1f}% of decisions) {acc_dev:5.1f}%  ({time.time() - t0:4.0f} s)",
@@ -330,7 +357,7 @@ def baselines(world, n=EVAL_N, seed=EVAL_SEED):
     return out
 
 
-def train(world, seed, gens, n_env, tag, eyes=False, eval_every=10, kl=0.0, eval_seed=None):
+def train(world, seed, gens, n_env, tag, eyes=False, eval_every=10, kl=0.0, eval_seed=None, task=None):
     """
     From scratch the exploration bonus anneals 0.01 -> 0.0005. At a constant 0.01
     the first policy stayed spread over near-equivalent manoeuvres: sampled it
@@ -374,7 +401,7 @@ def train(world, seed, gens, n_env, tag, eyes=False, eval_every=10, kl=0.0, eval
     net = Net(inputs(o, gen, eyes).shape[-1]).to(DEV)
     log = []
     if eyes:
-        copy_planner(world, net, eyes, betas=(1.0, 0.5, 0.0), seed0=20_000 + 100 * seed, smooth=0.05, tag=tag)
+        copy_planner(world, net, eyes, betas=(1.0, 0.5, 0.0), seed0=20_000 + 100 * seed, smooth=0.05, tag=tag, task=task)
         warm, lr, (ent0, ent1) = 5, 1e-4, ((0.0, 0.0) if kl else (0.002, 0.0002))
         ref = copy.deepcopy(net).requires_grad_(False)
         c, _ = greedy_eval(net, world, eyes, n=eval_n, seed=eval_seed)
@@ -391,8 +418,9 @@ def train(world, seed, gens, n_env, tag, eyes=False, eval_every=10, kl=0.0, eval
     for g in range(gens):
         batch, s = generation(env, gen, net, eyes)
         steps += int(batch[5].sum().item()) * HOLD
+        st = {}
         ppo_update(net, opt, batch, ent=ent0 + (ent1 - ent0) * g / max(gens - 1, 1), pg=float(g >= warm),
-                   ref=ref if kl else None, kl=kl)
+                   ref=ref if kl else None, kl=kl, stats=st)
         f = lambda x: 100 * x.float().mean().item()
         viol = s["crash"] | s["nmac"] | (s["viol_s"] > 0).any(-1)
         live = batch[5]
@@ -401,6 +429,10 @@ def train(world, seed, gens, n_env, tag, eyes=False, eval_every=10, kl=0.0, eval
         if eyes:                                         # how often it flew what the planner would have
             row["planner_share"] = f(batch[1][live] == batch[0][live][:, -N_ACT:].argmax(-1))
         log.append(row)
+        pts = [("clean delivery %", "training", row["clean"]), ("mean reward", "per episode", batch[4].sum(0).mean().item()),
+               ("follows the rule %", "rule", row["rule_share"])] + [("PPO", k, v) for k, v in st.items()]
+        if eyes:
+            pts.append(("follows the planner %", "planner", row["planner_share"]))
         if g % eval_every == 0 or g == gens - 1:
             row["eval_clean"], row["eval_violation"] = greedy_eval(net, world, eyes, n=eval_n, seed=eval_seed)
             if best is not None:
@@ -409,6 +441,9 @@ def train(world, seed, gens, n_env, tag, eyes=False, eval_every=10, kl=0.0, eval
                 for k in READOUTS:
                     if row[LOGKEY[k]] > best[k][0]:
                         best[k] = (row[LOGKEY[k]], g, copy.deepcopy(net.state_dict()))
+            pts += [("validation clean %", k, row[v]) for k, v in LOGKEY.items() if v in row]
+            pts.append(("validation violation %", "greedy", row["eval_violation"]))
+        clearml_log(task, g, pts)
         if g % 10 == 0 or g == gens - 1:
             share = f"planner {row['planner_share']:4.1f}%" if eyes else f"rule {row['rule_share']:4.1f}%"
             print(f"  [{tag}] gen {g:3d}  episodes {row['episodes']:>7,}  clean {row['clean']:5.1f}%  "
@@ -446,6 +481,7 @@ def main():
     ap.add_argument("--cameras", action="store_true", help="magpie seen only by the forward and landing cameras")
     ap.add_argument("--hunter", action="store_true", help="the magpie attacks from behind and keeps steering")
     ap.add_argument("--rig", action="store_true", help="magpie seen by the six-camera rig's detector + tracker")
+    ap.add_argument("--no-clearml", action="store_true", help="no live logging to ClearML (rl-landing/fast_sim)")
     ap.add_argument("--tag", default="", help="appended to the names, e.g. _v2 with RIG_CALIB=rig_calib_v2.json (rig v2)")
     a = ap.parse_args()
     assert not (a.cameras and a.rig)
@@ -463,7 +499,17 @@ def main():
     ref = {k: ladder(agent)["clean"].float() for k, agent in (("rule", A.Rule()), ("planner", A.MPC("obs")))}
     for sd in a.seeds:
         tag = f"{a.world}{'_eyes' if a.eyes else ''}{f'_kl{a.kl:g}' if a.kl else ''}{'_lidar' if a.map else ''}{gps}_s{sd}"
-        net, log, states = train(a.world, sd, a.gens, a.n_env, tag, eyes=a.eyes, kl=a.kl)
+        task = None
+        if not a.no_clearml:
+            try:
+                from clearml import Task
+                task = Task.init(project_name="rl-landing/fast_sim", task_name=f"{pre}_{a.world}_s{sd}", auto_connect_frameworks=False)
+                task.connect({**vars(a), "seed": sd})
+                print("ClearML:", task.get_output_log_web_page(), flush=True)
+            except Exception as e:
+                task = None
+                print("clearml unavailable, training without it:", e, flush=True)
+        net, log, states = train(a.world, sd, a.gens, a.n_env, tag, eyes=a.eyes, kl=a.kl, task=task)
         runs = [("greedy", net, True), ("sampled", net, False)]
         if states is not None:                        # each read-out's own best, plus the last generation
             pn = {k: copy.deepcopy(net) for k in states}
@@ -485,6 +531,8 @@ def main():
                   f"violations {ev[mode]['violation']:.1f}% (ceiling {ev[mode]['ceiling']:.1f}%)  "
                   f"median {ev[mode]['median_t']:.0f} s", flush=True)
         out[tag] = dict(log=log, eval=ev)
+        if task:
+            task.close()                              # one task per seed
         json.dump(out, open(f"{pre}_{a.world}_{'_'.join(map(str, a.seeds))}.json", "w"), indent=1)
 
 

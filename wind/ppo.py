@@ -247,6 +247,28 @@ def hp_of(path):
     return meta.get("hp_tau", 0.0) or (hp_of(meta["flyer"]) if meta.get("flyer") else 0.0)
 
 
+PPO_NAMES = ["total loss", "policy loss", "value loss", "entropy (deciding)", "approx KL", "stopped early (KL)"]   # update()'s vector
+
+
+def clearml_log(task, row, n_dec, dt):
+    """Live curves for one round (rows are the jsonl rows; speed = decisions/s of rollout+update). Never stops a run."""
+    try:
+        lg, it = task.get_logger(), row["it"]
+        pts = [("outcomes (training flights)", k, row[k]) for k in ("landed", "crashed", "hard", "timeout")]
+        pts += [("return", "mean episode return", row["ret"]), ("curriculum", "W (wind m/s)", row["w_cur"]), ("curriculum", "band landed", row["band_landed"]),
+                ("speed", "decisions/s", n_dec / dt)]
+        pts += [("PPO", n, v) for n, v in zip(PPO_NAMES, row["loss"])]
+        pts += [("policy std", n, v) for n, v in zip(("x", "y"), row["std"])]
+        if "val" in row:
+            pts += [("validation landed", f"W{w}", v) for w, v in zip((9, 12, 15, 18), row["val"])]
+        pts += [("test-yard landed", f"W{e['w10']:.0f}", e["landed"]) for e in row.get("eval", [])]
+        for t, sname, v in pts:
+            if v == v:                                           # NaN: nothing finished yet
+                lg.report_scalar(t, sname, float(v), it)
+    except Exception as e:
+        print("clearml: logging stopped:", e, flush=True)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--tag", default="both")
@@ -269,6 +291,7 @@ def main():
     ap.add_argument("--shape-g", type=float, default=E.SHAPE_G, help="the shaping's discount (land_env.SHAPE_G); GAMMA makes it exact")
     ap.add_argument("--log-test", action="store_true", help="also score the TEST yards at every eval (logging only, ~55%% of eval time)")
     ap.add_argument("--ladder", metavar="CKPT", help="score a checkpoint (or 'rule') on the full wind ladder, 1024 paired flights")
+    ap.add_argument("--no-clearml", action="store_true", help="no live logging to ClearML (rl-landing/wind)")
     a = ap.parse_args()
     if a.ladder:
         if a.ladder == "rule":
@@ -284,6 +307,17 @@ def main():
             print(json.dumps(r))
         return
     fly, decide = not a.no_fly, not a.no_decide
+    task = None
+    if not a.no_clearml:
+        try:
+            from clearml import Task
+            task = Task.init(project_name="rl-landing/wind", task_name=f"{a.tag}_s{a.seed}", auto_connect_frameworks=False,
+                             tags=[n for n, on in (("fly", fly), ("decide", decide), ("flyer", bool(a.flyer))) if on])
+            task.connect(vars(a))
+            print("ClearML:", task.get_output_log_web_page(), flush=True)
+        except Exception as e:
+            task = None
+            print("clearml unavailable, training without it:", e, flush=True)
     E.CRASH_R, E.HARD_R, E.FLIP_R, E.SHAPE_G = a.crash_r, a.hard_r, a.flip_r, a.shape_g    # read by land_env.step when traced
     flyer = None
     if a.flyer:
@@ -307,6 +341,7 @@ def main():
     rms = rms_update(rms, obs)
     t0 = time.time()
     for it in range(1, a.iters + 1):
+        t_round = time.time()
         key, kr, ku = jax.random.split(key, 3)
         st, obs, tr, last_v = rollout(p, rms, st, obs, kr, jnp.float32(w_cur), flyer if flyer is not None else 0.0)
         adv, ret = gae(tr, last_v)
@@ -323,6 +358,7 @@ def main():
                    hard=float((oc == 3).mean()) if len(oc) else float("nan"), timeout=float((oc == 4).mean()) if len(oc) else float("nan"),
                    ret=float(np.array(tr["r"]).sum() / max(1, done.sum())), loss=[float(x) for x in info],
                    std=[float(x) for x in np.exp(np.array(p["logstd"]))], wall=round(time.time() - t0, 1))
+        t_round = time.time() - t_round
         stuck += 1
         if stuck >= MIN_ROUNDS and ((succ == succ and succ >= a.w_ok) or stuck >= STUCK) and w_cur < W_TOP:
             row["advance"] = "landed" if succ == succ and succ >= a.w_ok else "stuck"
@@ -343,11 +379,15 @@ def main():
                 save(base + "_best.npz", p, rms, meta)
                 row["best"] = True
         log.write(json.dumps(row) + "\n"); log.flush()
+        if task:
+            clearml_log(task, row, a.envs * a.steps, t_round)
         if it % 10 == 0 or "val" in row:
             print(f"it {it} W {w_cur:.0f} band {succ:.2f} landed {row['landed']:.2f} crash {row['crashed']:.3f} "
                   f"timeout {row['timeout']:.2f} ret {row['ret']:.1f} std {row['std'][0]:.2f} {row['wall']:.0f}s"
                   + (" eval " + " ".join(f"{e['w10']:.0f}:{e['landed']:.2f}" for e in row.get("eval", [])) + " val " + " ".join(f"{v:.2f}" for v in row["val"])
                      + (" BEST" if row.get("best") else "") if "val" in row else ""), flush=True)
+    if task and os.path.exists(base + "_best.npz"):
+        task.upload_artifact("best checkpoint", base + "_best.npz")
 
 
 if __name__ == "__main__":
