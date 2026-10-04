@@ -1,0 +1,18 @@
+\begin{table*}[t]
+\centering\small
+\setlength{\tabcolsep}{5pt}
+\caption{PX4 flights in Gazebo with GNSS denied, the last flight of each scenario. Errors against Gazebo's truth, median / 90th percentile. Miss: touchdown distance from the pad center. Flying learner: wind seed 0. Learner: trained with the up-camera rig's model, not Table~\ref{tab:ladder}'s, flying the probability-weighted mean of its commands.}
+\label{tab:gnssfree}
+\begin{tabular}{llcccc}
+\toprule
+Scenario & Decider & GNSS off (s) & Visual fix error (m) & PX4 error (m) & Miss (m) \\
+\midrule
+Calm & Rule & 110 & 2.13 / 4.95 & 2.32 / 3.89 & 0.06 \\
+Wind, W10 9~m/s & Flying learner & 117 & 2.12 / 4.71 & 1.71 / 6.68 & 0.19 \\
+Crane on the route & Rule, local 3D planner & 117 & 2.28 / 5.12 & 1.85 / 3.89 & 0.04 \\
+Magpie & Learner & 116 & 2.21 / 5.12 & 1.67 / 3.55 & 0.04 \\
+Magpie, up camera added & Learner & 116 & 2.17 / 5.11 & 1.44 / 3.52 & 0.08 \\
+Mission to another pad & Rule & 107 & 2.26 / 5.17 & 3.13 / 4.82 & 0.05 \\
+\bottomrule
+\end{tabular}
+\end{table*}

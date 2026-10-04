@@ -1,0 +1,34 @@
+\begin{table}[t]
+\centering\footnotesize
+\setlength{\tabcolsep}{4pt}
+\caption{The learned decision layer and its training in the fast simulator.}
+\label{tab:learner}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Inputs & 221, magpie 228 \\
+\quad own state, pad, helipad & 7, 5, 5 \\
+\quad intruder slots & $15 \times 7$, magpie $16 \times 7$ \\
+\quad candidates, pad blocked & $14 \times 3$, 1 \\
+\quad planner's view & $14 \times 4$ \\
+\quad scaling & fixed constants \\
+Policy, value networks & separate, $2 \times 256$ ReLU \\
+Parameters & 249,103, magpie 252,687 \\
+Action at test time & sampled, exact repeats masked \\
+\midrule
+Imitation (DAgger) & 3 rounds of 2,048 flights \\
+\quad planner flying & 100, 50, 0\% of decisions \\
+\quad decisions labeled & 2.2 to 2.3 million \\
+\quad optimizer & Adam $10^{-3}$, 8 epochs a round \\
+\quad label smoothing & 0.05 \\
+PPO generations & 200 of 2,048 flights \\
+\quad optimizer & Adam $10^{-4}$, 4 epochs \\
+\quad minibatch & 32,768 decisions \\
+\quad clip, $\gamma$, GAE $\lambda$ & 0.2, 0.997, 0.95 \\
+\quad entropy bonus & 0.002 falling to 0.0002 \\
+\quad value weight, grad.\ clip & 0.5, 0.5 \\
+\quad value trained alone & first 5 generations \\
+Validation check & every 10 generations \\
+PPO time per seed & 1.1 to 2.0~h (RTX 5070) \\
+\bottomrule
+\end{tabular}
+\end{table}

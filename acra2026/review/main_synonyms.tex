@@ -1,0 +1,69 @@
+% =====================================================================
+%  Where Learning Helps a Delivery Drone Land
+%
+%  Target: ACRA 2026 (Canberra, 30 Nov - 2 Dec). Template: acra.sty and named.bst from
+%  the ARAA template folder (copies of template/ beside this file). US letter, two
+%  columns, 6 to 10 pages INCLUDING references, abstract at most 200 words,
+%  single-blind, author-year citations through named.bst.
+%
+%  Layout follows the journal manuscript (slr-uav-matching-edge/paper): sections/ and
+%  tables/ pulled in by \input, refs.bib, \figslot for figures not drawn yet.
+%  Writing rules: that repo's CLAUDE.md and the paper-prose skill. One paragraph per
+%  source line. README.md lists the result file behind every number in the text.
+%
+%  Build:  pdflatex main && bibtex main && pdflatex main && pdflatex main
+% =====================================================================
+\documentclass{article}
+\usepackage{acra}
+\usepackage{pdfcomment}
+\hypersetup{hidelinks}
+\hyphenpenalty=10000\exhyphenpenalty=10000\sloppy
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage{enumitem}
+\setlist{nosep,leftmargin=*}
+
+% Reserved space for a figure that is not drawn yet: a framed box at the size the
+% figure will occupy, so the page count and float placement stay honest.
+% \figslot{label}{height}{caption} is one column wide, \figslotwide spans both.
+\newcommand{\slotbox}[2]{%
+  \setlength{\fboxrule}{0.5pt}\setlength{\fboxsep}{0pt}%
+  \textcolor{gray}{\fbox{\begin{minipage}[c][#2][c]{0.98\linewidth}
+    \centering\small\itshape\color{gray}Figure~\ref{#1} to be added
+  \end{minipage}}}}
+\newcommand{\figslot}[3]{%
+  \begin{figure}[t]\centering\slotbox{#1}{#2}\caption{#3}\label{#1}\end{figure}}
+\newcommand{\figslotwide}[3]{%
+  \begin{figure*}[t]\centering\slotbox{#1}{#2}\caption{#3}\label{#1}\end{figure*}}
+
+\title{Where Learning Helps a Delivery Drone Land: A Hierarchical Stack\\
+       Tested from a Fast Simulator to GNSS-Free PX4 Flights}
+
+% Authors and affiliations as in the journal manuscript (main_drones.tex), supplied by
+% Saikrishna 2026-08-21. Nabin Sharma is corresponding there too.
+\author{Saikrishna Bulusu$^{1,2}$ and Nabin Sharma$^{1}$\\
+  $^{1}$School of Computer Science, University of Technology Sydney, NSW 2007, Australia\\
+  $^{2}$Birla Institute of Technology and Science Pilani, Pilani, Rajasthan 333031, India\\
+  f20230728@pilani.bits-pilani.ac.in, nabin.sharma@uts.edu.au}
+
+\begin{document}
+\maketitle
+
+\noindent\fbox{\parbox{0.96\linewidth}{\small\textbf{Review copy.} Highlighted words have alternatives in their notes (open the comments panel). Not highlighted on purpose, because each names one defined thing throughout: planner, learner, rule, decider, drone, magpie, pad, marker, fog, mist, wind, gusts, rig, voxel, velocity, crash, landed, landing, timeout, clean delivery, room, ladder, shield, commit-on-lock, flight(s), decision layer, flying learner, crash-priced decider, all-knowing planner, same-sensor planner, landing gate, GNSS, PX4, Gazebo, MJX, W10, NMAC, YOLO26n, visual localization module, fix (a position fix). Choose one word per meaning and use it everywhere.}}\par\medskip
+\input{review/sections/s0_abstract}
+\input{review/sections/s1_introduction}
+\input{review/sections/s2_related}
+\input{review/sections/s3_stack}
+\input{review/sections/s4_method}
+\input{review/sections/s5_results}
+\input{review/sections/s6_gazebo}
+\input{review/sections/s7_discussion}
+
+\bibliographystyle{named}
+\bibliography{refs}
+
+\end{document}

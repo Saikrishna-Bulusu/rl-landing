@@ -1,0 +1,19 @@
+\section{Introduction}
+
+A delivery drone spends most of its flight in open air and has most of its risk in the final few hundred meters. There it descends into a suburb among houses, trees and cranes, close to people in their yards, other delivery drones and an air ambulance. During the Australian breeding season, it may also encounter a magpie that protects its nest by going after the drone \cite{lyons2018}. The channeling effect around high-rise structures increases local wind drafts, while the resulting urban canyon environment frequently causes degradation and loss of global navigation satellite system (GNSS) signals. Each of these risks has a hand-written response, and each response fails somewhere.
+
+Reinforcement learning (RL) is a common answer for those failures, for landing \cite{polvara2020,amendola2024}, for flight among moving obstacles \cite{xu2025navrl} and for urban last-mile delivery \cite{benali2026}. A learned policy that beats a reactive rule does not show that learning was needed. The gain may come from information its designers gave it, from a weak baseline, or from one encounter repeated in training and test. In the study by Benali and Hamoud \shortcite{benali2026}, for example, the helicopter follows one fixed straight path and the drone starts from fixed relative positions and headings. Without a stronger comparison, a reader cannot tell which parts of a landing stack need learning and which need a better sensor or a better planner.
+
+We ask where learning pays and answer it by measuring before training. Our landing stack is hierarchical (Figure~\ref{fig:stack}). A local 3D planner and fixed safety rules handle what the map and depth camera provide. A learned decision layer selects every 0.5~s from the same maneuvers that a planner scores, and the PX4 autopilot \cite{meier2015} executes the result.
+
+For each condition, we first compare three deciders on identical flights. They are a reactive rule, the best planner that uses the drone's own sensors, and a planner that reads every intruder's true future from the simulator. The gap between the first two is room for better decisions. The gap to the third is room for better information. Only then do we train, and the learner starts as a copy of the planner.
+
+This paper makes four contributions.
+\begin{itemize}
+\item A hierarchical landing stack in which a learned decision layer chooses among planner-scored maneuvers. It sits above PX4 and below hard safety rules and a local 3D planner, and a separate learned flying layer handles gusts.
+\item A measurement protocol for learned deciders. It pairs flights, measures a ladder of three deciders without prior learning, and initializes the learner as a copy of the planner.
+\item Results from a fast simulator of a real suburb and from a wind simulator matched to PX4. Learning pays where information is missing or where a rule's safety gate rarely opens, and adds about two points elsewhere.
+\item Software-in-the-loop flights with PX4 in the Gazebo simulator, including landings with GNSS denied and an absolute visual localization module feeding PX4's estimator.
+\end{itemize}
+
+We will release the complete simulation codebase on GitHub, with videos of the simulated flights. All results in this paper come from simulation. We have not flown the stack on hardware.

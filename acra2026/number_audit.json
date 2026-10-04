@@ -1,0 +1,1276 @@
+[
+ [
+  "T1 clear",
+  "t1_ladder",
+  "Clear & 93.7 & \\textbf{94.5} & 94.3 & 95.4 & 96.4 (96.3--96.4) & $+1.9 \\pm 0.5$ & $+1.9 \\pm 0.5$ \\\\",
+  "urban/headroom_lidar_gps*.json (corridor) + urban/rl_eyes_lidar_gps*_corridor_*.json eval.sampled + urban/pair_magpie.json + urban/sens/unmapped_base.json",
+  "OK"
+ ],
+ [
+  "T1 unmapped",
+  "t1_ladder",
+  "Unmapped structures & 93.3 & 94.0 & \\textbf{94.3} & 94.4 & 96.0 (95.9--96.1) & $+2.0 \\pm 0.7$ & $+1.9 \\pm 0.8$ \\\\",
+  "urban/headroom_lidar_gps*.json (corridor) + urban/rl_eyes_lidar_gps*_corridor_*.json eval.sampled + urban/pair_magpie.json + urban/sens/unmapped_base.json",
+  "OK"
+ ],
+ [
+  "T1 fog",
+  "t1_ladder",
+  "Fog & 68.8 & \\textbf{71.9} & 69.3 & 95.7 & 86.4 (84.8--88.8) & $+14.6 \\pm 5.4$ & $+14.6 \\pm 5.4$ \\\\",
+  "urban/headroom_lidar_gps*.json (corridor) + urban/rl_eyes_lidar_gps*_corridor_*.json eval.sampled + urban/pair_magpie.json + urban/sens/unmapped_base.json",
+  "OK"
+ ],
+ [
+  "T1 rig",
+  "t1_ladder",
+  "Magpie, camera rig & 72.6 & 69.8 & \\textbf{73.5} & 75.1 & 77.5 (77.1--77.7) & $+7.7 \\pm 1.7$ & $+4.1 \\pm 2.2$ \\\\",
+  "urban/headroom_lidar_gps*.json (corridor) + urban/rl_eyes_lidar_gps*_corridor_*.json eval.sampled + urban/pair_magpie.json + urban/sens/unmapped_base.json",
+  "OK"
+ ],
+ [
+  "T1 truth",
+  "t1_ladder",
+  "Magpie, known exactly & 79.1 & \\textbf{78.7} & 77.7 & 78.9 &",
+  "urban/headroom_lidar_gps*.json (corridor) + urban/rl_eyes_lidar_gps*_corridor_*.json eval.sampled",
+  "OK"
+ ],
+ [
+  "best excl 0",
+  "s5_results",
+  "every seed's interval excludes zero in all four conditions",
+  "gains over the best planner, per seed",
+  "OK"
+ ],
+ [
+  "gain clear abstract",
+  "s0_abstract",
+  "the learner beats the best same-sensor planner by 1.9 points of clean deliveries in clear weather",
+  "urban/headroom_lidar_gps*.json (corridor) + urban/rl_eyes_lidar_gps*_corridor_*.json eval.sampled",
+  "OK"
+ ],
+ [
+  "gain rig abstract",
+  "s0_abstract",
+  "It gains 4.1 points against a swooping magpie",
+  "urban/pair_magpie.json",
+  "OK"
+ ],
+ [
+  "gain fog abstract",
+  "s0_abstract",
+  "and 14.6 in fog",
+  "urban/headroom_lidar_gps*.json (corridor) + urban/rl_eyes_lidar_gps*_corridor_*.json eval.sampled",
+  "OK"
+ ],
+ [
+  "span clear",
+  "s5_results",
+  "without learning span 1.8 points, from the rule's 93.7\\% to the privileged planner's 95.4\\%",
+  "urban/headroom_lidar_gps*.json (corridor) + urban/rl_eyes_lidar_gps*_corridor_*.json eval.sampled",
+  "OK"
+ ],
+ [
+  "unmapped cost",
+  "s5_results",
+  "Unmapped structures cost the rule 0.3 points and leave the privileged planner only 0.1 points",
+  "urban/headroom_lidar_gps*.json (corridor) + urban/rl_eyes_lidar_gps*_corridor_*.json eval.sampled",
+  "OK"
+ ],
+ [
+  "fog gap",
+  "s5_results",
+  "planner reaches 71.9\\% and the privileged planner 95.7\\%, a gap of 23.8 points",
+  "urban/headroom_lidar_gps*.json (corridor) + urban/rl_eyes_lidar_gps*_corridor_*.json eval.sampled",
+  "OK"
+ ],
+ [
+  "truth",
+  "s5_results",
+  "(79.1\\% against 78.7\\% and 78.9\\%)",
+  "urban/headroom_lidar_gps*.json (corridor) + urban/rl_eyes_lidar_gps*_corridor_*.json eval.sampled",
+  "OK"
+ ],
+ [
+  "rig ladder",
+  "s5_results",
+  "the room returns: 72.6\\% for the rule, 73.5\\% for the best same-sensor planner and 75.1\\% for the privileged planner",
+  "urban/headroom_lidar_gps*.json (corridor) + urban/rl_eyes_lidar_gps*_corridor_*.json eval.sampled",
+  "OK"
+ ],
+ [
+  "best is copied",
+  "s5_results",
+  "The copied shield planner is also the best same-sensor planner in clear weather and fog. With unmapped structures and with the magpie seen through the rig, the safe planner does better.",
+  "urban/headroom_lidar_gps*.json (corridor) + urban/rl_eyes_lidar_gps*_corridor_*.json eval.sampled",
+  "OK"
+ ],
+ [
+  "gains text",
+  "s5_results",
+  "missing: 14.6 points in fog and 4.1 with the magpie seen through the rig. It is 1.9 points in clear weather and 1.9 with unmapped structures",
+  "urban/headroom_lidar_gps*.json (corridor) + urban/rl_eyes_lidar_gps*_corridor_*.json eval.sampled + second evaluations",
+  "OK"
+ ],
+ [
+  "rig vs copied",
+  "s5_results",
+  "The gain of 7.7 points over the copied planner is larger",
+  "urban/headroom_lidar_gps*.json (corridor) + urban/rl_eyes_lidar_gps*_corridor_*.json eval.sampled",
+  "OK"
+ ],
+ [
+  "beats privileged",
+  "s5_results",
+  "In three conditions the learner also beats the privileged planner",
+  "urban/headroom_lidar_gps*.json (corridor) + urban/rl_eyes_lidar_gps*_corridor_*.json eval.sampled",
+  "OK"
+ ],
+ [
+  "rig caveat",
+  "s5_results",
+  "reaches only 69.8\\% there, below the safe planner's 73.5\\%.",
+  "urban/why_cond.json + ladders",
+  "OK"
+ ],
+ [
+  "fog over",
+  "s5_results",
+  "fell from 24.5\\% for the copied planner to 6.8\\% for the learner",
+  "urban/why_cond.json",
+  "OK"
+ ],
+ [
+  "fog 30m",
+  "s5_results",
+  "within 30~m of a person rose from 0.0\\% to 4.1\\%",
+  "urban/why_cond.json",
+  "OK"
+ ],
+ [
+  "rig strikes",
+  "s5_results",
+  "strikes fell from 22.7\\% of all flights to 17.9\\%",
+  "urban/why_cond.json",
+  "OK"
+ ],
+ [
+  "clear timeouts",
+  "s5_results",
+  "on 1.8\\% of flights against the planner's 2.8\\%",
+  "urban/why_cond.json",
+  "OK"
+ ],
+ [
+  "magpie sensing",
+  "s5_results",
+  "27.7\\% of magpie flights end in a strike when the drone knows the magpie exactly, and 38.9\\% through the rig. The rate is 41.6\\% when the rig sees only half as far, and 45.1\\%",
+  "urban/headroom_*birds*.json struck_magpie",
+  "OK"
+ ],
+ [
+  "magpie planners",
+  "s5_results",
+  "struck on 38.8\\% of magpie flights and the privileged planner on 37.7\\%",
+  "urban/headroom_lidar_gps_birds_hunter_rig.json",
+  "OK"
+ ],
+ [
+  "detector2",
+  "s5_results",
+  "Before the photographic renders, it boxed tree crowns and roofs 0.57 times per picture, and after them 0.002 times.",
+  "results/geo_flights_2026-09-27.json detector_retrain",
+  "OK"
+ ],
+ [
+  "T2 rule",
+  "t2_wind",
+  "Rule & 100 (0.0) & 77.9 (0.0) & 5.6 (0.1) \\\\",
+  "wind/runs/*_ladder.json (1024 flights per wind)",
+  "OK"
+ ],
+ [
+  "T2 fly",
+  "t2_wind",
+  "Flying learner (8) & 100 (0.0) & 99.1 (0.0) & 50.7 (0.1) \\\\",
+  "wind/runs/*_ladder.json (1024 flights per wind)",
+  "OK"
+ ],
+ [
+  "T2 dec",
+  "t2_wind",
+  "Crash-priced decider (3) & 99.0 (0.0) & 98.6 (0.1) & 96.2 (1.0) \\\\",
+  "wind/runs/*_ladder.json (1024 flights per wind)",
+  "OK"
+ ],
+ [
+  "rule text",
+  "s5_results",
+  "up to a W10 of 12~m/s, 77.9\\% at 15~m/s and 5.6\\% at 18~m/s",
+  "wind/runs/*_ladder.json (1024 flights per wind)",
+  "OK"
+ ],
+ [
+  "abstract wind",
+  "s0_abstract",
+  "lands 99.1\\% of flights at 15~m/s against the rule's 77.9\\%",
+  "wind/runs/*_ladder.json (1024 flights per wind)",
+  "OK"
+ ],
+ [
+  "fly text",
+  "s5_results",
+  "It lands 99.1\\% at 15~m/s (98.6 to 99.4\\% over eight seeds) and 50.7\\% at 18~m/s (43.8 to 54.9\\%)",
+  "wind/runs/*_ladder.json (1024 flights per wind)",
+  "OK"
+ ],
+ [
+  "fly crashes",
+  "s5_results",
+  "It crashes on at most 0.5\\% of flights at any speed up to 20~m/s",
+  "wind/runs/*_ladder.json (1024 flights per wind)",
+  "OK"
+ ],
+ [
+  "dec text",
+  "s5_results",
+  "It lands 96.2\\% at 18~m/s (93.8 to 96.2\\%) but crashes on 1.0\\% (0.8 to 3.0\\%), and at 20~m/s it lands 78.5\\% and crashes on 6.5\\%",
+  "wind/runs/*_ladder.json (1024 flights per wind)",
+  "OK"
+ ],
+ [
+  "unpriced",
+  "s5_results",
+  "One decider priced at $-15$ and $-10$ landed 69.1\\% and crashed on 11.7\\%",
+  "wind/runs/stage2_s0_best_ladder.json",
+  "OK"
+ ],
+ [
+  "old priced",
+  "s5_results",
+  "$-100$ for a crash and $-30$ for a hard touchdown gave a median of 87.3\\% landed at 18~m/s and 3.3\\% crashed",
+  "wind/runs/stage2_c100_s*_best_ladder.json",
+  "OK"
+ ],
+ [
+  "pulsing mjx",
+  "s5_results",
+  "trained with the 0.997 discount and $-100$ for a hard touchdown, landed 92.1\\% at 18~m/s in MJX but alternated between climbing and descending",
+  "wind/runs/stage2_c100h100_s1_best_ladder.json",
+  "OK"
+ ],
+ [
+  "wind reward",
+  "s4_method",
+  "A crash and a hard or off-pad touchdown each cost $-100$",
+  "wind/runs/stage2_c100h100g_s*_best.npz meta (all three asserted above)",
+  "OK"
+ ],
+ [
+  "wind discount",
+  "s4_method",
+  "with the learner's own discount of 0.9998. With 0.997, which we first used, hovering near the start earned about as much as landing",
+  "wind/ppo.py GAMMA, land_env.py SHAPE_G default",
+  "OK"
+ ],
+ [
+  "more than flyer",
+  "s5_results",
+  "At 18 and 20~m/s the crash-priced decider lands more flights than the flying learner and crashes more often",
+  "wind/runs/*_ladder.json (1024 flights per wind)",
+  "OK"
+ ],
+ [
+  "wind README",
+  "-",
+  "0.29/0.85/1.51 s | 0.28/0.80/1.52 s",
+  "wind/README.md",
+  "OK"
+ ],
+ [
+  "wind README",
+  "-",
+  "10.36 / 10.43 (9.2 m/s), 22.48 / 22.6 (15.8 m/s)",
+  "wind/README.md",
+  "OK"
+ ],
+ [
+  "wind README",
+  "-",
+  "2.584 kg",
+  "wind/README.md",
+  "OK"
+ ],
+ [
+  "step",
+  "s3_stack",
+  "63\\% of the response takes 0.85~s in Gazebo and 0.80~s in MJX",
+  "wind/README.md step table",
+  "OK"
+ ],
+ [
+  "hover",
+  "s3_stack",
+  "steady 15.8~m/s wind, the drone tilts 22.5$^\\circ$ in Gazebo and 22.6$^\\circ$ in MJX",
+  "wind/README.md hover",
+  "OK"
+ ],
+ [
+  "weather wind",
+  "s6_gazebo",
+  "Wind of 7~m/s with gusts to about 10~m/s cost no landing. Mist and thick fog cost one and three landings.",
+  "weather_runs/{gusty,mist_nocommit,fog_nocommit}",
+  "OK"
+ ],
+ [
+  "weather text",
+  "s6_gazebo",
+  "With commit-on-lock, mist and fog both landed 10 of 10, and the median miss was 0.33 to 0.37~m in every sky.",
+  "weather_runs/<sky>/m_*.json",
+  "OK"
+ ],
+ [
+  "abort",
+  "s6_gazebo",
+  "once only 0.68~m from its own pad",
+  "weather_runs/fog_nocommit",
+  "OK"
+ ],
+ [
+  "first read",
+  "s6_gazebo",
+  "first read at about 51~m in every sky",
+  "weather_report.json first_read_alt_m_median",
+  "OK"
+ ],
+ [
+  "crane survey",
+  "s6_gazebo",
+  "crashed into the crane in 8 of 10 flights",
+  "gazebo_voxel/set10c/flights.jsonl",
+  "OK"
+ ],
+ [
+  "crane voxel",
+  "s6_gazebo",
+  "passed all ten but came within 0.99~m",
+  "set10c",
+  "OK"
+ ],
+ [
+  "crane local3d",
+  "s6_gazebo",
+  "never closer than 2.59~m (median 3.42~m)",
+  "set10c",
+  "OK"
+ ],
+ [
+  "live magpie",
+  "s6_gazebo",
+  "The planner and a learner trained with that rig's model each landed 5 of 9 flights",
+  "gazebo_rig/*_rig_v2l*/flights.jsonl",
+  "OK"
+ ],
+ [
+  "T4 geo_calm4",
+  "t4_gnssfree",
+  "Calm & Rule & 110 & 2.13 / 4.95 & 2.32 / 3.89 & 0.06 \\\\",
+  "results/geo_flights_2026-09-27.json geo_calm4",
+  "OK"
+ ],
+ [
+  "T4 geo_wind10",
+  "t4_gnssfree",
+  "Wind, W10 9~m/s & Flying learner & 117 & 2.12 / 4.71 & 1.71 / 6.68 & 0.19 \\\\",
+  "results/geo_flights_2026-09-27.json geo_wind10",
+  "OK"
+ ],
+ [
+  "T4 geo_obst5",
+  "t4_gnssfree",
+  "Crane on the route & Rule, local 3D planner & 117 & 2.28 / 5.12 & 1.85 / 3.89 & 0.04 \\\\",
+  "results/geo_flights_2026-09-27.json geo_obst5",
+  "OK"
+ ],
+ [
+  "T4 geo_magpie5",
+  "t4_gnssfree",
+  "Magpie & Learner & 116 & 2.21 / 5.12 & 1.67 / 3.55 & 0.04 \\\\",
+  "results/geo_flights_2026-09-27.json geo_magpie5",
+  "OK"
+ ],
+ [
+  "T4 geo_magpie6",
+  "t4_gnssfree",
+  "Magpie, up camera added & Learner & 116 & 2.17 / 5.11 & 1.44 / 3.52 & 0.08 \\\\",
+  "results/geo_flights_2026-09-27.json geo_magpie6",
+  "OK"
+ ],
+ [
+  "T4 mission_example_pad4",
+  "t4_gnssfree",
+  "Mission to another pad & Rule & 107 & 2.26 / 5.17 & 3.13 / 4.82 & 0.05 \\\\",
+  "results/geo_flights_2026-09-27.json mission_example_pad4",
+  "OK"
+ ],
+ [
+  "gnss ranges",
+  "s6_gazebo",
+  "the median fix error was 2.1 to 2.3~m, the 90th percentile 4.7 to 5.2~m, and 97.8 to 98.5\\% of fixes fell within 10~m. PX4's fused position had a median error of 1.4 to 3.1~m",
+  "results/geo_flights_2026-09-27.json",
+  "OK"
+ ],
+ [
+  "gnss miss",
+  "s6_gazebo",
+  "every flight landed within 0.19~m of the pad center",
+  "results/geo_flights",
+  "OK"
+ ],
+ [
+  "abstract miss",
+  "s0_abstract",
+  "all landed within 0.19~m of the pad",
+  "results/geo_flights",
+  "OK"
+ ],
+ [
+  "concl miss",
+  "s7_discussion",
+  "the pad's markers guided it to within 0.19~m of the center",
+  "results/geo_flights",
+  "OK"
+ ],
+ [
+  "rtf",
+  "s6_gazebo",
+  "we slowed each magpie landing to a tenth of real time for the detector",
+  "gazebo_geo/geo_magpie{4,5,6}/magpie_geo.json rows, landing phase",
+  "OK"
+ ],
+ [
+  "rtf2",
+  "s6_gazebo",
+  "so its delay cost the drone a tenth of the simulated time it would in real time",
+  "same",
+  "OK"
+ ],
+ [
+  "paired safeplan",
+  "s5_results",
+  "With the magpie, the seeds range from 3.5 to 4.8 points, each with a 95\\% interval of about $\\pm 1.5$",
+  "urban/pair_magpie.json",
+  "OK"
+ ],
+ [
+  "sens",
+  "s7_discussion",
+  "We changed each assumption alone, 18 variations in all",
+  "urban/sens/*.json",
+  "OK"
+ ],
+ [
+  "sens2",
+  "s7_discussion",
+  "moved by up to 33 points, yet the learner beat the planner it copied in every variation and every seed",
+  "urban/sens/*.json",
+  "OK"
+ ],
+ [
+  "sens3",
+  "s7_discussion",
+  "The gain stayed at least 5.8 points in fog and with the magpie and at most 2.2 in clear weather",
+  "urban/sens/*.json",
+  "OK"
+ ],
+ [
+  "sens4",
+  "s7_discussion",
+  "the learner fell 0.4 points below the safe planner",
+  "urban/sens/clear_tmax200.json",
+  "OK"
+ ],
+ [
+  "sens5",
+  "s7_discussion",
+  "Against the best same-sensor planner it stayed at least 6.5 points in fog and 3.2 with the magpie. In one clear-weather variation, a 200~s limit",
+  "urban/sens/*.json vs the better of shield and safe planner",
+  "OK"
+ ],
+ [
+  "T2 gz rule",
+  "t2_wind",
+  "Rule & 19/20 & 12/19 & 0/19 \\\\",
+  "gazebo_wind/ladder_rule/flights.jsonl",
+  "OK"
+ ],
+ [
+  "T2 gz fly_hp_s0_best",
+  "t2_wind",
+  "Flying learner, s.~0 & 20/20 & 18/20 & 6/20 \\\\",
+  "gazebo_wind/ladder_rule/flights.jsonl",
+  "OK"
+ ],
+ [
+  "T2 gz fly_hp_s1_best",
+  "t2_wind",
+  "Flying learner, s.~1 & 20/20 & 19/20 & 5/20 \\\\",
+  "gazebo_wind/ladder_rule/flights.jsonl",
+  "OK"
+ ],
+ [
+  "T2 gz stage2_c100h100g_s0_best",
+  "t2_wind",
+  "Crash-priced decider, s.~0 & 18/20 & 19/20 & 18/20 \\\\",
+  "gazebo_wind/ladder_rule/flights.jsonl",
+  "OK"
+ ],
+ [
+  "gz dec",
+  "s5_results",
+  "The crash-priced decider landed 18 of 20, with no crash",
+  "gazebo_wind/ladder_rule",
+  "OK"
+ ],
+ [
+  "pulsing gz",
+  "s5_results",
+  "In Gazebo at 9~m/s it reversed 1.7 times per second and landed 16 of 20, and its four hard landings touched down at 1.06 to 1.15~m/s",
+  "gazebo_wind/ladder_rule e*_w9_stage2_c100h100_s1_best.csv (vz_cmd) + flights.jsonl sink",
+  "OK"
+ ],
+ [
+  "pulsing seed",
+  "s5_results",
+  "One seed of the crash-priced decider reversed 2.2 times per second in MJX at 9~m/s, so we count reversals before any Gazebo flight",
+  "wind/runs/stage2_c100h100g_s*_timing.out (timing_check.py, hold 1, no delay)",
+  "OK"
+ ],
+ [
+  "flown seed rev",
+  "s5_results",
+  "The seed we flew reversed at most 0.34 times per second in Gazebo",
+  "gazebo_wind/ladder_rule e*_stage2_c100h100g_s0_best.csv; seed 0 has the best validation mean",
+  "OK"
+ ],
+ [
+  "gz paired",
+  "s5_results",
+  "the decider landed 17 flights that the rule did not, and the rule landed none",
+  "gazebo_wind/ladder_rule",
+  "OK"
+ ],
+ [
+  "gz text",
+  "s5_results",
+  "At 15~m/s the rule landed 12 of 19 flights and the two flying learners 18 and 19 of 20",
+  "gazebo_wind/ladder_rule",
+  "OK"
+ ],
+ [
+  "concl",
+  "s7_discussion",
+  "In simulation, against the best same-sensor planner, learning added 14.6 points of clean deliveries in fog, 4.1 against a magpie seen through cameras and 1.9 elsewhere",
+  "wind/runs/*_ladder.json (1024 flights per wind) + second evaluations",
+  "OK"
+ ],
+ [
+  "copy = planner",
+  "s4_method",
+  "Before PPO, the copy's top choice scored exactly the planner's rate of clean deliveries on the validation flights, in every seed and condition.",
+  "urban/rl_eyes_lidar_gps*_corridor_*.json log[0].eval_clean vs baselines.planner",
+  "OK"
+ ],
+ [
+  "T5 inputs",
+  "t5_learner",
+  "Inputs & 221, magpie 228",
+  "checkpoints body.0.weight",
+  "OK"
+ ],
+ [
+  "T5 params",
+  "t5_learner",
+  "Parameters & 249,103, magpie 252,687",
+  "checkpoints, all tensors",
+  "OK"
+ ],
+ [
+  "T5 data",
+  "t5_learner",
+  "decisions labeled & 2.2 to 2.3 million",
+  "urban/rl_cond_*.log, DAgger round 2",
+  "OK"
+ ],
+ [
+  "T5 time",
+  "t5_learner",
+  "PPO time per seed & 1.1 to 2.0~h",
+  "urban/rl_cond_*.log, gen 199",
+  "OK"
+ ],
+ [
+  "T2 caption",
+  "t2_wind",
+  "Two rule flights, at 15 and 18~m/s, stopped on a simulator fault and left no record.",
+  "gazebo_wind/ladder_rule/flights.jsonl (rule e13 at 15 and e12 at 18 m/s have no record)",
+  "OK"
+ ],
+ [
+  "start",
+  "s3_stack",
+  "Each flight starts 50~m up, at most 1~km from its pad in the direction of the depot.",
+  "urban/urban_env.py reset()",
+  "OK"
+ ],
+ [
+  "touchdown",
+  "s3_stack",
+  "It models no wind and counts any touchdown within 1~m of the pad center, so it has no landing gate.",
+  "urban/urban_env.py step()",
+  "OK"
+ ],
+ [
+  "dev flights",
+  "s6_gazebo",
+  "Before them, and after short pipeline tests, we flew 18 development flights in the same scenarios. Six failed:",
+  "gazebo_geo/<run>/ run.log and flights.jsonl",
+  "OK"
+ ],
+ [
+  "dev 659",
+  "s6_gazebo",
+  "a timeout and a landing 659~m off the pad",
+  "gazebo_geo/geo_magpie2/run.log miss_m",
+  "OK"
+ ],
+ [
+  "any direction",
+  "s7_discussion",
+  "The learner's gain over its copied planner was then 2.4 to 2.7 points, against 1.9 to 2.1 from the north-west.",
+  "urban/rl_eyes_lidar_{random,corridor}_0_1_2.json eval.sampled.vs_planner",
+  "OK"
+ ],
+ [
+  "concl 7.7",
+  "s7_discussion",
+  "Against the planner it started from, the magpie gain was 7.7 points.",
+  "wind/runs/*_ladder.json (1024 flights per wind)",
+  "OK"
+ ],
+ [
+  "combined ci",
+  "s4_method",
+  "For the mean over seeds we combine the widest per-seed interval with a Student's $t$ interval over the seed means",
+  "Table 2 intervals",
+  "OK"
+ ],
+ [
+  "det sizes",
+  "s5_results",
+  "fine-tuned on 4,115 labeled renders over plain ground and 4,611 over photographic ground.",
+  "gz_logan/rig_v2/yolo/{ds,ds_geo}/images/train",
+  "OK"
+ ],
+ [
+  "detector",
+  "s5_results",
+  "it found 89\\% of magpies over plain ground (511 pictures) and 81\\% over photographic ground (577), at a 0.5 threshold.",
+  "detector_retrain + yolo/{ds,ds_geo}/images/test",
+  "OK"
+ ],
+ [
+  "det range",
+  "s5_results",
+  "It found 85 to 86\\% of magpies within 20~m and 59\\% at 45 to 70~m.",
+  "score_yolo_new.json found_by_distance_m (photo ground)",
+  "OK"
+ ],
+ [
+  "sign test",
+  "s5_results",
+  "and the rule landed none that the decider missed. A two-sided sign test gives $p < 0.001$.",
+  "gazebo_wind/ladder_rule, 18 m/s pairs",
+  "OK"
+ ],
+ [
+  "mjx ci",
+  "t2_wind",
+  "A rate from 1,024 flights has a 95\\% interval of at most $\\pm 3.1$ points.",
+  "binomial, p = 0.5",
+  "OK"
+ ],
+ [
+  "weather cp",
+  "s6_gazebo",
+  "10 of 10 shows only that the landing rate exceeds 69\\% at 95\\% confidence",
+  "Clopper-Pearson lower bound, 10 of 10",
+  "OK"
+ ],
+ [
+  "fix latency",
+  "s6_gazebo",
+  "a visual fix was ready a median of 11 to 41~ms after its image was taken.",
+  "results/geo_flights latency_ms_wall_median",
+  "OK"
+ ],
+ [
+  "candidates",
+  "s3_stack",
+  "The other four are landing anyway, hovering, climbing straight up and flying away from the helipad. Every candidate is capped at 8~m/s across, 3~m/s up and 2.5~m/s down.",
+  "urban/urban_agents.py MPC.candidates",
+  "OK"
+ ],
+ [
+  "planner",
+  "s4_method",
+  "It extends each track in a straight line at its sensed velocity and replans every 0.5~s. Its cost adds progress over 5~s, predicted violations over 20~s, and a deadline term.",
+  "urban/urban_agents.py MPC",
+  "OK"
+ ],
+ [
+  "test-picked",
+  "s4_method",
+  "We report the better of the two on the test flights as the best same-sensor planner.",
+  "urban/urban_headroom.py",
+  "OK"
+ ],
+ [
+  "T5 scaling",
+  "t5_learner",
+  "\\quad scaling & fixed constants \\\\",
+  "urban/urban_rl.features",
+  "OK"
+ ],
+ [
+  "T6 base",
+  "t6_sens",
+  "As in Table~\\ref{tab:ladder} & 1.8 & 1.8 & 14.4 & 14.4 & 7.8 & 4.1 \\\\",
+  "urban/sens/*_base.json",
+  "OK"
+ ],
+ [
+  "T6 leave10_120",
+  "t6_sens",
+  "Leave 10--120~s & 2.0 & 1.9 & 12.4 & 12.4 & 8.2 & 4.2 \\\\",
+  "urban/sens/*_leave10_120.json",
+  "OK"
+ ],
+ [
+  "T6 leave60_480",
+  "t6_sens",
+  "Leave 60--480~s & 1.5 & 1.2 & 6.5 & 6.5 & 6.2 & 3.2 \\\\",
+  "urban/sens/*_leave60_480.json",
+  "OK"
+ ],
+ [
+  "T6 tmax200",
+  "t6_sens",
+  "Limit 200~s & 2.2 & $-0.4$ & 9.2 & 6.9 & 11.4 & 4.4 \\\\",
+  "urban/sens/*_tmax200.json",
+  "OK"
+ ],
+ [
+  "T6 tmax400",
+  "t6_sens",
+  "Limit 400~s & 0.8 & 0.8 & 14.7 & 14.7 & 5.8 & 3.7 \\\\",
+  "urban/sens/*_tmax400.json",
+  "OK"
+ ],
+ [
+  "T6 sep50",
+  "t6_sens",
+  "Drones 50~m & 1.4 & 1.4 & 14.1 & 14.1 & 7.3 & 3.9 \\\\",
+  "urban/sens/*_sep50.json",
+  "OK"
+ ],
+ [
+  "T6 commit0.1",
+  "t6_sens",
+  "Commit 0.1~s & -- & -- & -- & -- & 7.9 & 3.9 \\\\",
+  "urban/sens/*_commit0.1.json",
+  "OK"
+ ],
+ [
+  "T6 commit0.5",
+  "t6_sens",
+  "Commit 0.5~s & -- & -- & -- & -- & 6.7 & 3.2 \\\\",
+  "urban/sens/*_commit0.5.json",
+  "OK"
+ ],
+ [
+  "T6 halfrange",
+  "t6_sens",
+  "Rig range half & -- & -- & -- & -- & 7.6 & 4.3 \\\\",
+  "urban/sens/*_halfrange.json",
+  "OK"
+ ],
+ [
+  "T6 first row",
+  "t6_sens",
+  "The first row is a second evaluation, within 0.2 points of Table~\\ref{tab:ladder}.",
+  "sens base vs training-run evaluation",
+  "OK"
+ ],
+ [
+  "repeats",
+  "s6_gazebo",
+  "We then repeated the calm flight ten times on one frozen code version, changing only the landing heading. All ten landed, 0.04 to 0.07~m from the pad center, with GNSS denied for 109 to 130~s and PX4's median error 2.0 to 2.9~m.",
+  "gazebo_geo/geo_calm10_e*/",
+  "OK"
+ ],
+ [
+  "repeats abstract",
+  "s0_abstract",
+  "and ten repeated calm flights, all landed within 0.19~m of the pad",
+  "gazebo_geo/geo_calm10_e* + results/geo_flights",
+  "OK"
+ ],
+ [
+  "repeats limits",
+  "s7_discussion",
+  "ten GNSS-denied flights in calm air but one in each harder scenario",
+  "gazebo_geo/geo_calm10_e*/",
+  "OK"
+ ],
+ [
+  "det latency",
+  "s6_gazebo",
+  "the detector took a median of 54 to 65~ms per set of four or five pictures. The slowest set took 157~ms, inside the 0.25~s reflex period.",
+  "results/detector_latency_2026-09-30.json",
+  "OK"
+ ],
+ [
+  "pad",
+  "s3_stack",
+  "The delivery pad is a 5~m square mat carrying three ArUco markers \\cite{garrido2014} in a row, 1.80, 1.20 and 0.15~m across",
+  "make_pad.py MAT, MARKERS",
+  "OK"
+ ],
+ [
+  "pad fig 2",
+  "pad",
+  "\\fill (-2.175,-0.9) rectangle (-0.375,0.9);",
+  "make_pad.py MARKERS",
+  "OK"
+ ],
+ [
+  "pad fig 1",
+  "pad",
+  "\\fill (-0.075,-0.075) rectangle (0.075,0.075);",
+  "make_pad.py MARKERS",
+  "OK"
+ ],
+ [
+  "pad fig 0",
+  "pad",
+  "\\fill (0.275,-0.6) rectangle (1.475,0.6);",
+  "make_pad.py MARKERS",
+  "OK"
+ ],
+ [
+  "pad fig mat",
+  "pad",
+  "node[below] {5.0 m mat}",
+  "make_pad.py MAT",
+  "OK"
+ ],
+ [
+  "pad fig radii",
+  "pad",
+  "\\draw[orange] (0,0) circle (0.75);\n  \\draw[orange, dashed] (0,0) circle (1.0);",
+  "gz_windland.py PAD_R, gz_learner.py landed_off_pad",
+  "OK"
+ ],
+ [
+  "pad fig legend",
+  "pad",
+  "node[right, black] {0.75 m, wind};\n  \\draw[orange, dashed] (2.75,0.35) -- (3.35,0.35) node[right, black] {1 m, others}",
+  "the same radii, named in the legend",
+  "OK"
+ ],
+ [
+  "pad fig A",
+  "pad",
+  "A: global approach on satellite-image fixes, median fix error 2.1 to 2.3 m",
+  "results/geo_flights fix_err_m.median",
+  "OK"
+ ],
+ [
+  "pad fig B",
+  "pad",
+  "B: terminal landing on the pad's markers, touchdown within 0.19 m",
+  "results/geo_flights miss",
+  "OK"
+ ],
+ [
+  "pad fig gate",
+  "pad",
+  "GNSS off once 4 fixes arrive within 15 s",
+  "geo/geo_cruise.py HEALTHY",
+  "OK"
+ ],
+ [
+  "pad fig lock",
+  "pad",
+  "pad identity read five times, then commit",
+  "px4_mission.py LOCK_FRAMES",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_env.py",
+  "0.69, 0.23",
+  "urban/urban_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_env.py",
+  "1.80",
+  "urban/urban_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_env.py",
+  "0.25, 300.0",
+  "urban/urban_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_env.py",
+  "120.0, 30.0, 1400.0",
+  "urban/urban_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_env.py",
+  "152.4, 30.5",
+  "urban/urban_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_env.py",
+  "30.0",
+  "urban/urban_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_env.py",
+  "0.5",
+  "urban/urban_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_env.py",
+  "6",
+  "urban/urban_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_env.py",
+  "FOG_Z, FOG_SEE = \\(([\\d.]+), [\\d., ]+?([\\d.]+)\\), \\(([\\d.]+), [\\d., ]+?([\\d.]+)\\)",
+  "5.0, 46.0, 1.0, 0.36",
+  "READ"
+ ],
+ [
+  "code",
+  "urban/urban_env.py",
+  "20.0, 0.3",
+  "urban/urban_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_env.py",
+  "40.0",
+  "urban/urban_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_env.py",
+  "30,240",
+  "urban/urban_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_env.py",
+  "0.5",
+  "urban/urban_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_rl.py",
+  "14, 2",
+  "urban/urban_rl.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_rl.py",
+  "2048",
+  "urban/urban_rl.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_agents.py",
+  "20, 2, 5",
+  "urban/urban_agents.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_headroom.py",
+  "196",
+  "urban/urban_headroom.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/local_planner.py",
+  "2.0, 5.0",
+  "urban/local_planner.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/local_planner.py",
+  "2 s -> 17 ms",
+  "urban/local_planner.py",
+  "OK"
+ ],
+ [
+  "code",
+  "px4_mission.py",
+  "5, 0.5",
+  "px4_mission.py",
+  "OK"
+ ],
+ [
+  "code",
+  "geo/geo_cruise.py",
+  "75.0",
+  "geo/geo_cruise.py",
+  "OK"
+ ],
+ [
+  "code",
+  "geo/geo_cruise.py",
+  "HEALTHY = (\\d+)\\s+# accepted fixes in the last (\\d+) s",
+  "4, 15",
+  "READ"
+ ],
+ [
+  "code",
+  "wind/land_env.py",
+  "90.0",
+  "wind/land_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "wind/land_env.py",
+  "0.75, 0.35",
+  "wind/land_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "wind/land_env.py",
+  "1.0, 0.5",
+  "wind/land_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "wind/land_env.py",
+  "-15.0",
+  "wind/land_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "wind/ppo.py",
+  "4.0, 1.0",
+  "wind/ppo.py",
+  "OK"
+ ],
+ [
+  "code",
+  "queue/overnight_27sep.sh",
+  "--w-ok 0.95 --envs 4096",
+  "queue/overnight_27sep.sh",
+  "OK"
+ ],
+ [
+  "code",
+  "queue/overnight_27sep.sh",
+  "4",
+  "queue/overnight_27sep.sh",
+  "OK"
+ ],
+ [
+  "code",
+  "queue/overnight_27sep.sh",
+  "--crash-r -100 --hard-r -30",
+  "queue/overnight_27sep.sh",
+  "OK"
+ ],
+ [
+  "code",
+  "queue/wind_gz2_30sep.sh",
+  "--crash-r -100 --hard-r -100 --shape-g 0.9998",
+  "queue/wind_gz2_30sep.sh",
+  "OK"
+ ],
+ [
+  "code",
+  "wind/land_env.py",
+  "2.5, 8.0",
+  "wind/land_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "wind/land_env.py",
+  "15.0, 25.0",
+  "wind/land_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "wind/land_env.py",
+  "0.6",
+  "wind/land_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "wind/land_env.py",
+  "3.0",
+  "wind/land_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "wind/land_env.py",
+  "0.0, -1.5, -0.6, 0.0, 1.0",
+  "wind/land_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "wind/land_env.py",
+  "0.04",
+  "wind/land_env.py",
+  "OK"
+ ],
+ [
+  "code",
+  "gz_learner.py",
+  "6.0",
+  "gz_learner.py",
+  "OK"
+ ],
+ [
+  "code",
+  "wind/ppo.py",
+  "150",
+  "wind/ppo.py",
+  "OK"
+ ],
+ [
+  "code",
+  "geo/geo_world.py",
+  "2023",
+  "geo/geo_world.py",
+  "OK"
+ ],
+ [
+  "code",
+  "geo/geo_world.py",
+  "2021",
+  "geo/geo_world.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_rl.py",
+  "0.997, 0.95",
+  "urban/urban_rl.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_rl.py",
+  "4, 32768, 0.2, 0.5",
+  "urban/urban_rl.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_rl.py",
+  "0.5",
+  "urban/urban_rl.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_rl.py",
+  "8, 1e-3",
+  "urban/urban_rl.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_rl.py",
+  "1.0, 0.5, 0.0, 0.05",
+  "urban/urban_rl.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_rl.py",
+  "5, 1e-4, 0.002, 0.0002",
+  "urban/urban_rl.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_rl.py",
+  "256",
+  "urban/urban_rl.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_rl.py",
+  "10",
+  "urban/urban_rl.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_rl.py",
+  "0.0",
+  "urban/urban_rl.py",
+  "OK"
+ ],
+ [
+  "code",
+  "urban/urban_rl.py",
+  "2048",
+  "urban/urban_rl.py",
+  "OK"
+ ]
+]

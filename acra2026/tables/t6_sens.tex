@@ -1,0 +1,23 @@
+\begin{table}[t]
+\centering\footnotesize
+\setlength{\tabcolsep}{4pt}
+\caption{Learner's gain in points over the copied (cop.) and the best same-sensor planner, one assumption changed at a time, learners not retrained, mean of three seeds. Defaults: people leave within 30--240~s, 300~s limit, drones 30~m apart, magpie commits 0.3~s before contact, rig range 40~m. The first row is a second evaluation, within 0.2 points of Table~\ref{tab:ladder}.}
+\label{tab:sens}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+ & \multicolumn{2}{c}{Clear} & \multicolumn{2}{c}{Fog} & \multicolumn{2}{c}{Magpie, rig} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+Assumption changed & cop. & best & cop. & best & cop. & best \\
+\midrule
+As in Table~\ref{tab:ladder} & 1.8 & 1.8 & 14.4 & 14.4 & 7.8 & 4.1 \\
+Leave 10--120~s & 2.0 & 1.9 & 12.4 & 12.4 & 8.2 & 4.2 \\
+Leave 60--480~s & 1.5 & 1.2 & 6.5 & 6.5 & 6.2 & 3.2 \\
+Limit 200~s & 2.2 & $-0.4$ & 9.2 & 6.9 & 11.4 & 4.4 \\
+Limit 400~s & 0.8 & 0.8 & 14.7 & 14.7 & 5.8 & 3.7 \\
+Drones 50~m & 1.4 & 1.4 & 14.1 & 14.1 & 7.3 & 3.9 \\
+Commit 0.1~s & -- & -- & -- & -- & 7.9 & 3.9 \\
+Commit 0.5~s & -- & -- & -- & -- & 6.7 & 3.2 \\
+Rig range half & -- & -- & -- & -- & 7.6 & 4.3 \\
+\bottomrule
+\end{tabular}
+\end{table}

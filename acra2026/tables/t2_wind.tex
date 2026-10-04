@@ -1,0 +1,22 @@
+\begin{table}[!tb]
+\centering\small
+\setlength{\tabcolsep}{3pt}
+\caption{Landing in gusty wind. MJX: landed \% (crashed \%) on 1,024 paired flights per wind speed, learners as the median over seeds (number of seeds in brackets). Gazebo: landed of flown on the same 20 yards and gusts, crashes in brackets where any. A rate from 1,024 flights has a 95\% interval of at most $\pm 3.1$ points. Two rule flights, at 15 and 18~m/s, stopped on a simulator fault and left no record.}
+\label{tab:wind}
+\begin{tabular}{lccc}
+\toprule
+W10 (m/s) & 12 & 15 & 18 \\
+\midrule
+\multicolumn{4}{l}{\textit{MJX}} \\
+Rule & 100 (0.0) & 77.9 (0.0) & 5.6 (0.1) \\
+Flying learner (8) & 100 (0.0) & 99.1 (0.0) & 50.7 (0.1) \\
+Crash-priced decider (3) & 99.0 (0.0) & 98.6 (0.1) & 96.2 (1.0) \\
+\midrule
+\multicolumn{4}{l}{\textit{Gazebo with PX4}} \\
+Rule & 19/20 & 12/19 & 0/19 \\
+Flying learner, s.~0 & 20/20 & 18/20 & 6/20 \\
+Flying learner, s.~1 & 20/20 & 19/20 & 5/20 \\
+Crash-priced decider, s.~0 & 18/20 & 19/20 & 18/20 \\
+\bottomrule
+\end{tabular}
+\end{table}

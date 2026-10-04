@@ -1,0 +1,36 @@
+\section{Results in the Fast and Wind Simulators}
+
+\input{tables/t1_ladder}
+
+\subsection{Room for Better Decisions}
+
+Table~\ref{tab:ladder} gives the ladder and the learners. In clear weather the three deciders without learning span 1.8 points, from the rule's 93.7\% to the privileged planner's 95.4\%. Unmapped structures cost the rule 0.3 points and leave the privileged planner only 0.1 points above the best same-sensor planner. Fog is different. The best same-sensor planner reaches 71.9\% and the privileged planner 95.7\%, a gap of 23.8 points, which Section~\ref{sec:method} defines as room for better information. Handed the magpie's true position, the rule already matches both planners (79.1\% against 78.7\% and 78.9\%), so the ladder shows no room for better decisions. Through the camera rig the room returns: 72.6\% for the rule, 73.5\% for the best same-sensor planner and 75.1\% for the privileged planner.
+
+\subsection{What the Learner Added}
+
+\begin{figure*}[t]\centering
+\begin{minipage}[b]{0.6\textwidth}\centering\includegraphics[width=\linewidth]{learning_a}\\[2pt]{\small (a) Validation during training}\end{minipage}\hfill
+\begin{minipage}[b]{0.38\textwidth}\centering\includegraphics[width=\linewidth]{learning_b}\\[2pt]{\small (b) Test gain over the copied planner}\end{minipage}
+\caption{The learners in training and on the test flights, three seeds per condition.}\label{fig:learning}\end{figure*}
+
+The learner beat the planner it copied in every condition and every seed, and each seed's paired interval excludes zero (Table~\ref{tab:ladder}, Figure~\ref{fig:learning}). The copied shield planner is also the best same-sensor planner in clear weather and fog. With unmapped structures and with the magpie seen through the rig, the safe planner does better. There we compared the same learners with it in a second evaluation on the same test flights, paired flight by flight. Against the best same-sensor planner, the gain is largest where information is missing: 14.6 points in fog and 4.1 with the magpie seen through the rig. It is 1.9 points in clear weather and 1.9 with unmapped structures, and every seed's interval excludes zero in all four conditions. With the magpie, the seeds range from 3.5 to 4.8 points, each with a 95\% interval of about $\pm 1.5$. The gain of 7.7 points over the copied planner is larger because that planner reaches only 69.8\% there, below the safe planner's 73.5\%. In three conditions the learner also beats the privileged planner, which still plans over only 14 constant commands.
+
+The first failure reason of each flight shows how the learner gained. In fog, flights that ended with the drone over a person fell from 24.5\% for the copied planner to 6.8\% for the learner. Flights that came within 30~m of a person rose from 0.0\% to 4.1\%. With the magpie seen through the rig, strikes fell from 22.7\% of all flights to 17.9\%. In clear weather the learner mainly timed out less often while people stood at the pad, on 1.8\% of flights against the planner's 2.8\%.
+
+\input{tables/t2_wind}
+
+\subsection{Knowing the Magpie}
+
+How the drone knows the magpie sets the strike rate more than the decider does. With the rule deciding, 27.7\% of magpie flights end in a strike when the drone knows the magpie exactly, and 38.9\% through the rig. The rate is 41.6\% when the rig sees only half as far, and 45.1\% with only the drone's forward and landing cameras. Better deciders move these figures by a few points at most. Through the rig the best same-sensor planner is struck on 38.8\% of magpie flights and the privileged planner on 37.7\%.
+
+The Gazebo flights use a newer rig on the frame, with YOLO26n \cite{sapkota2025} fine-tuned on 4,115 labeled renders over plain ground and 4,611 over photographic ground. On renders from drone positions unseen in training, it found 89\% of magpies over plain ground (511 pictures) and 81\% over photographic ground (577), at a 0.5 threshold. Before the photographic renders, it boxed tree crowns and roofs 0.57 times per picture, and after them 0.002 times. It found 85 to 86\% of magpies within 20~m and 59\% at 45 to 70~m.
+
+\subsection{Landing in Gusty Wind}
+
+The rule never crashes in wind (Table~\ref{tab:wind}). It lands every flight up to a W10 of 12~m/s, 77.9\% at 15~m/s and 5.6\% at 18~m/s. Almost all its failures are timeouts. The flying learner keeps the rule's decisions. It lands 99.1\% at 15~m/s (98.6 to 99.4\% over eight seeds) and 50.7\% at 18~m/s (43.8 to 54.9\%). It crashes on at most 0.5\% of flights at any speed up to 20~m/s.
+
+At 18 and 20~m/s the crash-priced decider lands more flights than the flying learner and crashes more often. It lands 96.2\% at 18~m/s (93.8 to 96.2\%) but crashes on 1.0\% (0.8 to 3.0\%), and at 20~m/s it lands 78.5\% and crashes on 6.5\%. The prices matter. With the earlier discount of 0.997, $-100$ for a crash and $-30$ for a hard touchdown gave a median of 87.3\% landed at 18~m/s and 3.3\% crashed. One decider priced at $-15$ and $-10$ landed 69.1\% and crashed on 11.7\%.
+
+The Gazebo flights on 20 of the same yards, with identical gusts, keep the order. At 15~m/s the rule landed 12 of 19 flights and the two flying learners 18 and 19 of 20. At 18~m/s the rule landed none of 19 and the flying learners 6 and 5. The crash-priced decider landed 18 of 20, with no crash. Flight by flight at 18~m/s, the decider landed 17 flights that the rule did not, and the rule landed none that the decider missed. A two-sided sign test gives $p < 0.001$.
+
+An earlier decider, trained with the 0.997 discount and $-100$ for a hard touchdown, landed 92.1\% at 18~m/s in MJX but alternated between climbing and descending. In Gazebo at 9~m/s it reversed 1.7 times per second and landed 16 of 20, and its four hard landings touched down at 1.06 to 1.15~m/s. One seed of the crash-priced decider reversed 2.2 times per second in MJX at 9~m/s, so we count reversals before any Gazebo flight. The seed we flew reversed at most 0.34 times per second in Gazebo.

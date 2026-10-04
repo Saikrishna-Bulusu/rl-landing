@@ -1,0 +1,21 @@
+\section{Discussion}
+
+\textbf{Where learning paid.} Learning paid where the sensors miss something that matters, such as people hidden by fog or a magpie seen late. It also paid where a rule's safety gate rarely opens, as in strong gusts. Where the drone already knew enough, as with the magpie known exactly, a rule with a fast reflex left nothing to learn. In clear weather the learner added about two points, mostly by managing time around people at the pad. Learning to fly under the rule's decisions never raised crashes above 0.5\%, while learning to decide traded timeouts for crashes at a rate set by the crash price. For that reason we keep the hard rules outside every learned layer.
+
+\input{tables/t6_sens}
+
+\textbf{Limitations.} Every result here comes from simulation. The fast simulator rests on assumptions that move its numbers, from when people leave the pad to how far the rig sees. We changed each assumption alone, 18 variations in all (Table~\ref{tab:sens}), and evaluated the trained learners again without retraining.
+
+Every decider's clean deliveries moved by up to 33 points, yet the learner beat the planner it copied in every variation and every seed. The gain stayed at least 5.8 points in fog and with the magpie and at most 2.2 in clear weather. Against the best same-sensor planner it stayed at least 6.5 points in fog and 3.2 with the magpie. In one clear-weather variation, a 200~s limit, the learner fell 0.4 points below the safe planner.
+
+The air ambulance always arrives from the north-west. In earlier clear-weather runs with the visual localization module's position errors instead of GNSS, we also let it arrive from any direction. The learner's gain over its copied planner was then 2.4 to 2.7 points, against 1.9 to 2.1 from the north-west. The fast simulator's rig model scatters false alarms at random, while the live detector's false boxes gathered on trees and roofs. Its fog model comes from Gazebo's rendering of the marker, not from measurement outdoors. The body drag in both wind simulators uses assumed coefficients. The PX4 evidence is thin where it matters most: ten GNSS-denied flights in calm air but one in each harder scenario, and nine live magpie flights per decider. The privileged planner is a reference, not a bound, since the learner beat it in three conditions.
+
+\textbf{Next steps.} Like VO-Safe RL \cite{lin2024vosafe}, we plan to give the decision layer the health of its own localization, with a penalty for losing it. The health will come from the visual fixes and PX4's optical flow. We will add drones that cross the landing area and moving objects the detector never saw, and measure the room for better decisions before training.
+
+\section{Conclusion}
+
+We built a hierarchical landing stack for delivery drones and asked, condition by condition, where a learned decision layer pays for itself. In simulation, against the best same-sensor planner, learning added 14.6 points of clean deliveries in fog, 4.1 against a magpie seen through cameras and 1.9 elsewhere. Against the planner it started from, the magpie gain was 7.7 points. A learned flying layer also landed in gusts that the rule waited out. With GNSS denied in PX4 software-in-the-loop, visual fixes brought the drone to the pad, and the pad's markers guided it to within 0.19~m of the center. We will release the simulation code base on GitHub, together with videos of the simulated flights.
+
+\section*{Acknowledgments}
+
+The simulation, training and analysis code was written with the help of Claude (Anthropic), used through Claude Code. The authors designed the experiments, checked the code's outputs against every result reported here, and take full responsibility for the work.

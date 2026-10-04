@@ -49,6 +49,10 @@ C_RD, C_RM = 8.06428e-05, 1e-06
 RHO = 1.225
 CDA_H, CDA_V = 0.04, 0.05                   # m^2, body drag areas: an assumption, the range wind tunnels report for
                                             # 1-3 kg multirotors (Russell et al., NASA 2016); Gazebo's x500 had none
+SPEED_LOSS = 0.0                            # 1/(m/s): thrust x (1 - SPEED_LOSS |v|), gz-sim MulticopterMotorModel's
+                                            # "scale down force linearly with forward speed" (1/25); 0 = off (cmd_replay.py)
+TQ_BODY = jnp.zeros(3)                      # N m, FLU: a steady body torque the rotors must hold (Gazebo's CoM sits 6.8 mm
+                                            # ahead of the rotor centre and the gimbal holds its camera: +y = nose down); 0 = off
 W_HOVER = math.sqrt(MASS * G / 4 / KT)      # 861 rad/s
 U_HOVER = (W_HOVER - W_MIN) / (W_MAX - W_MIN)   # 0.836: PX4's hover throttle once its estimator has converged
 
@@ -238,9 +242,9 @@ def forces(q, v, om, w, wind, cda):
     """World-frame force and torque on the CoM: thrust, rotor reaction, propeller drag and rolling moment against the
     air (Gazebo's MulticopterMotorModel), body drag."""
     Rm = qrot(q)
-    T = KT * w ** 2
+    T = KT * w ** 2 * jnp.clip(1.0 - SPEED_LOSS * jnp.linalg.norm(v), 0.0, 1.0)
     f_b = jnp.array([0.0, 0.0, T.sum()])
-    tau_b = jnp.array([(ROT3[:, 1] * T).sum(), -(ROT3[:, 0] * T).sum(), -(SPIN_J * KM * T).sum()])
+    tau_b = jnp.array([(ROT3[:, 1] * T).sum(), -(ROT3[:, 0] * T).sum(), -(SPIN_J * KM * T).sum()]) + TQ_BODY
     v_hub = (v - wind)[None, :] + (Rm @ jnp.cross(om[None, :], ROT3).T).T     # air-relative, world
     vb = v_hub @ Rm                                                          # -> body
     perp = vb.at[:, 2].set(0.0)

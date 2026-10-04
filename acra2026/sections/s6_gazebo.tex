@@ -1,0 +1,24 @@
+\section{PX4 Software-in-the-Loop Flights in Gazebo}
+
+\begin{figure*}[t]\centering
+\begin{minipage}[b]{0.14\textwidth}\centering\includegraphics[width=\linewidth]{gazebo_a.jpg}\\[2pt]{\small (a) Thick fog}\end{minipage}\hspace{2mm}%
+\begin{minipage}[b]{0.245\textwidth}\centering\includegraphics[width=\linewidth]{gazebo_b.jpg}\\[2pt]{\small (b) Voxels and planned path}\end{minipage}\hspace{2mm}%
+\begin{minipage}[b]{0.245\textwidth}\centering\includegraphics[width=\linewidth]{gazebo_c.jpg}\\[2pt]{\small (c) Magpie near the drone}\end{minipage}\hspace{2mm}%
+\begin{minipage}[b]{0.245\textwidth}\centering\includegraphics[width=\linewidth]{gazebo_d.jpg}\\[2pt]{\small (d) Pad at touchdown}\end{minipage}
+\caption{Frames from the PX4 flights in Gazebo.}\label{fig:gazebo}\end{figure*}
+
+\textbf{Weather.} With GNSS, the rule deciding and the marker guiding touchdown, we flew ten flights in each of five skies on the same seeds (Figure~\ref{fig:gazebo}(a)). Wind of 7~m/s with gusts to about 10~m/s cost no landing. Mist and thick fog cost one and three landings. Every failure was a safe abort: the drone lost its marker in a fog patch and searched away, once only 0.68~m from its own pad. With commit-on-lock, mist and fog both landed 10 of 10, and the median miss was 0.33 to 0.37~m in every sky. The marker was first read at about 51~m in every sky.
+
+\textbf{Unmapped crane.} We placed a crane at ten positions on the approach and flew the rig with GNSS. A planner that knew only the survey crashed into the crane in 8 of 10 flights. A planner that looked ahead on the voxel map passed all ten but came within 0.99~m. The rule with the local 3D planner passed all ten, never closer than 2.59~m (median 3.42~m).
+
+\textbf{Magpie with the live detector.} With GNSS, the drone knew the magpie only through the up-camera rig's live detector and tracker. The planner and a learner trained with that rig's model each landed 5 of 9 flights. These flights span three revisions of the landing code, so they show only that detection works in the loop.
+
+\input{tables/t4_gnssfree}
+
+\textbf{GNSS-denied deliveries.} Table~\ref{tab:gnssfree} lists six flights with GNSS denied over the suburb, the last flight of each scenario. The drone cruised at 75~m on a planned route, and we denied GNSS once PX4 had accepted four visual fixes within 15~s. The visual localization module matched each downward image against satellite imagery captured in 2021. The simulated ground and roofs carried a 2023 capture of the same area, so the map never equals what the camera sees. Per flight, the median fix error was 2.1 to 2.3~m, the 90th percentile 4.7 to 5.2~m, and 97.8 to 98.5\% of fixes fell within 10~m. PX4's fused position had a median error of 1.4 to 3.1~m. On the laptop that ran the simulation, a visual fix was ready a median of 11 to 41~ms after its image was taken. Once the pad's markers were readable they took over, and every flight landed within 0.19~m of the pad center. The touchdown accuracy therefore comes from the markers, and the visual fixes had to bring the drone close enough to read them.
+
+These six flights are integration demonstrations, not a landing rate. Before them, and after short pipeline tests, we flew 18 development flights in the same scenarios. Six failed: a hard landing, a crash in wind, lost visual fixes, a crash into the crane, a timeout and a landing 659~m off the pad. Each led to a fix: a downward rangefinder, marker fixes kept until touchdown with an outlier check, and one simulator per computer. Weighted A* fixed the crane crash by cutting a plan from about 2~s to 17~ms.
+
+We then repeated the calm flight ten times on one frozen code version, changing only the landing heading. All ten landed, 0.04 to 0.07~m from the pad center, with GNSS denied for 109 to 130~s and PX4's median error 2.0 to 2.9~m. As with the weather flights, 10 of 10 shows only that the landing rate exceeds 69\% at 95\% confidence, and calm air is the easiest case.
+
+The rig's cameras and the detector shared one laptop GPU (RTX 5070), and we slowed each magpie landing to a tenth of real time for the detector. Timed separately on that GPU, the detector took a median of 54 to 65~ms per set of four or five pictures. The slowest set took 157~ms, inside the 0.25~s reflex period. It ran beside the slowed simulation without pausing it, so its delay cost the drone a tenth of the simulated time it would in real time. These flights validate the software integration, not real-time operation on a drone's own computer.

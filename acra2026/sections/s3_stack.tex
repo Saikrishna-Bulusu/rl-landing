@@ -1,0 +1,38 @@
+\section{A Hierarchical Landing Stack}
+
+\input{figs/stack}
+
+Figure~\ref{fig:stack} shows the stack. Each layer answers one question and hands a smaller problem to the layer below it.
+
+\textbf{Localization.} The drone localizes in two stages (Figure~\ref{fig:pad}(b)). With GNSS available, PX4's estimator (EKF2) fuses it. For the global approach without GNSS, an absolute visual localization module matches the downward camera image against satellite imagery of the suburb. It sends each accepted fix to EKF2 as an auxiliary global position. These fixes are a few meters off, enough to bring the drone to the pad but not to land it.
+
+\textbf{Terminal pad localization.} The delivery pad is a 5~m square mat carrying three ArUco markers \cite{garrido2014} in a row, 1.80, 1.20 and 0.15~m across (Figure~\ref{fig:pad}(a)). The smallest sits at the touchdown point, and the drone reads the largest first and the smallest last. Each readable marker gives a position relative to the pad, and a downward rangefinder gives height. A touchdown error therefore measures this terminal stage, not the satellite-image fixes.
+
+\input{figs/pad}
+
+\textbf{Hard safety layer.} Some rules no decider may override, and that is all we mean by hard. The rules act on the same imperfect sensing as the deciders, so they guarantee nothing about a person hidden in fog or a magpie seen late. The drone lands only after it reads the customer's marker identity. Below 6~m it descends only while centered and still over the pad, a condition we call the landing gate. After five reads of its own pad's marker it commits to that pad, a rule we call commit-on-lock. A short loss of sight then means a slow descent at 0.5~m/s instead of a new search. A local 3D planner runs weighted A* over the surveyed map and a voxel map from the forward depth camera. It keeps 2~m from anything blocked and pays a cost for passing within 5~m. Between decisions, a reflex applies the rule's magpie dodge every 0.25~s. The fast simulator flies thousands of drones at once and runs a lighter version of this layer. It checks the map and voxel map ahead instead of running A*. It models no wind and counts any touchdown within 1~m of the pad center, so it has no landing gate.
+
+\textbf{Decision layer.} Every 0.5~s one decider picks one of 14 candidate velocity commands. Two are the rule's command and the guidance command it starts from, which heads for the pad. The guidance command also appears turned $45^\circ$ or $90^\circ$ either way, reversed, at half speed, held level and climbing. The other four are landing anyway, hovering, climbing straight up and flying away from the helipad. Every candidate is capped at 8~m/s across, 3~m/s up and 2.5~m/s down. The rule, both planners and the learner choose from the same list, so any difference between them comes from the decision alone.
+
+\textbf{Flying layer.} PX4 tracks the chosen velocity. In the wind study a flying learner adds an acceleration feed-forward of at most 3~m/s$^2$ per axis to that velocity setpoint.
+
+\subsection{Three Test Beds}
+
+\textbf{Fast simulator.} Thousands of deliveries advance in lock-step on the GPU in 0.25~s steps, with a 300~s limit per flight. The map covers 4~km by 4~km of Logan at 1~m resolution, rebuilt from the 2023 airborne LiDAR survey (Figure~\ref{fig:world}). It holds 1,324 candidate pads and a hospital helipad. Each flight starts 50~m up, at most 1~km from its pad in the direction of the depot. PX4's velocity response enters as first-order lags that we measured on PX4, 0.69~s horizontal and 0.23~s vertical. An air ambulance arrives on half the flights, and in the world we report it always comes from the north-west. Up to six other delivery drones fly between the depot and customers, and people and cars appear near the pad.
+
+We apply three drone safety rules that the Civil Aviation Safety Authority (CASA) sets for recreational flying \cite{casa2026}. They serve as safety constraints in the simulation, not as an assessment of regulatory compliance for commercial delivery. The drone stays below 120~m and at least 30~m from people, and never flies over a person. Within 1.4~km of a helicopter landing site, it moves away from a helicopter that is nearby, taking off or landing. A near mid-air collision (NMAC) with the air ambulance follows ASTM F3442 \cite{astm2023}, which covers encounters with crewed aircraft: 152~m horizontally and 30~m vertically. We assume a 30~m separation between drones, since we found no CASA figure for it. A clean delivery is a touchdown on the right pad with no crash, no NMAC and no rule broken during the flight.
+
+\begin{figure}[t]\centering\includegraphics[width=0.76\linewidth]{world}
+\caption{Logan from the 2023 LiDAR survey.}\label{fig:world}\end{figure}
+
+We test four conditions. Clear is the world as described. Unmapped adds tall structures that the survey does not contain, such as cranes, which the drone senses only with its depth camera. Fog covers every flight. We measured in Gazebo how often the drone reads the marker through fog at each height, relative to calm air. The share falls from every frame at 5~m to 36\% of frames at 46~m. Fog hides people as well.
+
+Magpie adds a territorial Australian magpie near half the pads. It attacks from behind, keeps steering through its dive with turns of up to 20~m/s$^2$, and commits to its path 0.3~s before contact. The drone knows the magpie either exactly or through a model of a six-camera rig, its small detector and a tracker, calibrated on Gazebo renders of that rig.
+
+\textbf{Wind simulator.} For wind we need flight dynamics, so we model the x500 quadrotor in MuJoCo \cite{todorov2012}, run with MuJoCo XLA (MJX) on the GPU. The drone is a 2.584~kg rigid body with Gazebo's motor and propeller-drag model. We emulate PX4's velocity, attitude and rate loops and its control allocation with PX4's default gains.
+
+We report the mean wind 10~m above ground as W10. The same wind drives MJX and a Gazebo plugin we wrote: a logarithmic profile, turbulence in the low-altitude form of MIL-F-8785C \cite{milf8785c}, and one-minus-cosine gusts. The specification scales turbulence by the wind at 20~ft, and we scale it by W10. The two simulators agree closely. For a 0 to 8~m/s velocity step, 63\% of the response takes 0.85~s in Gazebo and 0.80~s in MJX. Hovering in a steady 15.8~m/s wind, the drone tilts 22.5$^\circ$ in Gazebo and 22.6$^\circ$ in MJX.
+
+The wind task starts 30~m up and 15 to 25~m from a back-yard pad. A house stands 2.5 to 8~m away, and a tree stands beside the pad in 60\% of yards. A landing counts when the drone touches down within 0.75~m of the center, sinking slower than 1~m/s and sliding slower than 0.5~m/s. Within 0.35~m of the house or tree counts as a crash, any other touchdown as hard or off the pad, and 90~s aloft as a timeout.
+
+\textbf{PX4 and Gazebo.} The last test bed runs PX4 v1.16.2 in software-in-the-loop with Gazebo \cite{koenig2004}. The x500 model carries our camera rig. It has a forward stereo depth camera with a color sensor, wide cameras to the left, right and rear, and a landing camera on a gimbal. One variant adds a wide camera looking up. The suburb, pads, crane and magpie are the fast simulator's, rebuilt as Gazebo worlds.

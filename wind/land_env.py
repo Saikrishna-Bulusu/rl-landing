@@ -41,6 +41,12 @@ MODES = jnp.array([0.0, -1.5, -0.6, 0.0, 1.0])  # the deciding head: 0 = the rul
 TAU_LAT, A_MAX, K_LIN = 0.69, 1.5, 0.8     # px4_mission
 N_HIST = 4
 CRASH_R, HARD_R = -15.0, -10.0   # a crash's price (ppo.py --crash-r): a lost drone costs far more than a failed delivery
+SHAPE_G = 0.997                  # the shaping's discount (ppo.py --shape-g). Below the learner's (0.9998) it leaks
+                                 # +0.0003 (d + 0.3 h) per step, which beats the 0.002 time cost away from the pad: hovering
+                                 # at the start pays ~+15 over 90 s, as much as a landing (30 Sept, flip-priced runs hovered)
+FLIP_R = 0.0                     # price of each climb<->descend reversal of the sent vertical command (ppo.py --flip-r). 30 Sept:
+                                 # the hard -100 decider pulsed climb/descend at ~1.5 Hz, which held PX4 at its thrust limit;
+                                 # in Gazebo that sank the drone (1.05 m/s against a +0.25 average command) instead of slowing it
 
 
 # ---- wind: gz_winddrag/WindDrag.cc, updated once per decision (statistically the same process) ---------------------------
@@ -150,7 +156,7 @@ def reset(key, w10):
     return dict(sim=s, yaw=yaw, wind=wind_new(k[3], w10), yard=yard_new(k[4]),
                 bias=0.05 * jax.random.normal(k[5], (2,)), t=jnp.array(0.0), key=k[5],
                 prev_act=jnp.zeros(7), hist=jnp.zeros((N_HIST, 5)), done=jnp.array(False), ff_slow=jnp.zeros(2),
-                outcome=jnp.array(0), miss=jnp.array(0.0))
+                outcome=jnp.array(0), miss=jnp.array(0.0), vz_sent=jnp.array(0.0))
 
 
 def estimates(st, key):
@@ -204,6 +210,7 @@ def step(st, act, key, fly=True, decide=True, shield=0.0, hp_tau=0.0):
     vz = jnp.where(decide & (mode > 0), MODES[mode], cmd[2])
     vz = jnp.where(shield_block(d_h, p_est[2], v_est, shield), jnp.maximum(vz, 0.0), vz)
     vel_sp = cmd.at[2].set(vz)
+    flip = ((st["vz_sent"] > 0.5) & (vz < -0.3)) | ((st["vz_sent"] < -0.3) & (vz > 0.5))    # the rule alone never climbs
     ws, wind = wind_step(st["wind"], st["sim"]["d"].qpos[2], k2)
     sim = X.control_step(st["sim"], vel_sp, jnp.array([a_ff[0], a_ff[1], 0.0]), st["yaw"], wind)
     p, v = sim["d"].qpos[:3], sim["d"].qvel[:3]
@@ -219,15 +226,16 @@ def step(st, act, key, fly=True, decide=True, shield=0.0, hp_tau=0.0):
     done = outcome > 0
     # reward: the goal priced first; shaping small and potential-based
     phi = lambda pp: -(jnp.linalg.norm(pp[:2]) + 0.3 * pp[2]) / 10.0
-    r = 0.997 * phi(p) - phi(st["sim"]["d"].qpos[:3]) - 0.002 - 0.01 * jnp.sum(a_ff ** 2) / A_FF ** 2
+    r = SHAPE_G * phi(p) - phi(st["sim"]["d"].qpos[:3]) - 0.002 - 0.01 * jnp.sum(a_ff ** 2) / A_FF ** 2
     # a hard or off-pad touchdown is a failed delivery that may break something: as bad as missing the chance; a crash
     # worse; giving up (timeout) returns the parcel safely
     r = r + jnp.where(outcome == 1, 10.0 + 5.0 * (1 - miss / PAD_R), 0.0) + jnp.where(outcome == 2, CRASH_R, 0.0) \
-        + jnp.where(outcome == 3, HARD_R, 0.0) + jnp.where(outcome == 4, -5.0, 0.0)
+        + jnp.where(outcome == 3, HARD_R, 0.0) + jnp.where(outcome == 4, -5.0, 0.0) - FLIP_R * flip
     lean = X.qrot(sim["d"].qpos[3:7])[:2, 2]
     hist = jnp.concatenate([st["hist"][1:], jnp.concatenate([v_est / 3, lean * 5])[None]], axis=0)
     prev = jnp.concatenate([a_ff / A_FF, jax.nn.one_hot(mode, 5)])
-    st = dict(st, sim=sim, wind=ws, t=t, prev_act=prev, hist=hist, done=done, outcome=outcome, miss=miss, key=k3, ff_slow=ff_slow)
+    st = dict(st, sim=sim, wind=ws, t=t, prev_act=prev, hist=hist, done=done, outcome=outcome, miss=miss, key=k3, ff_slow=ff_slow,
+              vz_sent=vz)
     return st, r, done
 
 

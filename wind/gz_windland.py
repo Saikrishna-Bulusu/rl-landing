@@ -175,6 +175,7 @@ def main():
     ap.add_argument("--out", default=f"{R}/gazebo_wind/ladder/flights.jsonl")
     ap.add_argument("--geo", action="store_true", help="geo/geofly.sh: GeoAnchor's GNSS-free cruise first, then the "
                     "lander from 30 m over our real pad (its yard from the survey), the pad marker's fixes to PX4")
+    ap.add_argument("--log-obs", action="store_true", help="save every decision's inputs and choice (sim-to-sim checks)")
     ap.add_argument("--video", default=None, help="--geo: the film (geo/geo_film.py)")
     a = ap.parse_args()
     if a.check_obs:
@@ -260,6 +261,7 @@ def main():
     mi.mark_ned, t_last = None, -1.0
     outcome, miss, min_clear, rows, g_prev, tilt_max = "timeout", float("nan"), 1e3, [], None, 0.0
     v_est_prev, pending = None, False
+    obs_log = []
     while True:
         p = mi.pos()
         if p is None:
@@ -282,7 +284,10 @@ def main():
             hist = np.vstack([hist[1:], np.r_[v_est_prev / 3, lean * 5]])
         cmd = rule_cmd(-p_est[:2], p_est[2], v_est)
         if pol is not None:
-            a_c, mode = pol(observe(y, p_est, v_est, lean, cmd, prev_act, hist))
+            ob = observe(y, p_est, v_est, lean, cmd, prev_act, hist)
+            a_c, mode = pol(ob)
+            if a.log_obs:
+                obs_log.append(np.r_[t, ob, mode, p_est, v_est])
             raw = np.clip(a_c, -2, 2)
             a_ff = np.clip(raw - ff_slow * (hp_tau > 0), -1, 1) * A_FF if fly else np.zeros(2)
             ff_slow = ff_slow + (DT_C / max(hp_tau, DT_C)) * (raw - ff_slow)
@@ -343,6 +348,8 @@ def main():
     wind_pub.publish(m)
     send(np.array([0.0, 0.0, -0.5]), np.zeros(2))
     os.makedirs(os.path.dirname(a.out), exist_ok=True)
+    if a.log_obs and obs_log:                             # t, obs (OBS_DIM), mode, p_est (3), v_est (3)
+        np.save(f"{os.path.dirname(a.out)}/e{a.episode}_w{a.w10:g}_{tag}_obs.npy", np.array(obs_log))
     np.savetxt(f"{os.path.dirname(a.out)}/e{a.episode}_w{a.w10:g}_{tag}.csv", np.array(rows), delimiter=",", fmt="%.4f",
                header="t,x,y,z,vx,vy,vz,tilt,ax,ay,vz_cmd,locked", comments="")
     with open(a.out, "a") as f:

@@ -121,3 +121,13 @@ node_modules/
 *.laz
 /urban/lidar/
 build/
+
+# ---- LaTeX build files ---------------------------------------------------------------------------------------
+*.aux
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.upa
+*.upb

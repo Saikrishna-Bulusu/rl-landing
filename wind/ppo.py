@@ -265,6 +265,9 @@ def main():
     ap.add_argument("--hp-tau", type=float, default=0.0, help="s > 0: the push's slow part removed (PX4's integral cancels it)")
     ap.add_argument("--crash-r", type=float, default=E.CRASH_R, help="reward for a crash (a lost drone)")
     ap.add_argument("--hard-r", type=float, default=E.HARD_R, help="reward for a hard / off-pad touchdown")
+    ap.add_argument("--flip-r", type=float, default=E.FLIP_R, help="price of each climb<->descend reversal (land_env.FLIP_R)")
+    ap.add_argument("--shape-g", type=float, default=E.SHAPE_G, help="the shaping's discount (land_env.SHAPE_G); GAMMA makes it exact")
+    ap.add_argument("--log-test", action="store_true", help="also score the TEST yards at every eval (logging only, ~55%% of eval time)")
     ap.add_argument("--ladder", metavar="CKPT", help="score a checkpoint (or 'rule') on the full wind ladder, 1024 paired flights")
     a = ap.parse_args()
     if a.ladder:
@@ -281,7 +284,7 @@ def main():
             print(json.dumps(r))
         return
     fly, decide = not a.no_fly, not a.no_decide
-    E.CRASH_R, E.HARD_R = a.crash_r, a.hard_r                        # read by land_env.step when it is traced
+    E.CRASH_R, E.HARD_R, E.FLIP_R, E.SHAPE_G = a.crash_r, a.hard_r, a.flip_r, a.shape_g    # read by land_env.step when traced
     flyer = None
     if a.flyer:
         fp, frms, _ = load(a.flyer)
@@ -326,11 +329,12 @@ def main():
             w_cur, stuck, band_oc = min(W_TOP, w_cur + W_STEP), 0, []
         if it % a.eval_every == 0 or it == a.iters:
             pol = greedy_policy(p, rms, flyer)
-            row["eval"] = [E.evaluate(pol, float(w), n=512, seed=10_000, fly=fly, decide=decide, shield=a.shield, hp_tau=hp) for w in (0, 9, 12, 15, 18)]
+            if a.log_test:                                    # the test yards: logged, never used to choose
+                row["eval"] = [E.evaluate(pol, float(w), n=512, seed=10_000, fly=fly, decide=decide, shield=a.shield, hp_tau=hp) for w in (0, 9, 12, 15, 18)]
             # choose on VALIDATION yards (seed 20000), never on the test yards above
             row["val"] = [E.evaluate(pol, float(w), n=512, seed=20_000, fly=fly, decide=decide, shield=a.shield, hp_tau=hp)["landed"] for w in (9, 12, 15, 18)]
             meta = dict(tag=a.tag, seed=a.seed, it=it, w_cur=w_cur, fly=fly, decide=decide, shield=a.shield, val=row["val"], hp_tau=a.hp_tau,
-                        crash_r=a.crash_r, hard_r=a.hard_r,
+                        crash_r=a.crash_r, hard_r=a.hard_r, flip_r=a.flip_r, shape_g=a.shape_g,
                         flyer=os.path.abspath(a.flyer) if a.flyer else None)
             save(base + ".npz", p, rms, meta)
             save(f"{base}_it{it}.npz", p, rms, meta)
@@ -339,11 +343,11 @@ def main():
                 save(base + "_best.npz", p, rms, meta)
                 row["best"] = True
         log.write(json.dumps(row) + "\n"); log.flush()
-        if it % 10 == 0 or "eval" in row:
+        if it % 10 == 0 or "val" in row:
             print(f"it {it} W {w_cur:.0f} band {succ:.2f} landed {row['landed']:.2f} crash {row['crashed']:.3f} "
                   f"timeout {row['timeout']:.2f} ret {row['ret']:.1f} std {row['std'][0]:.2f} {row['wall']:.0f}s"
-                  + (" eval " + " ".join(f"{e['w10']:.0f}:{e['landed']:.2f}" for e in row["eval"]) + " val " + " ".join(f"{v:.2f}" for v in row["val"])
-                     + (" BEST" if row.get("best") else "") if "eval" in row else ""), flush=True)
+                  + (" eval " + " ".join(f"{e['w10']:.0f}:{e['landed']:.2f}" for e in row.get("eval", [])) + " val " + " ".join(f"{v:.2f}" for v in row["val"])
+                     + (" BEST" if row.get("best") else "") if "val" in row else ""), flush=True)
 
 
 if __name__ == "__main__":

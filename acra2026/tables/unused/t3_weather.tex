@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering\small
+\setlength{\tabcolsep}{5pt}
+\caption{PX4 landings in Gazebo, ten flights per sky on the same seeds, with GNSS and the rule deciding. Miss: median distance from the pad center over landed flights.}
+\label{tab:weather}
+\begin{tabular}{lcc}
+\toprule
+Sky & Landed & Miss (m) \\
+\midrule
+Calm & 10/10 & 0.37 \\
+Breeze, 3~m/s & 10/10 & 0.35 \\
+Gusty, 7~m/s, gusts near 10~m/s & 10/10 & 0.35 \\
+Mist, before commit-on-lock & 9/10 & 0.38 \\
+Mist, with commit-on-lock & 10/10 & 0.35 \\
+Fog, before commit-on-lock & 7/10 & 0.37 \\
+Fog, with commit-on-lock & 10/10 & 0.33 \\
+\bottomrule
+\end{tabular}
+\end{table}
