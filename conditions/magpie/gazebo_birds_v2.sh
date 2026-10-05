@@ -5,7 +5,7 @@
 # frame (gz_learner.Film) and the simulation runs at a tenth of real speed, so the decider's
 # thinking costs ~0.03 s of simulated time instead of 0.1-0.3 s.
 # Needs the SITL up at 0.1x in the magpie world:
-#   PX4_SIM_SPEED_FACTOR=0.1 WORLDS_DIR=$PWD/gz_logan/birds EXTRA_MODELS=$PWD/gz_logan/models ./shared/px4_gazebo/launch_px4.sh
+#   PX4_SIM_SPEED_FACTOR=0.1 WORLDS_DIR=$PWD/shared/px4_gazebo/gz_logan/birds EXTRA_MODELS=$PWD/shared/px4_gazebo/gz_logan/models ./shared/px4_gazebo/launch_px4.sh
 R=/home/sai/RL_projects/rl-landing; D=$R/outputs/gazebo_birds/v2
 cd $R && mkdir -p $D
 for s in 0 1 2 3; do for d in planner learner; do

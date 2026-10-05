@@ -5,7 +5,7 @@ world, with the magpie. Stage 5's first bridge: nothing about the decider change
 inputs come from.
 
     once:   python3 gz_learner.py --setup           writes shared/px4_gazebo/gz_logan/birds/aruco.sdf
-    SITL:   WORLDS_DIR=$PWD/gz_logan/birds EXTRA_MODELS=$PWD/gz_logan/models ./launch_px4.sh
+    SITL:   WORLDS_DIR=$PWD/shared/px4_gazebo/gz_logan/birds EXTRA_MODELS=$PWD/shared/px4_gazebo/gz_logan/models ./launch_px4.sh
     fly:    TREES_JSON=shared/px4_gazebo/gz_logan/trees_logan.json python3 gz_learner.py --decider learner --seed 0 --video out.mp4
     pair:   python3 gz_learner.py --compose planner.mp4 learner.mp4 out.mp4
     all:    python3 gz_learner.py --final DIR/final.mp4   (DIR holds flights.jsonl and the flights)
