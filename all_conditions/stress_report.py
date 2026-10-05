@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 stress_report.py -- the full-stack stress test's flights (all_conditions/queue/stress_30sep.sh), one row each plus the totals, into
-results/stress_2026-09-30.json. Every value comes from the flight's own files: run.log (the result line and the
+all_conditions/results/stress_2026-09-30.json. Every value comes from the flight's own files: run.log (the result line and the
 GNSS-denied report), <stem>_geo.json (the cruise's rows: phase, simulated and wall-clock time), <stem>.csv (the decider's
 loop: marker reads), manifest.json (what flew) and wall.json (wall-clock seconds, queue side).
 

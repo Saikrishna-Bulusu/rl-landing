@@ -10,9 +10,9 @@ The study grew in five parts. Each part's code is still here and still runs:
 |---|---|---|
 | 1. sigma | does GeoAnchor's own uncertainty help a landing policy? (it does not; staleness hurts) | `approach_env*.py`, `train*.py`, `archive/sigma/baselines.py`, `archive/sigma/calibrate.py` |
 | 2. obstacles | trees, a bigger marker, the forest study on real PX4 | `shared/px4_gazebo/px4_mission.py`, `shared/px4_gazebo/make_pad.py`, `forest*.py`, `conditions/static_obstacles/bigger_marker.py` |
-| 3. last mile | Logan under CASA rules: headroom, a learner that beats the planner, birds | `urban/` |
+| 3. last mile | Logan under CASA rules: headroom, a learner that beats the planner, birds | `shared/fast_sim/` |
 | 4. Gazebo | PX4 with real pictures: a crane, the voxel map, a 360 camera rig, the magpie | `shared/px4_gazebo/gz_learner.py`, `shared/px4_gazebo/gz_voxel.py`, `shared/px4_gazebo/gz_rig.py`, `shared/px4_gazebo/gz_unified.py` |
-| 5. wind + GeoAnchor | landing in gusts (MuJoCo MJX twin of PX4); whole deliveries with GPS denied | `wind/`, `geo/` |
+| 5. wind + GeoAnchor | landing in gusts (MuJoCo MJX twin of PX4); whole deliveries with GPS denied | `conditions/wind/`, `gnss_denied/` |
 
 The slide deck (all five parts, with the films) is a private Claude artifact:
 <https://claude.ai/artifact/QaYeAMh7cZThMmffKxjjNA>. Its source is in `papers/slides/` (one HTML file per slide, order in
@@ -179,7 +179,7 @@ OUT=learner_rig SEEDS="0 1 2 3" DECIDERS=learner SENSE=rig RIG=v2l \
   CKPT=rl_corridor_eyes_lidar_gps_birds_hunter_rig_v2l_s0_mean.pt ./conditions/magpie/rigfly.sh
 ```
 
-### Part 5a -- wind (MuJoCo MJX twin of PX4; details in `conditions/wind/README.md`; run from `wind/`)
+### Part 5a -- wind (MuJoCo MJX twin of PX4; details in `conditions/wind/README.md`; run from `conditions/wind/`)
 
 | step | command | produces, time |
 |---|---|---|
@@ -281,7 +281,7 @@ The `geo` line: `denied_s` (seconds with GNSS off), `fix_err_m` (GeoAnchor's fix
 (PX4's estimate against the truth after the denial), `gnss_restored_at` (null = GeoAnchor held all the way),
 `rtf` (sim speed / real time). Report medians and tails (p90, p99, % within 5/10/20 m) -- never the mean or RMSE.
 
-The 27 Sept flights (`results/geo_flights_2026-09-27.json`; one flight each: a demonstration, not a rate):
+The 27 Sept flights (`gnss_denied/results/geo_flights_2026-09-27.json`; one flight each: a demonstration, not a rate):
 
 | flight | lander | touchdown from centre | GNSS off | PX4 error (median, GNSS off) | sim speed |
 |---|---|---|---|---|---|

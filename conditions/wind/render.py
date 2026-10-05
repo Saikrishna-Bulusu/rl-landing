@@ -238,7 +238,7 @@ def main():
     ap.add_argument("--w10", type=float, nargs="+", default=[9, 15, 18])
     ap.add_argument("--seed", type=int, default=10_000, help="ppo.py scores seed 10000: episode i is its yard i")
     ap.add_argument("--episode", type=int, default=-1, help="-1: the first of 20 yards with a tree where rule and learner differ at the top W10")
-    ap.add_argument("--out", default=f"{HERE}/videos")
+    ap.add_argument("--out", default=os.path.join(HERE, "..", "..", "outputs", "wind", "videos"))
     ap.add_argument("--frames", help="also write 3 stills per clip (start, middle, end) to this folder")
     ap.add_argument("--clearml", action="store_true", help="upload the clips (project rl-landing/wind)")
     a = ap.parse_args()
