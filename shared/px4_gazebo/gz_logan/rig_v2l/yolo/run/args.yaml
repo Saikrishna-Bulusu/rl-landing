@@ -1,7 +1,7 @@
 task: detect
 mode: train
-model: /home/sai/RL_projects/rl-landing/gz_logan/rig_v2/yolo/run/weights/best.pt
-data: /home/sai/RL_projects/rl-landing/gz_logan/rig_v2l/yolo/ds/data.yaml
+model: /home/sai/RL_projects/rl-landing/shared/px4_gazebo/gz_logan/rig_v2/yolo/run/weights/best.pt
+data: /home/sai/RL_projects/rl-landing/shared/px4_gazebo/gz_logan/rig_v2l/yolo/ds/data.yaml
 epochs: 30
 time: null
 patience: 25
@@ -12,7 +12,7 @@ save_period: -1
 cache: false
 device: ''
 workers: 6
-project: /home/sai/RL_projects/rl-landing/gz_logan/rig_v2l/yolo
+project: /home/sai/RL_projects/rl-landing/shared/px4_gazebo/gz_logan/rig_v2l/yolo
 name: run
 exist_ok: true
 pretrained: true
@@ -112,4 +112,4 @@ auto_augment: randaugment
 erasing: 0.4
 cfg: null
 tracker: tracktrack.yaml
-save_dir: /home/sai/RL_projects/rl-landing/gz_logan/rig_v2l/yolo/run
+save_dir: /home/sai/RL_projects/rl-landing/shared/px4_gazebo/gz_logan/rig_v2l/yolo/run

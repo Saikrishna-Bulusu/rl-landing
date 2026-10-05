@@ -4,7 +4,7 @@ to_webm.py -- a flight film for the deck: 1280 x 720 VP8 webm under the deck's 2
 The only ffmpeg here is Playwright's: VP8 out, and in only piped JPEGs (no H.264, no raw video) -- so OpenCV
 decodes, resizes and writes each frame as a JPEG into a named pipe, which ffmpeg reads as its file (no stdin
 protocol in that build either).
-    python3 geo/to_webm.py film.mp4 out.webm [--still-at 0.9] [--kbps 750]
+    python3 papers/deck/to_webm.py film.mp4 out.webm [--still-at 0.9] [--kbps 750]
 """
 import argparse
 import os

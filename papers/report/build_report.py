@@ -2,21 +2,21 @@
 """build_report.py -- fill rig_report.template.html from the results on disk -> rig_report.html."""
 import base64, glob, json, os, re
 R = "/home/sai/RL_projects/rl-landing"
-T = open(f"{R}/report/rig_report.template.html").read()
+T = open(f"{R}/papers/report/rig_report.template.html").read()
 img = lambda p, mime: f"data:{mime};base64," + base64.b64encode(open(p, "rb").read()).decode()
-imgs = {"views": (f"{R}/gz_logan/rig/cover2/rig_views.jpg", "image/jpeg"), "pixels": (f"{R}/gz_logan/rig/cover2/rig_pixels.png", "image/png"),
-        "detect": (f"{R}/gz_logan/rig/data2/detect_vs_size.png", "image/png"), "sweep": (f"{R}/urban/hunter_sweep.png", "image/png"),
-        "sensing": (f"{R}/urban/sensing_corridor.png", "image/png"), "strike": (f"{R}/report/strike.jpg", "image/jpeg"),
-        "conditions": (f"{R}/urban/conditions.png", "image/png")}
+imgs = {"views": (f"{R}/shared/px4_gazebo/gz_logan/rig/cover2/rig_views.jpg", "image/jpeg"), "pixels": (f"{R}/shared/px4_gazebo/gz_logan/rig/cover2/rig_pixels.png", "image/png"),
+        "detect": (f"{R}/shared/px4_gazebo/gz_logan/rig/data2/detect_vs_size.png", "image/png"), "sweep": (f"{R}/outputs/fast_sim/hunter_sweep.png", "image/png"),
+        "sensing": (f"{R}/outputs/fast_sim/sensing_corridor.png", "image/png"), "strike": (f"{R}/papers/report/strike.jpg", "image/jpeg"),
+        "conditions": (f"{R}/outputs/fast_sim/conditions.png", "image/png")}
 for k, (p, m) in imgs.items():
     T = T.replace(f"%%IMG_{k}%%", img(p, m))
-labels = [json.loads(l) for l in open(f"{R}/gz_logan/rig/data2/labels.jsonl")]
+labels = [json.loads(l) for l in open(f"{R}/shared/px4_gazebo/gz_logan/rig/data2/labels.jsonl")]
 T = T.replace("%%N_PICS%%", f"{len(labels):,}").replace("%%N_NEG%%", f"{sum('_neg_' in r['file'] for r in labels):,}")
 
 # live Gazebo flights: planner with the rig vs handed the truth, same seeds
 rows = []
 for d, name in (("planner_rig", "rig"), ("planner_omni", "truth")):
-    f = f"{R}/gazebo_rig/{d}/flights.jsonl"
+    f = f"{R}/outputs/gazebo_rig/{d}/flights.jsonl"
     if os.path.exists(f):
         for l in open(f):
             r = json.loads(l); rg = r.get("rig") or {}
@@ -34,7 +34,7 @@ table = ("<div class='tablewrap'><table><thead><tr><th>magpie known by</th><th>s
          "</tbody></table></div><p style='font-size:14.5px;color:var(--muted)'>Same world, magpie and seeds for both; "
          "\"found\" = frames with the magpie within 40 m where a detection points within 10° of it. Contact is 0.8 m.</p>") if rows else ""
 def tally(d):
-    f = f"{R}/gazebo_rig/{d}/flights.jsonl"
+    f = f"{R}/outputs/gazebo_rig/{d}/flights.jsonl"
     rs = [json.loads(l) for l in open(f)] if os.path.exists(f) else []
     return len(rs), sum(r["outcome"] == "landed" for r in rs), sum(r["outcome"] == "struck" for r in rs)
 (nr, dr, sr), (nt, dt, st_) = tally("planner_rig"), tally("planner_omni")
@@ -46,7 +46,7 @@ T = T.replace("%%GZ_TABLE%%", table)
 
 # the rig learner: validation curve so far, and test results if a seed has finished
 st = []
-for log in sorted(glob.glob(f"{R}/urban/rl_cond_birds_hunter_rig_s*.log")):
+for log in sorted(glob.glob(f"{R}/outputs/fast_sim/rl_cond_birds_hunter_rig_s*.log")):
     L = [l for l in open(log) if re.search(r"gen +\d+", l)]
     base = next((l for l in open(log) if "baselines" in l), "")
     if L:
@@ -56,7 +56,7 @@ for log in sorted(glob.glob(f"{R}/urban/rl_cond_birds_hunter_rig_s*.log")):
 bl = re.search(r"'rule': ([\d.]+), 'planner': ([\d.]+), 'oracle': ([\d.]+)", base) if base else None
 # finished seeds print their test results ("EVAL mean on the ladder's 4096 episodes ...") in the log
 res, tests = "", []
-for log in sorted(glob.glob(f"{R}/urban/rl_cond_birds_hunter_rig_s*.log")):
+for log in sorted(glob.glob(f"{R}/outputs/fast_sim/rl_cond_birds_hunter_rig_s*.log")):
     for l in open(log):
         m = re.search(r"\[(\S+)\] EVAL mean +on the ladder's 4096 episodes: clean ([\d.]+)%  \(vs rule ([+-][\d.]+) \+/-([\d.]+), vs planner ([+-][\d.]+) \+/-([\d.]+) pp\)", l)
         if m:
@@ -79,5 +79,5 @@ else:
     tile = ""
 T = T.replace("%%LEARN_TILE%%", tile)
 assert "%%" not in T, re.findall(r"%%\w+%%", T)
-open(f"{R}/report/rig_report.html", "w").write(T)
-print(f"{R}/report/rig_report.html", f"{len(T) / 1e6:.1f} MB")
+open(f"{R}/outputs/report/rig_report.html", "w").write(T)
+print(f"{R}/outputs/report/rig_report.html", f"{len(T) / 1e6:.1f} MB")

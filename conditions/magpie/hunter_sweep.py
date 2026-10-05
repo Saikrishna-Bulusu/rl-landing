@@ -15,12 +15,13 @@ import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+FS = os.path.join(HERE, "..", "..", "shared", "fast_sim")      # urban_env etc.; hunter_sweep.json is kept there
 T_COMMITS = (0.1, 0.3, 0.5, 0.8, 1.2)
 
 
 def one(sense, n):
     import torch
-    sys.path.insert(0, HERE)
+    sys.path.insert(0, FS)
     import urban_agents as A
     import urban_env as U
     torch.set_num_threads(8)
@@ -54,7 +55,7 @@ def plot(path, out):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--n", type=int, default=1024)
-    ap.add_argument("--out", default=f"{HERE}/hunter_sweep.json")
+    ap.add_argument("--out", default=f"{FS}/hunter_sweep.json")
     ap.add_argument("--one", default=None, help=argparse.SUPPRESS)
     ap.add_argument("--plot", metavar="PNG", default=None, help="chart an existing --out file")
     a = ap.parse_args()

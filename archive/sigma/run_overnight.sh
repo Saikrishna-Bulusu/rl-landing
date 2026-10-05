@@ -13,7 +13,7 @@
 # memory, or the whole launcher can die, and restarting loses only the run that
 # was in flight -- not the night.
 set -u
-cd /home/sai/RL_projects/rl-landing
+cd /home/sai/RL_projects/rl-landing/archive/sigma   # these drivers run from their own folder
 PY=/home/sai/miniconda3/envs/mujoco_drones/bin/python
 OUT=overnight
 PAR=10                      # Sai's cap: 10 jobs, keep 3 GB free

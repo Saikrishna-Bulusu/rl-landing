@@ -12,9 +12,13 @@ both deciders; the magpie then reacts to whatever each drone does.
 """
 import argparse
 
+import os
+import sys
+
 import numpy as np
 import torch
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "shared", "fast_sim"))   # run from shared/fast_sim
 import urban_agents as A
 import urban_env as U
 import urban_rl as R

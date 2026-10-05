@@ -11,9 +11,9 @@
 # 4320 policy steps against a 4096-8192 step rollout -- PPO never saw the
 # terminal reward. Action repeat fixed that.
 set -u
-cd /home/sai/RL_projects/rl-landing
+cd /home/sai/RL_projects/rl-landing/archive/sigma   # these drivers run from their own folder
 PY=/home/sai/miniconda3/envs/mujoco_drones/bin/python
-say(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" | tee -a out_run.log; }
+say(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" | tee -a ../../outputs/logs/out_run.log; }
 guard(){
   local r=$(awk '/MemAvailable/{printf "%d",$2/1024}' /proc/meminfo)
   local d=$(df -BG --output=avail / | tail -1 | tr -dc '0-9')
@@ -48,7 +48,7 @@ say "STAGE A done: $(ls out_sweep/*/ablation.json 2>/dev/null|wc -l)/24"; guard
 
 say "STAGE B: 12-seed ablation, 4 arms @ 800k policy steps (48 runs)"
 rm -rf out_final; mkdir -p out_final
-$PY - <<'PYEOF' | tee -a out_run.log
+$PY - <<'PYEOF' | tee -a ../../outputs/logs/out_run.log
 import json, os, glob
 best={}
 for arm in ("none","staleness","sigma","random"):

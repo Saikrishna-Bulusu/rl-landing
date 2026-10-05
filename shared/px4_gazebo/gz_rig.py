@@ -7,8 +7,8 @@ see the magpie. The fast simulator had handed the decider the magpie's exact pos
 within 40 m, in every direction -- no real sensor does that.
 
     once:   python3 gz_rig.py --setup
-              gz_logan/models/x500_rig/   PX4's x500 + its landing camera + the six rig cameras
-              gz_logan/rig/aruco.sdf      the bench: Logan, the magpie, and a STATIC drone with the rig
+              shared/px4_gazebo/gz_logan/models/x500_rig/   PX4's x500 + its landing camera + the six rig cameras
+              shared/px4_gazebo/gz_logan/rig/aruco.sdf      the bench: Logan, the magpie, and a STATIC drone with the rig
     bench:  python3 gz_rig.py --bench     Gazebo, headless, in its own transport partition ("rig"),
                                           so it never touches a PX4 simulation running alongside
     cover:  python3 gz_rig.py --cover DIR
@@ -17,7 +17,7 @@ within 40 m, in every direction -- no real sensor does that.
               bird and difference them -- whatever blocks the view stays blocked)
     show:   python3 gz_rig.py --report DIR --views DIR     chart of the above; six-view contact sheet
     data:   python3 gz_rig.py --data DIR [--poses 600]     labelled pictures for the detector
-    calib:  python3 gz_rig.py --calib COVER_DIR DATA_DIR    -> urban/rig_calib.json (after rig_detect.py --score)
+    calib:  python3 gz_rig.py --calib COVER_DIR DATA_DIR    -> shared/fast_sim/rig_calib.json (after rig_detect.py --score)
 
 Rig: six 1280x960 cameras with 110-degree lenses (93 degrees tall), 20 Hz, like the six navigation
 cameras of a Skydio: a ring of four (front, left, back, right) and one looking up, on a mast 30 cm
@@ -36,6 +36,7 @@ import time
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+R = os.path.dirname(os.path.dirname(HERE))
 PX4 = "/home/sai/thesis_2.0/PX4-Autopilot"
 W, H, HFOV, HZ = 1280, 960, math.radians(110.0), 20
 F = (W / 2) / math.tan(HFOV / 2)                          # focal length, pixels (448)
@@ -55,7 +56,7 @@ BASE_Z = 0.24               # x500_base puts base_link this far above the model'
 BENCH_AT = (60.0, 0.0, 30.0)  # where the bench drone hovers: over Logan, between depot and pads
 PARTITION = "rig"
 CAMSZ = {n: (W, H, F) for n in RIG}     # each camera's picture: width, height (px) and focal length (px)
-BENCH = "rig"                           # the bench world: gz_logan/<BENCH>/aruco.sdf
+BENCH = "rig"                           # the bench world: shared/px4_gazebo/gz_logan/<BENCH>/aruco.sdf
 # RIG=v2 (gz_unified.py, Sai 25 Sept): the magpie is watched by the OAK-D Lite's colour camera ahead (1920x1080,
 # 69 deg: 3.1x the wide cameras' focal length, so a bird ahead shows 3.1x bigger) and three wide cameras left,
 # right and back, all under the body plate. The gimbal camera below only lands the drone; nothing looks up.
@@ -72,7 +73,7 @@ def prop_mask(r_blade=0.15, z_prop=0.05, grow=12):
     """Where each camera can see the spinning propellers: the four discs (x500_base: hubs at (+-0.174, +-0.174),
     0.05 m above base_link, 13-inch props scaled to ~0.14 m radius) projected into every camera, filled, grown by
     `grow` px. A blade at a new angle every frame looks like a small bird there, so the live tracker ignores
-    detections inside (urban/rig_perceive.py). -> gz_logan/<BENCH>/prop_mask.npz, and a preview beside it."""
+    detections inside (conditions/magpie/rig_perceive.py). -> shared/px4_gazebo/gz_logan/<BENCH>/prop_mask.npz, and a preview beside it."""
     import cv2
     out = {}
     a, r = np.meshgrid(np.linspace(0, 2 * math.pi, 180), np.linspace(0.0, r_blade, 12))
@@ -118,7 +119,7 @@ def photo_bench(src="geo_magpie", var="v2"):
     """The magpie bench on the PHOTO floor (27 Sept, Sai: "the cameras kept detecting trees as magpies" -- every
     training picture had been plain Gazebo ground): the GeoAnchor magpie world (2023 capture on the floor, roofs and
     crowns draped with it, the magpie, its nest) with rig v2 standing static as "rig" in place of PX4's drone and no
-    chase camera. -> gz_logan/rig_<var>_geo/aruco.sdf (the floor's textures linked, never copied: Esri's pixels)."""
+    chase camera. -> shared/px4_gazebo/gz_logan/rig_<var>_geo/aruco.sdf (the floor's textures linked, never copied: Esri's pixels)."""
     import gz_unified as GU
     w = open(f"{HERE}/gz_logan/{src}/aruco.sdf").read()
     w, n = re.subn(r"<include><uri>model://x500_unified_rng</uri><name>x500_mono_cam_down_0</name>.*?</include>",
@@ -181,7 +182,7 @@ def setup():
 
 
 def bench():
-    """Headless Gazebo with the bench world, in its partition; returns at once (log: gz_logan/<BENCH>/gz.log)."""
+    """Headless Gazebo with the bench world, in its partition; returns at once (log: shared/px4_gazebo/gz_logan/<BENCH>/gz.log)."""
     env = dict(os.environ, GZ_PARTITION=PARTITION,
                GZ_SIM_RESOURCE_PATH=f"{PX4}/Tools/simulation/gz/models:{HERE}/gz_logan/models",
                GZ_SIM_SERVER_CONFIG_PATH=f"{PX4}/src/modules/simulation/gz_bridge/server.config",
@@ -323,7 +324,7 @@ def negatives(out, n_places=200, seed=1, first=10000):
     rng = np.random.default_rng(seed)
     mover, cams, lab = G.Mover(), Cams(), open(f"{out}/labels.jsonl", "a")
     cams.fresh(); cams.warm()
-    m = np.load(f"{HERE}/urban/logan_map_lidar.npz")
+    m = np.load(f"{R}/shared/fast_sim/logan_map_lidar.npz")
     Hm, half, res = m["H"], float(m["half"]), float(m["res"])
     top = lambda xy: float(Hm[tuple(np.clip(((np.asarray(xy) + G.OFFSET + half) / res).astype(int), 0, Hm.shape[0] - 1)[::-1])])
     mover.put("magpie", [0, 0, -50])
@@ -364,7 +365,7 @@ def data(out, n_poses=600, per_pose=6, seed=0, thresh=12):
         cv2.imwrite(f"{out}/{rec['file']}", cv2.cvtColor(im, cv2.COLOR_RGB2BGR), [cv2.IMWRITE_JPEG_QUALITY, 95])
         lab.write(json.dumps(rec) + "\n")
 
-    m = np.load(f"{HERE}/urban/logan_map_lidar.npz")                 # LiDAR heights, training-map frame
+    m = np.load(f"{R}/shared/fast_sim/logan_map_lidar.npz")                 # LiDAR heights, training-map frame
     Hm, half, res = m["H"], float(m["half"]), float(m["res"])
     top = lambda xy: float(Hm[tuple(np.clip(((np.asarray(xy) + G.OFFSET + half) / res).astype(int), 0, Hm.shape[0] - 1)[::-1])])
     t0 = time.time()
@@ -414,8 +415,8 @@ def data(out, n_poses=600, per_pose=6, seed=0, thresh=12):
     print(f"{out}/labels.jsonl")
 
 
-def calib(cover_dir, data_dir, out=f"{HERE}/urban/rig_calib.json", score="score.json"):
-    """The numbers urban/rig_sense.Rig flies with, all measured: from the coverage bench, the size of
+def calib(cover_dir, data_dir, out=f"{R}/shared/fast_sim/rig_calib.json", score="score.json"):
+    """The numbers shared/fast_sim/rig_sense.Rig flies with, all measured: from the coverage bench, the size of
     the magpie by distance (head-on, side-on) and the directions the drone's own frame blinds; from
     the detector's held-out score, detection by size in pixels and its direction and size errors;
     from the labelled pictures, how far off a distance read from the bird's size is (poses vary).
@@ -583,10 +584,10 @@ if __name__ == "__main__":
     ap.add_argument("--poses", type=int, default=600)
     ap.add_argument("--calib", nargs=2, metavar=("COVER_DIR", "DATA_DIR"))
     ap.add_argument("--score", default="score.json", help="--calib: the detector score to use (score_yolo.json)")
-    ap.add_argument("--out", default=f"{HERE}/urban/rig_calib.json", help="--calib: where to write it")
+    ap.add_argument("--out", default=f"{R}/shared/fast_sim/rig_calib.json", help="--calib: where to write it")
     ap.add_argument("--negatives", metavar="DIR")
-    ap.add_argument("--prop-mask", action="store_true", help="where each camera sees the propellers (gz_logan/<BENCH>)")
-    ap.add_argument("--photo-bench", action="store_true", help="build gz_logan/rig_v2_geo: the bench on the photo floor")
+    ap.add_argument("--prop-mask", action="store_true", help="where each camera sees the propellers (shared/px4_gazebo/gz_logan/<BENCH>)")
+    ap.add_argument("--photo-bench", action="store_true", help="build shared/px4_gazebo/gz_logan/rig_v2_geo: the bench on the photo floor")
     a = ap.parse_args()
     os.environ["GZ_PARTITION"] = PARTITION               # before any gz transport node exists
     if a.setup:

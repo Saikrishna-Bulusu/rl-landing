@@ -3,9 +3,9 @@
 rig_yolo.py -- a pretrained YOLO (Ultralytics YOLO26n, COCO weights) fine-tuned on the rig's pictures,
 scored exactly like rig_detect.py's small network: same held-out drone places, same worsened images.
 
-    python rig_yolo.py --data  gz_logan/rig/data2   -> gz_logan/rig/yolo/ds (YOLO-format copy, worsened)
-    python rig_yolo.py --train                      -> gz_logan/rig/yolo/run/weights/best.pt
-    python rig_yolo.py --score gz_logan/rig/data2   -> data2/score_yolo.json, detect_vs_size_yolo.png
+    python rig_yolo.py --data  shared/px4_gazebo/gz_logan/rig/data2   -> shared/px4_gazebo/gz_logan/rig/yolo/ds (YOLO-format copy, worsened)
+    python rig_yolo.py --train                      -> shared/px4_gazebo/gz_logan/rig/yolo/run/weights/best.pt
+    python rig_yolo.py --score shared/px4_gazebo/gz_logan/rig/data2   -> data2/score_yolo.json, detect_vs_size_yolo.png
 
 Runs in mujoco_drones with PYTHONPATH=.yolo_pkgs: ultralytics + torchvision live there, installed
 --no-deps, so the training environment's numpy/torch are never touched. YOLO_AUTOINSTALL=false stops
@@ -20,8 +20,8 @@ import numpy as np
 
 import rig_detect as RD
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-Y = f"{HERE}/gz_logan/{'rig_' + os.environ['RIG'] if os.environ.get('RIG', '').startswith('v2') else 'rig'}/yolo"
+R = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))      # repo root
+Y = f"{R}/shared/px4_gazebo/gz_logan/{'rig_' + os.environ['RIG'] if os.environ.get('RIG', '').startswith('v2') else 'rig'}/yolo"
 BEST = f"{Y}/run/weights/best.pt"
 
 

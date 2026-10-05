@@ -6,8 +6,8 @@ three wide cameras looking left, right and back. The four horizontal cameras sit
 (the first rig, at body height, saw its own propellers and legs); each is held by a bracket to a hub on the mast.
 No camera looks straight up (the six-camera rig had one). v2: all under the body, bottom camera on a gimbal.
 
-    python3 gz_unified.py --setup   -> gz_logan/models/x500_unified, gz_logan/photo/studio.sdf
-    python3 gz_unified.py --photo   -> gz_logan/photo/rig_*.png (Gazebo renders of the drone, two angles)
+    python3 gz_unified.py --setup   -> shared/px4_gazebo/gz_logan/models/x500_unified, shared/px4_gazebo/gz_logan/photo/studio.sdf
+    python3 gz_unified.py --photo   -> shared/px4_gazebo/gz_logan/photo/rig_*.png (Gazebo renders of the drone, two angles)
 """
 import argparse
 import math
@@ -147,7 +147,7 @@ def setup():
 
 
 def worlds():
-    """The flight worlds again with x500_unified as the drone PX4 attaches to: gz_logan/{voxfly,voxfast,rigfly}_v2
+    """The flight worlds again with x500_unified as the drone PX4 attaches to: shared/px4_gazebo/gz_logan/{voxfly,voxfast,rigfly}_v2
     (voxfly.sh / rigfly.sh with RIG=v2). Rebuild after gz_voxel.py / gz_rig.py --setup rewrites the originals."""
     for var in VARIANTS:
         for w in ("voxfly", "voxfast", "rigfly"):
@@ -165,7 +165,7 @@ def worlds():
         assert n == 1
         os.makedirs(f"{HERE}/gz_logan/rig_{var}", exist_ok=True)
         open(f"{HERE}/gz_logan/rig_{var}/aruco.sdf", "w").write(src)
-        print(f"{var}: gz_logan/{{voxfly,voxfast,rigfly,rig}}_{var}/aruco.sdf")
+        print(f"{var}: shared/px4_gazebo/gz_logan/{{voxfly,voxfast,rigfly,rig}}_{var}/aruco.sdf")
 
 
 def check(folder):
@@ -198,7 +198,7 @@ def check(folder):
 
 
 def photo(var="v2"):
-    """Studio renders of a variant (v2: gz_logan/photo/rig_<angle>.png; others: rig_<var>_<angle>.png)."""
+    """Studio renders of a variant (v2: shared/px4_gazebo/gz_logan/photo/rig_<angle>.png; others: rig_<var>_<angle>.png)."""
     import cv2
     studio = f"{HERE}/gz_logan/photo/studio.sdf"
     if var != "v2":                                            # the same studio with that variant's drone
@@ -237,7 +237,7 @@ def photo(var="v2"):
 
 def selfview():
     """Each rig camera's own view with the drone hung in an empty sky: every pixel that is not sky is the drone
-    itself -- propellers, arms, legs, the gimbal -- blocking that camera. -> gz_logan/photo/self_*.png + a summary."""
+    itself -- propellers, arms, legs, the gimbal -- blocking that camera. -> shared/px4_gazebo/gz_logan/photo/self_*.png + a summary."""
     import cv2
     os.makedirs(f"{HERE}/gz_logan/photo", exist_ok=True)
     open(f"{HERE}/gz_logan/photo/sky.sdf", "w").write(f"""<?xml version="1.0"?>

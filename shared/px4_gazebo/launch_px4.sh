@@ -20,19 +20,19 @@
 #    silently set the wrong directories, so the values are set explicitly here.
 #    Rebuilding PX4 from the current path would regenerate it correctly.
 P=/home/sai/thesis_2.0/PX4-Autopilot
-S=/home/sai/RL_projects/rl-landing/px4run${PX4_INSTANCE:+_$PX4_INSTANCE}   # PX4_INSTANCE=N: several SITLs side by side
+S=/home/sai/RL_projects/rl-landing/outputs/px4run${PX4_INSTANCE:+_$PX4_INSTANCE}   # PX4_INSTANCE=N: several SITLs side by side
 
 source /opt/ros/jazzy/setup.bash 2>/dev/null
 
 export PX4_GZ_MODELS="$P/Tools/simulation/gz/models"
-# WORLDS_DIR / EXTRA_MODELS: another world under the same name (e.g. gz_logan/, built
-# from the Logan LiDAR by urban/gz_logan.py) without touching the PX4 tree.
+# WORLDS_DIR / EXTRA_MODELS: another world under the same name (e.g. shared/px4_gazebo/gz_logan/, built
+# from the Logan LiDAR by shared/fast_sim/gz_logan.py) without touching the PX4 tree.
 export PX4_GZ_WORLDS="${WORLDS_DIR:-$P/Tools/simulation/gz/worlds}"
 export PX4_GZ_PLUGINS="$P/build/px4_sitl_default/src/modules/simulation/gz_plugins"
 export PX4_GZ_SERVER_CONFIG="$P/src/modules/simulation/gz_bridge/server.config"
 export GZ_SIM_RESOURCE_PATH="$PX4_GZ_MODELS:$PX4_GZ_WORLDS${EXTRA_MODELS:+:$EXTRA_MODELS}"
-export GZ_SIM_SYSTEM_PLUGIN_PATH="$PX4_GZ_PLUGINS${EXTRA_PLUGINS:+:$EXTRA_PLUGINS}"   # wind/sitl.sh: the WindDrag plugin
-# SERVER_CONFIG: a sky from urban/gz_weather.py (wind gusts, particles) -- plugins live
+export GZ_SIM_SYSTEM_PLUGIN_PATH="$PX4_GZ_PLUGINS${EXTRA_PLUGINS:+:$EXTRA_PLUGINS}"   # shared/px4_gazebo/sitl.sh: the WindDrag plugin
+# SERVER_CONFIG: a sky from conditions/weather/gz_weather.py (wind gusts, particles) -- plugins live
 # there because gz loads the server config only when the world declares no plugins.
 export GZ_SIM_SERVER_CONFIG_PATH="${SERVER_CONFIG:-$PX4_GZ_SERVER_CONFIG}"
 
@@ -43,7 +43,7 @@ export HEADLESS=1
 
 # START FROM A CLEAN STATE EVERY TIME.
 #
-# PX4 SITL persists its parameters in px4run/parameters.bson and reloads them
+# PX4 SITL persists its parameters in outputs/px4run/parameters.bson and reloads them
 # on boot. After a few dozen restarts that accumulated state began failing the
 # EKF magnetometer check -- "Preflight Fail: Strong magnetic interference" --
 # and arming was refused for every mission, including the plain bridge check.

@@ -6,17 +6,17 @@ airframe, the camera, the marker, or the PX4 build.
 
 | what | value | measured by | stored in |
 |---|---|---|---|
-| lateral velocity lag | tau = 0.69 s | `measure_tau.py` | `px4_response.json` |
-| vertical velocity lag | tau = 0.23 s | `measure_tau.py` | `px4_response.json` |
-| hover attitude noise | roll ±0.05°, pitch ±0.04° | `measure_tau.py` | `px4_response.json` |
+| lateral velocity lag | tau = 0.69 s | `shared/px4_gazebo/measure_tau.py` | `shared/px4_gazebo/px4_response.json` |
+| vertical velocity lag | tau = 0.23 s | `shared/px4_gazebo/measure_tau.py` | `shared/px4_gazebo/px4_response.json` |
+| hover attitude noise | roll ±0.05°, pitch ±0.04° | `shared/px4_gazebo/measure_tau.py` | `shared/px4_gazebo/px4_response.json` |
 | camera focal length | fx = fy = 539.94 px | `camera_info` topic | `px4_mission.F_PX` |
-| camera→body rotation | orthonormal 2×2 | `calib_cam.py` | `cam_B.npy` |
-| reliable decode size | ≈35 px (≥95% decode) | `measure_detect.py` | `detect_curve.json` |
-| pad → PX4 NED frame | +90°, residual 0.05 m | `find_pad.py` | `px4_mission.PAD_XY` |
+| camera→body rotation | orthonormal 2×2 | `shared/px4_gazebo/calib_cam.py` | `shared/px4_gazebo/cam_B.npy` |
+| reliable decode size | ≈35 px (≥95% decode) | `shared/px4_gazebo/measure_detect.py` | `shared/px4_gazebo/detect_curve.json` |
+| pad → PX4 NED frame | +90°, residual 0.05 m | `shared/px4_gazebo/find_pad.py` | `px4_mission.PAD_XY` |
 
 ## The three that mattered most
 
-**Reliable decode size.** `compare_physics.py` showed this single constant
+**Reliable decode size.** `archive/sigma/compare_physics.py` showed this single constant
 decides whether the trained policy delivers or aborts: at 20 px it delivered
 98%, at 34 px it delivered 0%. Nothing else came close, the velocity lag
 included. It is now a measured curve, not a threshold — 14% decode at 25 px,
@@ -37,12 +37,12 @@ The fault was outer-loop saturation, fixed in `_approach()`.
 ## Re-measuring
 
 ```
-./launch_px4.sh &                 # SITL + Gazebo, headless
-python3 measure_tau.py            # velocity lag + attitude baseline
-python3 find_pad.py               # Gazebo ENU -> PX4 NED transform
-python3 calib_cam.py              # camera mounting rotation
-python3 measure_detect.py         # decode rate vs apparent size
+./shared/px4_gazebo/launch_px4.sh &                 # SITL + Gazebo, headless
+python3 shared/px4_gazebo/measure_tau.py            # velocity lag + attitude baseline
+python3 shared/px4_gazebo/find_pad.py               # Gazebo ENU -> PX4 NED transform
+python3 shared/px4_gazebo/calib_cam.py              # camera mounting rotation
+python3 shared/px4_gazebo/measure_detect.py         # decode rate vs apparent size
 ```
 
-`calib_cam.py` and `find_pad.py` both print a residual. If it is not small,
+`shared/px4_gazebo/calib_cam.py` and `shared/px4_gazebo/find_pad.py` both print a residual. If it is not small,
 the fit is wrong — do not use the result.

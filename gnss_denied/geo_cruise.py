@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-geo_cruise.py -- GeoAnchor's leg of a Logan delivery, flown for real (geo/geofly.sh: PX4 SITL + Gazebo on the photo
+geo_cruise.py -- GeoAnchor's leg of a Logan delivery, flown for real (gnss_denied/geofly.sh: PX4 SITL + Gazebo on the photo
 floor, GeoAnchor's own three layers on the live gimbal camera, its accepted fixes fused by PX4's EKF2 over AGP):
 
   1. straight up at the depot on GPS to 75 m
@@ -8,14 +8,14 @@ floor, GeoAnchor's own three layers on the live gimbal camera, its accepted fixe
      arriving, cs_aux_gpos), GNSS is denied (EKF2_GPS_CTRL 0) -- from then on GeoAnchor alone knows where it is (if PX4
      drops it, GNSS comes back and the record says when)
   3. from 50 m out (by that estimate) down to 55 m, still inside GeoAnchor's envelope; settled over the pad, straight
-     down to 30 m, the height the pad's 1.80 m marker reads from (geo/read_height.py, 26 Sept: 88% of frames at 30 m,
+     down to 30 m, the height the pad's 1.80 m marker reads from (gnss_denied/read_height.py, 26 Sept: 88% of frames at 30 m,
      13% at 50 m). From 50 m out every marker read is a fix for PX4 too (MarkerFix), so no stretch is unaided.
 
 The landers take it from there (calm: the rule; wind: the flying learner; obstacles: rule + local 3D planner;
 magpie: the rig-trained learner). On its own this is the smoke test: it stops at 30 m over the pad and reports
 whether GeoAnchor was really in the loop -- PX4's flags, the fixes, and PX4's estimate against Gazebo's truth.
 
-    OUT=smoke WORLD=geo_clean INSTANCE=5 geo/geofly.sh /usr/bin/python3 -u geo/geo_cruise.py
+    OUT=smoke WORLD=geo_clean INSTANCE=5 gnss_denied/geofly.sh /usr/bin/python3 -u gnss_denied/geo_cruise.py
 """
 import json
 import math
@@ -27,7 +27,7 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 R = os.path.dirname(HERE)
-sys.path[:0] = [R, HERE, f"{R}/wind"]
+sys.path[:0] = [f"{R}/shared/px4_gazebo", HERE]
 from geo_world import gz_to_ll, ll_to_gz
 from record_sweep import heading_deg
 
@@ -36,7 +36,7 @@ ROUTE = [(0.0, -120.0), (260.0, -120.0)]                              # then the
 ALT, V, DESCEND_AT, H_READ, HOVER_Z = 75.0, 7.0, 50.0, 30.0, 55.0                    # draped sweep matched (38% overall, the south
                                                                       # lane ~70%; the north lane's forest, 8%)
 DENY = True
-if os.environ.get("GEO_MISSION"):             # the dashboard's mission planner (geo/fly_mission.sh): its route and pad
+if os.environ.get("GEO_MISSION"):             # the dashboard's mission planner (gnss_denied/fly_mission.sh): its route and pad
     _m = json.load(open(os.environ["GEO_MISSION"]))
     PAD, ROUTE = np.array(_m["pad"]["enu"], float), [tuple(map(float, q)) for q in _m["route"]]
     ALT, V, DENY = float(_m["alt"]), float(_m["speed"]), bool(_m.get("deny_gnss", True))
@@ -89,7 +89,7 @@ def steer(poly, seg, p, v_prev, yaw, dt, v, want=None):
 
 
 class Bridge:
-    """geo/agp_sim_bridge.py's log, read as it grows: PX4's estimator flags and every fix GeoAnchor produced."""
+    """gnss_denied/agp_sim_bridge.py's log, read as it grows: PX4's estimator flags and every fix GeoAnchor produced."""
 
     def __init__(self, path=os.environ.get("GEO_AGP_LOG")):
         self.path, self.pos, self.flags, self.fixes = path, 0, {}, []
@@ -271,7 +271,7 @@ class Cruise:
 
 class MarkerFix:
     """The pad marker as a position fix for PX4 below GeoAnchor's envelope: the drone's place from the marker's ray and
-    the pad's surveyed place (PM.PAD_XY), published like a GeoAnchor fix to geo/agp_sim_bridge.py. The landers call
+    the pad's surveyed place (PM.PAD_XY), published like a GeoAnchor fix to gnss_denied/agp_sim_bridge.py. The landers call
     send() wherever they read the marker, with px4_mission's own projection (the same ray their centring uses)."""
 
     def __init__(self, endpoint=os.environ.get("GEO_MARKER_PUB")):
@@ -315,13 +315,13 @@ class MarkerFix:
 
 def logan_yard():
     """land_env's yard for our real pad, from the 2023 survey the world's houses and trees were built from
-    (urban/gz_logan.py): the nearest house as its footprint's minimum-area rectangle with a flat roof at its median
+    (shared/fast_sim/gz_logan.py): the nearest house as its footprint's minimum-area rectangle with a flat roof at its median
     height, the nearest tree as gz_logan plants it. 26 Sept: house wall 4.1 m north (21 x 13.5 m, roof 3.5 m), tree
     canopy edge 3.3 m east (top 5.2 m, crown 1.7 m) -- the tree inside land_env's training range, the house bigger."""
     import cv2
     from scipy.ndimage import label
     cwd = os.getcwd()
-    os.chdir(f"{R}/urban"); sys.path.insert(0, f"{R}/urban")
+    os.chdir(f"{R}/shared/fast_sim"); sys.path.insert(0, f"{R}/shared/fast_sim")
     try:
         import gz_logan as GL
         lay, _road, X0, Y0 = GL.crop()

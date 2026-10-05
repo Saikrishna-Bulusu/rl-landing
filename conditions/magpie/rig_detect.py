@@ -9,8 +9,8 @@ with and without the bird, difference). Scored only on drone PLACES it never tra
 10th place), with the images made worse the way a real camera would: sensor noise, slight blur,
 JPEG, brightness changes.
 
-    train:  python rig_detect.py --train gz_logan/rig/data          -> gz_logan/rig/data/det.pt
-    score:  python rig_detect.py --score gz_logan/rig/data          -> score.json, detect_vs_size.png
+    train:  python rig_detect.py --train shared/px4_gazebo/gz_logan/rig/data          -> shared/px4_gazebo/gz_logan/rig/data/det.pt
+    score:  python rig_detect.py --score shared/px4_gazebo/gz_logan/rig/data          -> score.json, detect_vs_size.png
 
 Runs in the training environment (mujoco_drones: PyTorch + CUDA).
 """
@@ -24,6 +24,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as Fn
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))      # repo root
 
 S = 4                    # heat map stride
 CROP = 320               # training crop, pixels
@@ -66,7 +68,7 @@ def worsen_gpu(imgs, rng):
     """worsen() for a whole frame set on the GPU (torch + nvjpeg), RGB in and out, same steps and parameter draws.
     26 Sept, rig v2l held-out pictures: 15 ms vs 98 ms per 5-picture set (CPU, 6 threads); YOLO found the magpie in
     90.5% vs 90.0% of 369, same false alarms (fp16 too)."""
-    sys_path = f"{os.path.dirname(os.path.abspath(__file__))}/.yolo_pkgs"      # torchvision lives there (rig_yolo.py)
+    sys_path = f"{ROOT}/.yolo_pkgs"      # torchvision lives there (rig_yolo.py)
     if sys_path not in __import__("sys").path:
         __import__("sys").path.insert(0, sys_path)
     from torchvision.io import encode_jpeg, decode_jpeg
@@ -213,6 +215,7 @@ def score(root, dev="cuda", thresholds=(0.3, 0.5, 0.7), op=0.5, det=None, tag=""
     if det is None:
         net = Det().to(dev); net.load_state_dict(torch.load(f"{root}/det.pt", map_location=dev, weights_only=True)); net.eval()
         det = lambda img, t: detect(net, img, t, dev)
+    __import__("sys").path.insert(0, f"{ROOT}/shared/px4_gazebo")
     import gz_rig as GR                          # each camera's focal length (RIG=v2: the OAK-D's is 3.1x the others')
     recs = load(root)["test"]
     rows = []

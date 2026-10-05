@@ -3,9 +3,9 @@
 render.py -- see the wind environment: the landing rule and a trained learner fly the SAME yard in the SAME gusts, side by
 side (left rule, right learner), one MP4 per wind speed, real time (25 frames/s = one frame per 0.04 s decision).
 
-    python wind/render.py                                   W10 9, 15, 18 m/s, the default decider, wind/videos/*.mp4
-    python wind/render.py --w10 18 --episode 7 --frames /tmp/f   one clip on yard 7, plus 3 PNG stills per clip to look at
-    python wind/render.py --clearml                         also upload the clips to ClearML (rl-landing/wind)
+    python conditions/wind/render.py                                   W10 9, 15, 18 m/s, the default decider, outputs/wind/videos/*.mp4
+    python conditions/wind/render.py --w10 18 --episode 7 --frames /tmp/f   one clip on yard 7, plus 3 PNG stills per clip to look at
+    python conditions/wind/render.py --clearml                         also upload the clips to ClearML (rl-landing/wind)
 
 Both fly through land_env.step with identical reset keys and identical per-step keys, so the yard, the start, the gust
 sequence and the sensor noise are the same; only the policy differs. The drawing is MuJoCo's offscreen renderer (EGL) over an

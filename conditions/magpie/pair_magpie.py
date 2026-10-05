@@ -1,7 +1,8 @@
 """Magpie-through-the-rig learners (3 seeds, dice read-out) against the SAFE planner on the ladder's 4,096 test flights,
 paired flight by flight. The training run compared each seed only with the planner it copied (shield); this adds the
 paired comparison with the best same-sensor planner.   python pair_magpie.py  -> pair_magpie.json"""
-import json, torch
+import json, os, sys, torch
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "shared", "fast_sim"))   # run from shared/fast_sim
 import urban_rl as R, urban_agents as A, urban_env as U
 R.MAP, R.NAV, R.BIRDS, R.HUNTER, R.RIG = "logan_map_lidar.npz", "gps", True, True, True
 torch.manual_seed(2026)

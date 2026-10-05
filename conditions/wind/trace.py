@@ -2,7 +2,7 @@
 """
 trace.py -- one flight, rule against learner, the same yard, start and gusts (MJX, evaluation seed 10000, episode i):
 height, distance from the pad against the rule's gate, and the learner's push against the gust that moves the drone.
-    python wind/trace.py runs/fly_s0_best.npz --w10 15 --episode 3     -> gazebo_wind/figs/trace_w15_e3.png
+    python conditions/wind/trace.py runs/fly_s0_best.npz --w10 15 --episode 3     -> outputs/gazebo_wind/figs/trace_w15_e3.png
 """
 import argparse
 import math
@@ -18,7 +18,7 @@ import land_env as E
 import ppo as P
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-R = os.path.dirname(HERE)
+R = os.path.dirname(os.path.dirname(HERE))
 
 
 def run(policy_fn, w10, i, fly, decide, shield, n=512, seed=10_000):
@@ -84,8 +84,8 @@ def main():
     ax[2].axhline(0, color="#ccc", lw=1)
     ax[2].set_xlabel("seconds"); ax[2].legend(frameon=False, fontsize=10); ax[2].set_title("pushing against the gusts")
     fig.tight_layout()
-    os.makedirs(f"{R}/gazebo_wind/figs", exist_ok=True)
-    path = f"{R}/gazebo_wind/figs/trace_w{a.w10:g}_e{a.episode}.png"
+    os.makedirs(f"{R}/outputs/gazebo_wind/figs", exist_ok=True)
+    path = f"{R}/outputs/gazebo_wind/figs/trace_w{a.w10:g}_e{a.episode}.png"
     fig.savefig(path, dpi=110)
     corr = np.corrcoef(out["learner"][2][2][~out["learner"][2][3]], out["learner"][2][1][~out["learner"][2][3]])[0, 1]
     print(path, {w: (names[o], round(t_, 1)) for w, (o, t_, _) in out.items()}, f"push vs gust correlation {corr:+.2f}")

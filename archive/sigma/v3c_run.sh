@@ -17,8 +17,8 @@
 # BOTH conditions are re-run, not just the broken one, so the comparison is
 # entirely within one code version.
 set -u
-cd /home/sai/RL_projects/rl-landing
-say(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" | tee -a v3c_run.log; }
+cd /home/sai/RL_projects/rl-landing/archive/sigma   # these drivers run from their own folder
+say(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" | tee -a ../../outputs/logs/v3c_run.log; }
 guard(){
   local r=$(awk '/MemAvailable/{printf "%d",$2/1024}' /proc/meminfo)
   local d=$(df -BG --output=avail / | tail -1 | tr -dc '0-9')

@@ -10,7 +10,7 @@
 #   2. a job dying silently and leaving a hole in the seed table
 #   3. the whole launcher dying, leaving nothing running at all
 set -u
-cd /home/sai/RL_projects/rl-landing
+cd /home/sai/RL_projects/rl-landing/archive/sigma   # these drivers run from their own folder
 LOG=overnight/watchdog.log
 mkdir -p overnight
 say(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" >> "$LOG"; }

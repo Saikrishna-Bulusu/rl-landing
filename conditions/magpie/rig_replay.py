@@ -16,8 +16,8 @@ import sys
 import numpy as np
 import torch
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.dirname(HERE))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path[:0] = [f"{ROOT}/shared/px4_gazebo", f"{ROOT}/shared/fast_sim"]
 import gz_rig as GR
 import rig_sense as RS
 

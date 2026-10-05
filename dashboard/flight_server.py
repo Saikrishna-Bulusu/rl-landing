@@ -3,13 +3,13 @@
 flight_server.py -- the forked dashboard's own backend (the GeoAnchor dashboard and its API are untouched).
 
   /                      the built dashboard (dashboard/out: GeoAnchor's page, Flight log, Mission planner)
-  /fl/flights            the flights under gazebo_geo/ (a GeoAnchor record, PX4's .ulg, or both)
+  /fl/flights            the flights under outputs/gazebo_geo/ (a GeoAnchor record, PX4's .ulg, or both)
   /fl/flight/<name>      one flight as time series, QGC-style: attitude and its setpoints from PX4's own log, heights
                          and speeds, PX4's estimate against Gazebo's truth, GNSS/AGP fusion, phases, fixes
   /fl/world              the pads (Gazebo ENU, marker ids), the map extent, the default route
   /fl/basemap.jpg        the floor the sim flies over (Esri Wayback 2023: internal use only -- never publish)
-  /fl/missions           GET the saved missions, POST one (-> geo/missions/<name>.json)
-  /fl/fly                POST {"mission": name}: fly it in Gazebo (geo/fly_mission.sh), if nothing else is flying
+  /fl/missions           GET the saved missions, POST one (-> outputs/gnss_denied/missions/<name>.json)
+  /fl/fly                POST {"mission": name}: fly it in Gazebo (gnss_denied/fly_mission.sh), if nothing else is flying
   /fl/live               Server-Sent Events: the flight in the air, row by row (its live.jsonl)
 
     python3 dashboard/flight_server.py            # then http://localhost:8010  (system python: pyulog, numpy, cv2)
@@ -31,10 +31,10 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 R = os.path.dirname(HERE)
-sys.path[:0] = [f"{R}/geo"]
+sys.path[:0] = [f"{R}/gnss_denied"]
 from geo_world import EXTENT, ll_to_gz                     # noqa: E402  (math and numpy only)
 
-FLIGHTS, MISSIONS = f"{R}/gazebo_geo", f"{R}/geo/missions"
+FLIGHTS, MISSIONS = f"{R}/outputs/gazebo_geo", f"{R}/outputs/gnss_denied/missions"
 NAME = re.compile(r"^[A-Za-z0-9_.-]{1,64}$")
 HZ = 10.0                                                 # series rate sent to the browser
 
@@ -160,7 +160,7 @@ def flights():
 
 
 def world():
-    pads = json.load(open(f"{R}/gz_logan/pads_logan.json"))
+    pads = json.load(open(f"{R}/shared/px4_gazebo/gz_logan/pads_logan.json"))
     import geo_cruise as GC                                  # noqa: E402  the default route
     return dict(extent=EXTENT, pads=pads, route=[list(p) for p in GC.ROUTE], alt=GC.ALT, speed=GC.V, depot=[0.0, 0.0])
 
@@ -172,7 +172,7 @@ def basemap():
     global _BASEMAP
     if _BASEMAP is None:
         import cv2
-        im = cv2.imread(f"{R}/gz_logan/geo_floor/materials/textures/logan_2023.png")
+        im = cv2.imread(f"{R}/shared/px4_gazebo/gz_logan/geo_floor/materials/textures/logan_2023.png")
         _BASEMAP = cv2.imencode(".jpg", cv2.resize(im, (1300, 1300), interpolation=cv2.INTER_AREA),
                                 [cv2.IMWRITE_JPEG_QUALITY, 82])[1].tobytes()
     return _BASEMAP
@@ -185,7 +185,7 @@ def check_mission(m):
     route = [[float(a), float(b)] for a, b in m.get("route", [])]
     assert len(route) <= 12, "at most 12 waypoints"
     assert all(x0 + 20 <= a <= x1 - 20 and y0 + 20 <= b <= y1 - 20 for a, b in route), "waypoints must be on the map"
-    pads = {p["name"]: p for p in json.load(open(f"{R}/gz_logan/pads_logan.json"))}
+    pads = {p["name"]: p for p in json.load(open(f"{R}/shared/px4_gazebo/gz_logan/pads_logan.json"))}
     pad = pads.get(m.get("pad", {}).get("name") if isinstance(m.get("pad"), dict) else m.get("pad"))
     assert pad is not None, "pick a pad"
     alt, v = float(m.get("alt", 75)), float(m.get("speed", 7))
@@ -265,7 +265,7 @@ class H(SimpleHTTPRequestHandler):
                 if busy():
                     return self._json(dict(error="a Gazebo flight is already up: one at a time"), 409)
                 out = f"mission_{name}_{time.strftime('%H%M%S')}"
-                subprocess.Popen(["setsid", f"{R}/geo/fly_mission.sh", f"{MISSIONS}/{name}.json", out],
+                subprocess.Popen(["setsid", f"{R}/gnss_denied/fly_mission.sh", f"{MISSIONS}/{name}.json", out],
                                  stdout=open(f"/tmp/fly_mission_{out}.log", "w"), stderr=subprocess.STDOUT, cwd=R)
                 return self._json(dict(started=out))
         except (AssertionError, ValueError, TypeError) as e:

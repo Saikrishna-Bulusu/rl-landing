@@ -15,9 +15,9 @@
 # Evaluation is BY SCENE; headline is the two scenes with no easy fixes at all
 # (Scene_10, Scene_22).
 set -u
-cd /home/sai/RL_projects/rl-landing
+cd /home/sai/RL_projects/rl-landing/archive/sigma   # these drivers run from their own folder
 PY=/home/sai/miniconda3/envs/mujoco_drones/bin/python
-say(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" | tee -a v2_run.log; }
+say(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" | tee -a ../../outputs/logs/v2_run.log; }
 guard(){
   local r=$(awk '/MemAvailable/{printf "%d",$2/1024}' /proc/meminfo)
   local d=$(df -BG --output=avail / | tail -1 | tr -dc '0-9')
@@ -51,7 +51,7 @@ for SC in 1.5 2.0; do
 
   say "STAGE B[$SC]: 16-seed ablation, 4 arms @ 2.5M (64 runs)"
   rm -rf v2s${TAG}_final; mkdir -p v2s${TAG}_final
-  TAG=$TAG SC=$SC $PY - <<'PYEOF' | tee -a v2_run.log
+  TAG=$TAG SC=$SC $PY - <<'PYEOF' | tee -a ../../outputs/logs/v2_run.log
 import json, os
 TAG=os.environ["TAG"]; SC=os.environ["SC"]
 GRID=[f"--lr {lr} --ent-coef {e} --net {n}" for lr in ("1e-4","3e-4","1e-3")

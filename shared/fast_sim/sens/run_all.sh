@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # All sensitivity variations, one at a time, low priority beside Gazebo. Log: sens/run_all.log
-cd /home/sai/RL_projects/rl-landing/urban; PY="nice -n 15 /home/sai/miniconda3/envs/mujoco_drones/bin/python"
+cd /home/sai/RL_projects/rl-landing/shared/fast_sim; PY="nice -n 15 /home/sai/miniconda3/envs/mujoco_drones/bin/python"
 run () { cond=$1; label=$2; shift 2; [ -f sens/${cond}_${label}.json ] && return; env "$@" $PY sens.py $cond $label 2>&1 | grep -v -i warn | tail -1 >> sens/run_all.log; }
 for c in clear fog rig; do
   run $c base

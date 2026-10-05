@@ -4,11 +4,11 @@ record_sweep.py -- a 75 m sweep over the Logan square with rig v2's landing came
 recorded the way GeoAnchor replays a flight: the frames as a video, and a truth sidecar per frame (lat, lon, height,
 the compass heading of the IMAGE TOP, camera tilt) -- so GeoAnchor's own pipeline can be run on it unchanged.
 
-    OUT=geo_rec_floor WORLD=geo_floor INSTANCE=5 ./wind/sitl.sh /usr/bin/python3 -u geo/record_sweep.py --out gazebo_geo/floor
-    OUT=geo_rec_plain WORLD=voxfast_v2 INSTANCE=5 ./wind/sitl.sh /usr/bin/python3 -u geo/record_sweep.py --out gazebo_geo/plain
+    OUT=geo_rec_floor WORLD=geo_floor INSTANCE=5 ./shared/px4_gazebo/sitl.sh /usr/bin/python3 -u gnss_denied/record_sweep.py --out outputs/gazebo_geo/floor
+    OUT=geo_rec_plain WORLD=voxfast_v2 INSTANCE=5 ./shared/px4_gazebo/sitl.sh /usr/bin/python3 -u gnss_denied/record_sweep.py --out outputs/gazebo_geo/plain
 
 The image top's heading is the body heading plus an offset (--top-offset, degrees) MEASURED from the frames against the
-floor (geo/frame_check.py), not assumed: the gimbal model sits in the drone rotated 180 degrees.
+floor (gnss_denied/frame_check.py), not assumed: the gimbal model sits in the drone rotated 180 degrees.
 """
 import argparse
 import json
@@ -23,7 +23,7 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 R = os.path.dirname(HERE)
-sys.path[:0] = [R, HERE, f"{R}/wind"]
+sys.path[:0] = [f"{R}/shared/px4_gazebo", HERE]
 import px4_mission as PM
 from px4_steps import TruthLog
 from geo_world import gz_to_ll
@@ -58,7 +58,7 @@ def heading_deg(q):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
-    ap.add_argument("--top-offset", type=float, default=0.0, help="image top heading = nose heading + this (deg); measured 0 (geo/frame_check.py)")
+    ap.add_argument("--top-offset", type=float, default=0.0, help="image top heading = nose heading + this (deg); measured 0 (gnss_denied/frame_check.py)")
     a = ap.parse_args()
     os.makedirs(f"{R}/{a.out}/frames", exist_ok=True)
     truth, cam = TruthLog(), Frames()

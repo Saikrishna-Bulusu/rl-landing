@@ -1,10 +1,10 @@
-"""The ACRA figures, drawn from saved results into acra2026/figs/ (PDF + PNG), in the style of urban/paper_figs.py.
-    python3 acra2026/make_figs.py            all four data figures (the stack diagram is TikZ in the paper)
+"""The ACRA figures, drawn from saved results into papers/acra2026/figs/ (PDF + PNG), in the style of shared/fast_sim/paper_figs.py.
+    python3 papers/acra2026/make_figs.py            all four data figures (the stack diagram is TikZ in the paper)
 No render of the Esri photo floor appears anywhere: the GNSS-free figure is a plot of errors."""
 import json, os, sys
 import numpy as np
-HERE = os.path.dirname(os.path.abspath(__file__)); R = os.path.dirname(HERE)
-sys.path.insert(0, f"{R}/urban")
+HERE = os.path.dirname(os.path.abspath(__file__)); R = os.path.dirname(os.path.dirname(HERE))
+sys.path.insert(0, f"{R}/shared/fast_sim")
 import paper_figs as P                      # rcParams (LaTeX text, ACRA widths), colours, save()
 import matplotlib.pyplot as plt
 P.OUT = f"{HERE}/figs"
@@ -18,7 +18,7 @@ def magpie():
     fig, bx = plt.subplots(figsize=(P.COL, 1.75), layout="constrained")
     w = 0.26
     for k, (f, lab) in enumerate(modes):
-        h = json.load(open(f"{R}/urban/{f}"))["corridor"]
+        h = json.load(open(f"{R}/shared/fast_sim/{f}"))["corridor"]
         for j, key in enumerate(("rule", "planner", "oracle")):
             d = h[{"rule": "rule", "planner": h["best_obs"], "oracle": h["best_full"]}[key]]["struck_magpie"]
             bx.bar(k + (j - 1) * w, d, w * 0.92, color=P.C[key], label=P.LAB[key] if k == 0 else None)
@@ -32,7 +32,7 @@ def magpie():
 def gnssfree(run="geo_calm4"):
     """One GNSS-free flight: PX4's horizontal position error and each sent visual fix's error, both against Gazebo's
     truth, over the time since GNSS was denied (the same quantities as geo_cruise.report)."""
-    d = json.load(open(f"{R}/gazebo_geo/{run}/geo_e0_w0_rule.json"))
+    d = json.load(open(f"{R}/outputs/gazebo_geo/{run}/geo_e0_w0_rule.json"))
     rows, fixes, rep = d["rows"], d["fixes"], d["report"]
     ts = np.array([r["t"] for r in rows]); wall = np.array([r["wall"] for r in rows])
     t0 = ts[-1] - rep["denied_s"]

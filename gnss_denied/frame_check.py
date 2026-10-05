@@ -5,7 +5,7 @@ turned north-up for every candidate heading (and mirrored), scaled to the floor 
 correlated with the floor under the drone's TRUE position. The best heading, minus the nose heading, is the offset
 record_sweep.py must add (and the check fails loudly if the frames do not match the floor at all).
 
-    <GeoAnchor venv python> geo/frame_check.py gazebo_geo/floor
+    <GeoAnchor venv python> gnss_denied/frame_check.py outputs/gazebo_geo/floor
 """
 import json
 import math
@@ -38,7 +38,7 @@ def north_up(img, top_heading, mirror=False):
 
 
 def main(folder, n=12):
-    tex = cv2.cvtColor(cv2.imread(f"{R}/gz_logan/geo_floor/materials/textures/logan_2023.png"), cv2.COLOR_BGR2GRAY)
+    tex = cv2.cvtColor(cv2.imread(f"{R}/shared/px4_gazebo/gz_logan/geo_floor/materials/textures/logan_2023.png"), cv2.COLOR_BGR2GRAY)
     tex = cv2.resize(tex, None, fx=RES / C, fy=RES / C, interpolation=cv2.INTER_AREA)
     x0, x1, y0, y1 = EXTENT
     rows = [json.loads(l) for l in open(f"{R}/{folder}/flight_gt.jsonl")]

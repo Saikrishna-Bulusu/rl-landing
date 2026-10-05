@@ -24,10 +24,13 @@ To fly the physical version instead, set COLLIDE = True below.
 """
 import argparse
 import json
+import os
 
 import numpy as np
 
 import forest_spec as Base
+
+HERE = os.path.dirname(os.path.abspath(__file__))
 
 WORLD = ("/home/sai/thesis_2.0/PX4-Autopilot/Tools/simulation/gz/worlds/"
          "aruco.sdf")
@@ -127,10 +130,10 @@ def main():
         w = _strip(w)
         w = w.replace("  </world>", sdf + "  </world>")
         open(WORLD, "w").write(w)
-        json.dump(meta, open("trees.json", "w"), indent=1)
+        json.dump(meta, open(f"{HERE}/trees.json", "w"), indent=1)
         print(f"3. wrote {len(trees)} trees into the world and trees.json")
     else:
-        json.dump(meta, open("trees.json", "w"), indent=1)
+        json.dump(meta, open(f"{HERE}/trees.json", "w"), indent=1)
         print("3. wrote trees.json   (dry run -- pass --write for the world)")
 
 

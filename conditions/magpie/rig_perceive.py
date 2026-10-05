@@ -11,7 +11,7 @@ PyTorch) answers each with the tracker's belief. Protocol, per frame set on stdi
     then the images, raw RGB, in the order of "cams"
 and on stdout one JSON line {"seen": bool, "rel": [..], "vel": [..], "dets": [[cam, score, u, v, size], ...]}.
 
-    python rig_perceive.py [--det ../gz_logan/rig/data/det.pt] [--thresh 0.5]
+    python rig_perceive.py [--det ../../shared/px4_gazebo/gz_logan/rig/det.pt] [--thresh 0.5]
 """
 import argparse
 import json
@@ -23,7 +23,8 @@ import numpy as np
 import torch
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.dirname(HERE))
+ROOT = os.path.dirname(os.path.dirname(HERE))
+sys.path[:0] = [f"{ROOT}/shared/px4_gazebo", f"{ROOT}/shared/fast_sim"]
 import gz_rig as GR                  # the rig's cameras: mounting, focal length
 import rig_detect as RD              # the detector
 import rig_sense as RS               # the tracker and the calibration
@@ -31,7 +32,7 @@ import rig_sense as RS               # the tracker and the calibration
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--det", default=f"{os.path.dirname(HERE)}/gz_logan/rig/det.pt")      # the current detector
+    ap.add_argument("--det", default=f"{ROOT}/shared/px4_gazebo/gz_logan/rig/det.pt")      # the current detector
     ap.add_argument("--thresh", type=float, default=None, help="default: the calibration's operating threshold")
     a = ap.parse_args()
     dev = "cuda" if torch.cuda.is_available() else "cpu"
@@ -39,8 +40,7 @@ def main():
     c = json.load(open(RS.CALIB))
     a.thresh = a.thresh or float(os.environ.get("RIG_THRESH", 0)) or c["source"]["operating_threshold"]   # as calibrated
     if os.environ.get("RIG_YOLO"):            # the fine-tuned YOLO (rig_yolo.py) instead of the small CNN; its
-        R_ = os.path.dirname(HERE)            # packages live apart from this environment's (.yolo_pkgs)
-        sys.path[:0] = [f"{R_}/.yolo_pkgs", R_]
+        sys.path[:0] = [f"{ROOT}/.yolo_pkgs"]      # packages live apart from this environment's; rig_yolo is beside this file
         import rig_yolo
         detect_batch = rig_yolo.detector(os.environ["RIG_YOLO"])
         print(f"YOLO {os.environ['RIG_YOLO']} at {a.thresh}", file=sys.stderr)
@@ -55,13 +55,13 @@ def main():
     cam_R = {n: GR.rot(*rpy) for n, (_, rpy) in GR.RIG.items()}
     # the spinning propellers' tips reach into the ring cameras' bottom rows even on the mast: a blade
     # at a new angle every frame looks like a small bird there. Ignore detections inside that sweep
-    # (gz_logan/rig/prop_mask.npz, projected from the geometry) -- the down camera covers those directions
-    prop = dict(np.load(f"{os.path.dirname(HERE)}/gz_logan/{GR.BENCH}/prop_mask.npz"))   # RIG=v2: gz_logan/rig_v2
+    # (shared/px4_gazebo/gz_logan/rig/prop_mask.npz, projected from the geometry) -- the down camera covers those directions
+    prop = dict(np.load(f"{ROOT}/shared/px4_gazebo/gz_logan/{GR.BENCH}/prop_mask.npz"))   # RIG=v2: shared/px4_gazebo/gz_logan/rig_v2
     # the landing pads are surveyed (the delivery addresses, in the drone's map): their black-and-white
     # markers seen at an angle scored up to 0.82 as "magpie" in Gazebo even after hard-negative
     # training. Ignore detections pointing at a known pad (its angular size + 4 deg of heading error)
     import re
-    world = open(f"{os.path.dirname(HERE)}/gz_logan/rigfly/aruco.sdf").read()
+    world = open(f"{ROOT}/shared/px4_gazebo/gz_logan/rigfly/aruco.sdf").read()
     pads = [tuple(map(float, m.split()[:3])) for m in re.findall(r"model://(?:logan_pad_\d+|arucotag)</uri>(?:<name>[^<]*</name>)?\s*(?:<!--.*?-->\s*)?<pose>([^<]*)</pose>", world, re.S)]
     pads = np.array(pads)
     print(f"{len(pads)} known pads", file=sys.stderr)

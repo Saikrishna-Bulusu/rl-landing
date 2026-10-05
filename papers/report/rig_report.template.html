@@ -1,0 +1,149 @@
+<title>Magpie Rig Night</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#f3f5f4; --card:#ffffff; --ink:#15211f; --muted:#56655f; --line:#d5ddd9;
+  --accent:#12806a; --accent-soft:#dcefe9; --alert:#a8392a; --alert-soft:#f6e3df;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0f1513; --card:#161f1c; --ink:#e2ebe8; --muted:#9aaba5; --line:#2a3632;
+    --accent:#45c9a8; --accent-soft:#17332c; --alert:#e8806d; --alert-soft:#3a1f1a; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0f1513; --card:#161f1c; --ink:#e2ebe8; --muted:#9aaba5; --line:#2a3632;
+  --accent:#45c9a8; --accent-soft:#17332c; --alert:#e8806d; --alert-soft:#3a1f1a; color-scheme:dark;
+}
+body{background:var(--ground);color:var(--ink);font:17px/1.6 var(--body);padding-inline:16px;padding-block:28px 64px}
+main{max-width:880px;margin:0 auto;display:grid;gap:40px}
+h1,h2,h3{font-family:var(--display);font-weight:600;letter-spacing:.01em;line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(34px,6vw,50px)}
+h2{font-size:30px;padding-top:8px;border-top:1px solid var(--line)}
+h3{font-size:21px;margin-top:6px}
+p{margin:0;max-width:68ch}
+section{display:grid;gap:14px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{font-size:19px;color:var(--ink);max-width:62ch}
+.glance{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.glance div{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px 16px;display:grid;gap:4px;align-content:start}
+.glance b{font-family:var(--display);font-size:30px;font-weight:600;color:var(--accent);line-height:1}
+.glance .bad b{color:var(--alert)}
+.glance span{font-size:14.5px;color:var(--muted);line-height:1.4}
+figure{margin:0;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:10px;display:grid;gap:8px}
+figure img{width:100%;height:auto;display:block;border-radius:3px;background:#fff}
+figcaption{font-size:14.5px;color:var(--muted);line-height:1.45}
+.open{background:var(--alert-soft);border-left:4px solid var(--alert);border-radius:0;padding:12px 16px;display:grid;gap:6px}
+.open strong{color:var(--alert)}
+.note{background:var(--accent-soft);border-left:4px solid var(--accent);border-radius:0;padding:12px 16px}
+.tablewrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:15px;font-variant-numeric:tabular-nums}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+td.num{font-family:var(--mono);text-align:right}
+tr:last-child td{border-bottom:0}
+.tag{font-family:var(--mono);font-size:12px;padding:2px 7px;border-radius:3px;background:var(--accent-soft);color:var(--accent)}
+.tag.bad{background:var(--alert-soft);color:var(--alert)}
+ul,ol{margin:0;padding-left:22px;display:grid;gap:6px;max-width:70ch}
+li{padding-left:2px}
+code{font-family:var(--mono);font-size:.88em}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+@media (prefers-reduced-motion: no-preference){ figure{transition:border-color .2s} figure:hover{border-color:var(--accent)} }
+</style>
+
+<main>
+<header style="display:grid;gap:12px">
+  <div class="eyebrow">rl-landing · overnight 24–25 Sept · for Sai to critique</div>
+  <h1>A 360-degree camera rig, and a magpie that fights back</h1>
+  <p class="lede">You said the bird results didn't count, because the drone was handed the magpie's exact position and speed. And a magpie that dives in a straight line gives its whole path away at the first sighting. So overnight I built a six-camera rig, trained a detector on its own pictures, tracked the bird from those detections, made the magpie steer and attack from behind, and tested it all. First on the bench, then in the fast simulator, then live in Gazebo with PX4, with no true bird position anywhere in the loop.</p>
+  <div class="glance">
+    <div><b>28% → 39%</b><span>magpie flights struck, perfect awareness vs the rig (rule decider, corridor)</span></div>
+    <div><b>≈ 0</b><span>room for learning when the drone is handed the truth: the simple reflex is already as good as planning</span></div>
+    <div><b>+2.5</b><span>points of headroom over the rule with the realistic rig: learning has something to do</span></div>
+    <div class="bad"><b>35–60%</b><span>of the time a phantom "bird" is tracked in Gazebo while the real magpie is far away: open problem</span></div>
+    %%LEARN_TILE%%
+  </div>
+</header>
+
+<section>
+  <h2>1 · The rig</h2>
+  <p>Six 1280×960 cameras with 110° lenses, 20 frames a second, like the navigation cameras on a Skydio. Four look out in a ring and one looks up, all on a 30 cm mast above the propellers. One looks down from a short boom below the landing legs. The first version sat just above the propellers: spinning blades in the pictures looked like birds, so it moved up the mast.</p>
+  <figure><img src="%%IMG_views%%" alt="The six rig camera views for four magpie positions, the magpie ringed where it appears"><figcaption>What each camera sees with the magpie 20 m behind, 20 m behind and 30° up, 30 m to the left, and 12 m below. A ring marks where it shows. The drone no longer sees its own propellers or legs.</figcaption></figure>
+  <figure><img src="%%IMG_pixels%%" alt="Magpie size in pixels against distance, and the share of directions some camera sees"><figcaption>Left: the magpie's size in the picture. About 80 px at 5 m, 20 px at 20 m, 10 px at 40 m, 7 px at 60 m. Right: some camera sees it in every direction above the drone. Below, trees and roofs hide it 0–4% of the time. The camera model matches Gazebo to a median 1.0 px.</figcaption></figure>
+</section>
+
+<section>
+  <h2>2 · Seeing the bird: detector and tracker</h2>
+  <p>A small neural network (about 90,000 weights, nothing downloaded) was trained on %%N_PICS%% rig pictures that Gazebo labelled itself: each picture rendered with and without the magpie, and the difference is the bird. That includes %%N_NEG%% empty views over the landing pads. It's scored only on drone positions it never saw, with the pictures degraded the way a real camera would: sensor noise, blur, JPEG compression, brightness changes.</p>
+  <figure><img src="%%IMG_detect%%" alt="Detection rate by magpie size and distance on held-out drone positions"><figcaption>It finds the magpie in 86.5% of single frames (93–95% against sky, 74–83% against ground), with 0.09 false alarms per picture. Direction is sharp, about 0.2°. Distance, judged from the bird's size, is poor: about ±38%, because a magpie head-on and side-on differ in size and it banks and flaps.</figcaption></figure>
+  <p>The tracker turns detections into "where it is and where it's heading". It gates each detection on <em>direction</em>, not position: with distance this uncertain, a position gate happily paired unrelated false alarms into a phantom bird. It reports a bird only after two sightings, and only if it's moving.</p>
+</section>
+
+<section>
+  <h2>3 · A magpie that fights back</h2>
+  <p>The new "hunter" magpie waits behind and above the drone, launches only from its rear sector, and keeps re-aiming at where the drone will be (turning at up to 2 g). It stops correcting 0.3 s before it arrives, which is its reaction time. It keeps the old bird's calibration: a drone that doesn't dodge is touched on about 12% of dives.</p>
+  <div class="note">Dodging 2 s early against the old straight-line magpie: touched on 0.6% of dives, which is why the old results were too easy. Against the hunter: 12.2%. It simply re-aims. Checked in both the fast simulator and Gazebo (12.6% at Gazebo's 30 steps a second).</div>
+  <figure><img src="%%IMG_sweep%%" alt="Dives that touch the drone against the magpie's reaction time, truth versus rig"><figcaption>The assumption that decides everything: how late the magpie stops correcting its dive. With perfect awareness, dodging goes from useless (0.1 s) to very effective (1.2 s). With the rig, dodging never gets below about 5% of dives. The distance error makes the rule, which was written for exact information, mistime its dodges. 1,024 flights per point.</figcaption></figure>
+</section>
+
+<section>
+  <h2>4 · What knowing the bird is worth</h2>
+  <figure><img src="%%IMG_sensing%%" alt="Struck and clean deliveries for rule, planner and all-knowing planner under four kinds of bird sensing"><figcaption>Corridor world, 4,096 paired flights, GPS, a magpie on about half the flights. The rig costs about 11 points of strikes against perfect awareness. Half its detection range barely matters, because the hunter attacks within 20–30 m. The "all-knowing" planner plans with the true bird, but its between-decision reflex still uses the sensed bird. The random world gives the same picture.</figcaption></figure>
+  <ul>
+    <li><b>Handed the truth:</b> the rule is best (64.0% clean on magpie flights). Headroom over the rule −0.2 points: <b>nothing for learning to add</b>. That's your objection, confirmed.</li>
+    <li><b>With the rig:</b> headroom +2.5 ± 1.5 points (better decisions +0.9, knowing the future +1.6). Modest, but real.</li>
+    <li><b>Own two cameras:</b> the most headroom (+3.9), because a decider can compensate for the blind rear.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>5 · Live in Gazebo: PX4, the rig, no truth in the loop</h2>
+  <p>The planner flies PX4's x500 with the rig. Every frame set goes through the detector and tracker, the planner acts on the tracker's belief, and the hunter attacks. Here is the first valid flight, second by second:</p>
+  <figure><img src="%%IMG_strike%%" alt="Six frames from the live rig flight: the magpie tracked in the front then up camera, then the strike"><figcaption>33.6 s: the front camera spots the magpie about 17 m out. 34.9–36.1 s: the up camera follows it diving from above (9, 11, 5 m, confidence up to 0.95). 36.5 s: struck. The rig saw it coming for about 3 s. Against a bird that keeps re-aiming, seeing isn't enough.</figcaption></figure>
+  %%GZ_TABLE%%
+  <div class="open"><strong>Open problem: phantom birds.</strong>
+  <p>Close up, the live rig does well: a diving magpie within 30 m is reported on 78–98% of frames, pointing about 4–8° from the truth (PX4's own heading estimate is 6° off). But while the real magpie is far away, clutter still produces a tracked phantom 35–60% of the time: landing-pad markers, tree shadows, roof edges. Fixes that helped: the mast (propellers out of view), a propeller-tip mask, 1,200 hard negatives, ignoring surveyed pads, and reporting moving birds only. Not solved yet. The fast simulator's rig uses scattered false alarms and does not reproduce these persistent phantoms, so it's optimistic at long range. Within 20 m it matches Gazebo closely.</p></div>
+</section>
+
+<section>
+  <h2>6 · The learner</h2>
+  %%TRAIN_STATUS%%
+  <p>Why the learner can beat even the "all-knowing" planner's headroom (+2.5 points): that planner projects the bird along a straight line from its true position and speed. It knows the present, not how the hunter will react to the drone. Against a bird that keeps re-aiming, that's no upper bound. </p>
+  <div class="tablewrap"><table><thead><tr><th>1,024 test flights, magpie flights only</th><th>dives per flight</th><th>struck</th><th>clean</th><th>median time</th></tr></thead><tbody>
+  <tr><td>rule</td><td class="num">4.5</td><td class="num">38.3%</td><td class="num">50.7%</td><td class="num">170 s</td></tr>
+  <tr><td>planner</td><td class="num">4.9</td><td class="num">44.6%</td><td class="num">44.8%</td><td class="num">196 s</td></tr>
+  <tr><td>learner, seed 0</td><td class="num">3.6</td><td class="num">39.2%</td><td class="num">56.6%</td><td class="num">174 s</td></tr>
+  </tbody></table></div>
+  <p>How it wins is not what I first guessed. It draws the fewest dives, but it's struck about as often as the rule, so each dive is more likely to hit. Its gain is completing more deliveries around the bird, not dodging better. What exactly it learned needs a closer look, flight by flight. Your critique here would help.</p>
+  <figure><img src="%%IMG_conditions%%" alt="Success against training episodes for six conditions, and what practice added over the planner"><figcaption>The overnight queue, all three seeds of each condition (corridor, GPS). The bird conditions here are the <em>old</em> ones: a straight-diving magpie, with the drone handed the truth. Fog is where learning pays: +11 to +15 points over the planner.</figcaption></figure>
+</section>
+
+<section>
+  <h2>7 · Caught and fixed tonight</h2>
+  <ul>
+    <li>Laggy videos: the recorder sampled a stalling loop. Now one frame per camera image, 20 per second (checked in every flight).</li>
+    <li>Labels included the magpie's shadow; the magpie now casts none.</li>
+    <li>The bench rendered on the laptop's Intel chip (0.12× speed); it's now forced onto the NVIDIA card.</li>
+    <li>PX4 skips its speed setting when attaching to a pre-placed drone, so the first two rig flights ended in PX4's safety fallback. The speed is now set by hand, and failsafes are counted per flight.</li>
+    <li>The magpie was placed by the lagging video thread, so the cameras photographed a stale bird. The flight loop places it now.</li>
+    <li>A position gate plus distance-from-size turned pairs of false alarms into phantoms. The gate is now on direction.</li>
+    <li>The propellers and legs were in view. Fixed by the mast and boom.</li>
+    <li>Landing-pad markers were read as magpies. Fixed with hard negatives and ignoring surveyed pads.</li>
+    <li>My own mistakes: an edit that broke <code>urban_env</code>'s imports for two minutes, found before any job loaded it; and a stray <code>pkill</code> that stopped the comparison once.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>8 · What needs you</h2>
+  <ol>
+    <li><b>The magpie's agility.</b> Its reaction time (0.3 s) and turn rate (2 g) decide whether dodging can work at all (section 3). I'd like a source, or your call.</li>
+    <li><b>Phantom birds.</b> Options: a pretrained detector (YOLO: about 100 MB of downloads, needs your OK), motion-based detection (birds move against a still scene), or modelling phantoms in the fast simulator so the learner learns to discount them.</li>
+    <li><b>The paper's bird story.</b> Suggestion: perfect awareness as the upper bound, own cameras as the lower bound, the rig between them, and learning judged only under the rig.</li>
+    <li><b>Tello next?</b> As you planned, after the rig.</li>
+  </ol>
+</section>
+</main>

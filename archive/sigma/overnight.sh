@@ -29,9 +29,9 @@
 # the same class of unfair-comparison bug that has already produced three wrong
 # conclusions in this project.
 set -u
-cd /home/sai/RL_projects/rl-landing
+cd /home/sai/RL_projects/rl-landing/archive/sigma   # these drivers run from their own folder
 PY=/home/sai/miniconda3/envs/mujoco_drones/bin/python
-say(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" | tee -a overnight.log; }
+say(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" | tee -a ../../outputs/logs/overnight.log; }
 
 # jobs file format:  outdir|steps|rho|seed|hp...
 run_jobs(){
@@ -63,7 +63,7 @@ say "STAGE 1 done: $(ls sweep08/*/ablation.json 2>/dev/null | wc -l)/36"
 # ---------- 2 ----------
 say "STAGE 2: 20-seed ablation at rho=0.8 (60 runs)"
 mkdir -p final08
-$PY - <<'PYEOF' | tee -a overnight.log
+$PY - <<'PYEOF' | tee -a ../../outputs/logs/overnight.log
 import json, os
 GRID=[f"--lr {lr} --ent-coef {e} --net {n}" for lr in ("1e-4","3e-4","1e-3")
       for e in ("0.003","0.02") for n in ("128 64","256 128")]

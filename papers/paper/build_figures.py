@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""build_figures.py -- paper/figs/*.png (urban/paper_figs.py) + captions -> paper/figures.html, the review page.
+"""build_figures.py -- paper/figs/*.png (shared/fast_sim/paper_figs.py) + captions -> paper/figures.html, the review page.
 Numbers in the captions are read from the same result files the figures are drawn from."""
 import base64
 import glob
@@ -7,15 +7,15 @@ import json
 import os
 
 R = "/home/sai/RL_projects/rl-landing"
-F = f"{R}/paper/figs"
-css = open(f"{R}/report/rig_report.template.html").read().split("<main>")[0].replace("<title>Magpie Rig Night</title>", "<title>ACRA Figure Draft</title>")
+F = f"{R}/outputs/paper/figs"
+css = open(f"{R}/papers/report/rig_report.template.html").read().split("<main>")[0].replace("<title>Magpie Rig Night</title>", "<title>ACRA Figure Draft</title>")
 img = lambda n: "data:image/png;base64," + base64.b64encode(open(f"{F}/{n}.png", "rb").read()).decode()
-H = lambda s: json.load(open(f"{R}/urban/headroom_lidar_gps{s}.json"))["corridor"]
+H = lambda s: json.load(open(f"{R}/shared/fast_sim/headroom_lidar_gps{s}.json"))["corridor"]
 
 
 def learner(suf, read="sampled"):
     runs = {}
-    for p in glob.glob(f"{R}/urban/rl_eyes_lidar_gps{suf}_corridor_*.json"):
+    for p in glob.glob(f"{R}/shared/fast_sim/rl_eyes_lidar_gps{suf}_corridor_*.json"):
         runs.update({k: v for k, v in json.load(open(p)).items() if isinstance(v, dict) and "log" in v})
     return [r["eval"][read] for r in runs.values()]
 
@@ -24,12 +24,12 @@ mean = lambda xs: sum(xs) / len(xs)
 fog, rig, clear = learner("_fog"), learner("_birds_hunter_rig"), learner("")
 hr = H("_birds_hunter_rig"); hf = H("_fog")
 best_rig = hr[hr["best_obs"]]["clean"]
-w = json.load(open(f"{R}/weather_report.json"))
-sc = json.load(open(f"{R}/gz_logan/rig/data2/score.json"))
-yolo = json.load(open(f"{R}/gz_logan/rig/data2/score_yolo.json")) if os.path.exists(f"{R}/gz_logan/rig/data2/score_yolo.json") else None
-tello = json.load(open(f"{R}/tello/cage_fig.json"))["ladder"]
-tl_seeds = json.load(open(f"{R}/tello/cage_fig.json"))["learner_seeds"]
-why = json.load(open(f"{R}/urban/why_cond.json")) if os.path.exists(f"{R}/urban/why_cond.json") else None
+w = json.load(open(f"{R}/conditions/weather/weather_report.json"))
+sc = json.load(open(f"{R}/shared/px4_gazebo/gz_logan/rig/data2/score.json"))
+yolo = json.load(open(f"{R}/shared/px4_gazebo/gz_logan/rig/data2/score_yolo.json")) if os.path.exists(f"{R}/shared/px4_gazebo/gz_logan/rig/data2/score_yolo.json") else None
+tello = json.load(open(f"{R}/archive/tello/cage_fig.json"))["ladder"]
+tl_seeds = json.load(open(f"{R}/archive/tello/cage_fig.json"))["learner_seeds"]
+why = json.load(open(f"{R}/shared/fast_sim/why_cond.json")) if os.path.exists(f"{R}/shared/fast_sim/why_cond.json") else None
 over = lambda who: who["fail"]["over a person"]
 fog_why = (f" In fog, flights that ended with the drone over a person fell from {over(why['fog']['planner']):.1f}% (planner) to "
            f"{mean([over(v) for k, v in why['fog'].items() if k.startswith('learner')]):.1f}% (learner)." if why and "fog" in why else "")
@@ -48,7 +48,7 @@ FIGS = [
      "and the hospital helipad, whose air ambulance arrives from the north-west.",
      "Column width. Same data as before, drawn at print resolution (5 m cells, the tallest obstacle kept)."),
     ("system", "One decision layer, three test beds", "", "Not a plot: the prompt for Gemini is in "
-     "<code>diagram-prompts/11-system-overview.md</code>. It shows the learner as the one learned box, choosing among moves "
+     "<code>papers/diagram-prompts/11-system-overview.md</code>. It shows the learner as the one learned box, choosing among moves "
      "the planner has checked, with the hard safety rules outside it and the three test beds below."),
     ("headroom", "Where decisions have room", f"Clean deliveries on 4,096 test flights per condition: the rule, the best planner with the same "
      f"sensors, the learner (mean of three seeds; bar = seed range) and the planner told every intruder's true state. "
@@ -90,7 +90,7 @@ FIGS = [
 
 def live(tag):
     """Live Gazebo magpie flights (planner, hunter, rig in the loop): outcomes per seed."""
-    f = f"{R}/gazebo_rig/{tag}/flights.jsonl"
+    f = f"{R}/outputs/gazebo_rig/{tag}/flights.jsonl"
     return [json.loads(l) for l in open(f)] if os.path.exists(f) else []
 
 
@@ -133,7 +133,7 @@ rig learner (3 seeds, about 7 h, overnight).</p></section>"""
 parts = [css, "<main>", "<header style='display:grid;gap:14px'><div class='eyebrow'>rl-landing · ACRA 2026 · 25 Sept · draft 1</div>",
          "<h1>The paper's figures, redrawn</h1>",
          "<p class='lede'>Every figure in its paper form: LaTeX's Computer Modern text, sized to the ACRA column (3.4 in) or page "
-         "(7 in), vector PDFs in <code>paper/figs/</code>, drawn from the saved results by <code>urban/paper_figs.py</code>. "
+         "(7 in), vector PDFs in <code>paper/figs/</code>, drawn from the saved results by <code>shared/fast_sim/paper_figs.py</code>. "
          "The bird conditions that used the old straight-diving magpie handed the truth are left out.</p></header>", decision]
 for i, (name, title, cap, note) in enumerate(FIGS, 1):
     if not os.path.exists(f"{F}/{name}.png"):
@@ -142,5 +142,5 @@ for i, (name, title, cap, note) in enumerate(FIGS, 1):
     parts.append(f"<section><h2>Figure {i} · {title}</h2><figure><img src='{img(name)}' alt='{title}'><figcaption><b>Proposed caption.</b> {cap}</figcaption>"
                  f"</figure><p style='font-size:15.5px;color:var(--muted)'>{note}</p></section>")
 parts.append("</main>")
-open(f"{R}/paper/figures.html", "w").write("\n".join(parts))
-print(f"{R}/paper/figures.html", f"{sum(map(len, parts)) / 1e6:.1f} MB")
+open(f"{R}/outputs/paper/figures.html", "w").write("\n".join(parts))
+print(f"{R}/outputs/paper/figures.html", f"{sum(map(len, parts)) / 1e6:.1f} MB")

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-train.py -- the Tello learner, trained the way the Logan one is (urban/urban_rl.py): copy the cage planner
+train.py -- the Tello learner, trained the way the Logan one is (shared/fast_sim/urban_rl.py): copy the cage planner
 (DAgger, 5% label smoothing), let the value net warm up, then practise with PPO; keep each read-out's best
 round on validation flights; test once on the ladder's 4,096 flights, paired against the rule and planner.
 It sees what the planner sees plus the planner's forecast for every candidate ("eyes"). Landing is masked
@@ -19,7 +19,7 @@ import torch
 import torch.nn.functional as F
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, f"{os.path.dirname(HERE)}/urban")
+sys.path.insert(0, f"{os.path.dirname(os.path.dirname(HERE))}/shared/fast_sim")
 import urban_rl as R            # Net, ppo_update, fit, masked, repeats: one learner for both worlds
 import cage as C
 

@@ -27,7 +27,7 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 R = os.path.dirname(HERE)
-sys.path[:0] = [R, HERE]
+sys.path[:0] = [f"{R}/shared/px4_gazebo", HERE]
 from geo_world import EXTENT
 from gz_learner import Film, Mover
 
@@ -53,7 +53,7 @@ class GeoFilm:
         self.eye, self.rig, self.wind, self.wind_now = eye, rig, wind, None
         self.vw = cv2.VideoWriter(path, cv2.VideoWriter_fourcc(*"avc1"), FPS, (W, H))
         assert self.vw.isOpened(), "no H.264 writer"
-        tex = cv2.imread(f"{R}/gz_logan/geo_floor/materials/textures/logan_2023.png")
+        tex = cv2.imread(f"{R}/shared/px4_gazebo/gz_logan/geo_floor/materials/textures/logan_2023.png")
         self.map_bg = (cv2.resize(tex, (MAP_PX, MAP_PX), interpolation=cv2.INTER_AREA) * 0.75).astype(np.uint8)
         self.mover, self.yaw, self.placed = Mover(asyn=True), None, {}
         self.state, self.gimbal, self.track, self.est_track = None, None, [], []

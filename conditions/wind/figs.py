@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-figs.py -- the wind study's figures (gazebo_wind/figs/):
+figs.py -- the wind study's figures (outputs/gazebo_wind/figs/):
   mjx_vs_gazebo.png   PX4 in Gazebo against the MJX drone: velocity steps (truth, sim time) and hover tilt in wind
   ladder.png          landed / failure kinds against the 10 m wind: the rule and the learners, MJX (paired seeds)
-    python wind/figs.py [--ladder runs/both_s0.npz ...]
+    python conditions/wind/figs.py [--ladder runs/both_s0.npz ...]
 """
 import argparse
 import glob
@@ -15,9 +15,9 @@ import sys
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-R = os.path.dirname(HERE)
-OUT = f"{R}/gazebo_wind/figs"
-sys.path.insert(0, HERE)
+R = os.path.dirname(os.path.dirname(HERE))
+OUT = f"{R}/outputs/gazebo_wind/figs"
+sys.path[:0] = [HERE, f"{R}/shared/px4_gazebo"]
 
 
 def com(tr, h=0.224):
@@ -35,7 +35,7 @@ def mjx_vs_gazebo():
     import jax.numpy as jnp
     import x500_mjx as X
     from px4_steps import STEPS
-    g = np.load(f"{R}/gazebo_wind/steps/steps.npz")
+    g = np.load(f"{R}/outputs/gazebo_wind/steps/steps.npz")
     tr, c = g["truth"], g["cmds"]
     tg = tr[:, 0]
     vg = np.gradient(com(tr), tg, axis=0)                   # the CoM, as MJX: the model origin sits at the feet
@@ -73,7 +73,7 @@ def mjx_vs_gazebo():
         tl = X.tilt_in_wind(speeds=tuple(speeds), cda=cda)
         ax[2].plot([q[0] for q in tl], [q[1] for q in tl], color=col, lw=2, label=f"MJX, {lab}")
     for name, col in (("w7_nodrag", "#9aa0a6"), ("w7_steady", "#1f7a4d"), ("w12_steady", "#1f7a4d")):
-        d = np.load(f"{R}/gazebo_wind/hover_{name}/hover.npz")
+        d = np.load(f"{R}/outputs/gazebo_wind/hover_{name}/hover.npz")
         t_ = d["truth"][:, 0]
         sel = t_ > t_[-1] - 10
         x, y = d["truth"][sel, 5], d["truth"][sel, 6]
@@ -111,7 +111,7 @@ def ladder(ckpts, gz_dirs=()):
         ax[2].plot(w, [r["t_mean"] for r in res], "-o", color=cols.get(tag, "#555"), lw=2.2, ms=5)
     # Gazebo: landed share per wind, per decider
     for d in gz_dirs:
-        rows = [json.loads(l) for l in open(f"{R}/gazebo_wind/{d}/flights.jsonl")]
+        rows = [json.loads(l) for l in open(f"{R}/outputs/gazebo_wind/{d}/flights.jsonl")]
         for dec in sorted({r["decider"] for r in rows}):
             tag = "rule" if dec == "rule" else dec.split("_s")[0]
             for w in sorted({r["w10"] for r in rows if r["decider"] == dec}):
@@ -155,7 +155,7 @@ def pairs(gz_dir, ladder_json, decider="rule"):
     how often MJX and Gazebo agree on the outcome, per wind."""
     names = {1: "landed", 2: "crashed", 3: "hard", 4: "timeout", 0: "timeout"}
     mj = {r["w10"]: r["first40"] for r in json.load(open(ladder_json))}
-    rows = [json.loads(l) for l in open(f"{R}/gazebo_wind/{gz_dir}/flights.jsonl") if json.loads(l)["decider"] == decider]
+    rows = [json.loads(l) for l in open(f"{R}/outputs/gazebo_wind/{gz_dir}/flights.jsonl") if json.loads(l)["decider"] == decider]
     print(f"{'wind':>5s} {'n':>3s}  landed MJX  landed Gazebo  same outcome  miss (landed, median) MJX / Gazebo")
     for w in sorted({r["w10"] for r in rows}):
         sel = sorted([r for r in rows if r["w10"] == w], key=lambda r: r["episode"])
@@ -172,7 +172,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--valid", action="store_true")
     ap.add_argument("--ladder", nargs="*", help="checkpoints (runs/*.npz) whose _ladder.json to plot beside the rule")
-    ap.add_argument("--gz", nargs="*", default=[], help="gazebo_wind/<dir> with flights.jsonl")
+    ap.add_argument("--gz", nargs="*", default=[], help="outputs/gazebo_wind/<dir> with flights.jsonl")
     ap.add_argument("--pairs", nargs=2, metavar=("GZ_DIR", "LADDER_JSON"), help="MJX vs Gazebo outcome agreement, flight by flight")
     a = ap.parse_args()
     if a.valid:

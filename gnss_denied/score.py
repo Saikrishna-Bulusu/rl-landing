@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """score.py -- GeoAnchor's fixes on one run against the truth: how many frames got a fix, and the errors of the
 accepted ones as median / p90 / p99 / share within 5, 10, 20 m (never the mean: one lost fix drags it anywhere).
-    python geo/score.py geo/runs/<run> gazebo_geo/floor/flight_gt.jsonl
+    python gnss_denied/score.py outputs/gnss_denied/runs/<run> outputs/gazebo_geo/floor/flight_gt.jsonl
 """
 import json
 import sys

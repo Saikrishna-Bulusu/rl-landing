@@ -4,10 +4,10 @@ read_height.py -- how high can the landing camera read the pad? (Sai, 26 Sept: "
 which it starts to see the landing pads ... I think 50 m" -- measured, not assumed.) Hover over our pad and step down,
 decoding every gimbal frame with the landing's own detector (px4_perception's, DICT_4X4_50), per marker.
 
-    OUT=geo_readh WORLD=geo_floor INSTANCE=5 ./wind/sitl.sh /usr/bin/python3 -u geo/read_height.py
+    OUT=geo_readh WORLD=geo_floor INSTANCE=5 ./shared/px4_gazebo/sitl.sh /usr/bin/python3 -u gnss_denied/read_height.py
 
 Prints, per height: frames seen, % with any of our markers decoded, % per marker (2 = 1.80 m, 0 = 1.20 m), and the
-1.80 m marker's side in pixels when read. Writes gazebo_geo/read_height.json.
+1.80 m marker's side in pixels when read. Writes outputs/gazebo_geo/read_height.json.
 """
 import json
 import math
@@ -19,7 +19,7 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 R = os.path.dirname(HERE)
-sys.path[:0] = [R, HERE, f"{R}/wind"]
+sys.path[:0] = [f"{R}/shared/px4_gazebo", HERE]
 import px4_mission as PM
 from px4_perception import ArucoEye
 from px4_steps import TruthLog
@@ -82,7 +82,7 @@ def main():
               f"any {100 * any_:5.1f}%  1.80 m {100 * sum(2 in f['ids'] for f in fs) / n:5.1f}%  "
               f"1.20 m {100 * sum(0 in f['ids'] for f in fs) / n:5.1f}%  side {np.median(s2) if s2 else 0:4.1f} px",
               flush=True)
-    json.dump(rows, open(f"{R}/gazebo_geo/read_height.json", "w"))
+    json.dump(rows, open(f"{R}/outputs/gazebo_geo/read_height.json", "w"))
 
 
 if __name__ == "__main__":

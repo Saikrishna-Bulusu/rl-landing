@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
 px4_steps.py -- how PX4 (x500, rig v2) answers velocity commands, measured on Gazebo's truth in sim time: the
-target the MuJoCo drone (wind/x500_mjx.py) must reproduce before anything learned in it means anything.
+target the MuJoCo drone (conditions/wind/x500_mjx.py) must reproduce before anything learned in it means anything.
 
 measure_tau.py (the fast simulator's TAU_XY 0.69 / TAU_Z 0.23) timed PX4's own telemetry by the wall clock; this
 logs Gazebo's true pose with its sim-time stamp next to every command, so a stale read or a slow loop cannot
 pass for the aircraft's lag.
 
-    OUT=steps ./wind/sitl.sh /usr/bin/python3 -u wind/px4_steps.py --out gazebo_wind/steps/steps.csv
+    OUT=steps ./shared/px4_gazebo/sitl.sh /usr/bin/python3 -u shared/px4_gazebo/px4_steps.py --out outputs/gazebo_wind/steps/steps.csv
 """
 import argparse
 import os
@@ -17,7 +17,6 @@ import time
 
 import numpy as np
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import px4_mission as PM
 
 # (seconds, north m/s, east m/s, up m/s) after the climb; held steps, then back to hover

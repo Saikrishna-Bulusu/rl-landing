@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-overnight_report.py -- what the night's queue (queue/overnight_27sep.sh) found, as one markdown page:
+overnight_report.py -- what the night's queue (conditions/wind/queue/overnight_27sep.sh) found, as one markdown page:
   1. MJX ladder per recipe: landed / crashed / hard (off-pad or too fast) / gave up at 12-20 m/s, each seed and the
      spread over seeds (1024 paired flights per wind per checkpoint, evaluation seed 10000)
   2. Gazebo ladder: the same 20 yards x 4 winds flown by every decider; paired against the rule, flight by flight
   3. the GeoAnchor flights: outcome, and how well GeoAnchor + the pad marker navigated without GNSS
-    python3 wind/overnight_report.py > queue/overnight_report.md
+    python3 conditions/wind/overnight_report.py > conditions/wind/queue/overnight_report.md
 """
 import collections
 import glob
@@ -16,7 +16,7 @@ import re
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-R = os.path.dirname(HERE)
+R = os.path.dirname(os.path.dirname(HERE))
 WINDS = (12.0, 15.0, 18.0, 20.0)
 
 
@@ -51,7 +51,7 @@ def mjx():
 
 
 def gazebo():
-    path = f"{R}/gazebo_wind/ladder_rule/flights.jsonl"
+    path = f"{R}/outputs/gazebo_wind/ladder_rule/flights.jsonl"
     out = ["", "## 2. Gazebo ladder (20 yards x 4 winds, the same gusts for every decider)", ""]
     if not os.path.exists(path):
         return out + ["(no flights)"]
@@ -87,7 +87,7 @@ def gazebo():
 def geo():
     out = ["", "## 3. GeoAnchor flights (GNSS denied over the suburb, the pad marker below 50 m)", ""]
     for name in ("geo_calm", "geo_obst_baro", "geo_calm_rng", "geo_calm2", "geo_wind9", "geo_obst", "geo_magpie"):   # the first two: barometer only (no rangefinder)
-        d = f"{R}/gazebo_geo/{name}"
+        d = f"{R}/outputs/gazebo_geo/{name}"
         fl = f"{d}/flights.jsonl"
         if os.path.exists(fl):                                # gz_windland's record
             r = json.loads(open(fl).read().splitlines()[-1])

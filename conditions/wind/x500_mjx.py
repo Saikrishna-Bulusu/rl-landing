@@ -16,7 +16,7 @@ The drone is PX4's Gazebo model, not a guess:
   wind      mean + Dryden-like turbulence (MIL-F-8785C low altitude) + random 1-cosine gusts; it pushes through the
             propeller drag (as in Gazebo) and body drag 0.5 rho CdA |v| v (Gazebo had none: gz_weather.py)
 Frames: world ENU, body FLU (MuJoCo's); PX4's NED/FRD laws are written here in ENU/FLU, the allocation in FRD.
-Checked against PX4 in Gazebo (wind/px4_steps.py, truth + sim time):  python wind/x500_mjx.py --check
+Checked against PX4 in Gazebo (shared/px4_gazebo/px4_steps.py, truth + sim time):  python conditions/wind/x500_mjx.py --check
 """
 import argparse
 import math
@@ -31,7 +31,7 @@ import mujoco
 from mujoco import mjx
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-R = os.path.dirname(HERE)
+R = os.path.dirname(os.path.dirname(HERE))
 G = 9.81
 DT = 0.004                       # physics and PX4's inner loops, 250 Hz
 N_SUB = 10                       # physics steps per decision: 25 Hz, what the Gazebo flight loop sustains
@@ -313,11 +313,11 @@ def step_metrics(t, vel, t0, prev, tgt, span=4.8):
 
 
 def check():
-    """PX4 in Gazebo (gazebo_wind/steps/steps.npz: the same commands, truth + sim time) vs this model."""
+    """PX4 in Gazebo (outputs/gazebo_wind/steps/steps.npz: the same commands, truth + sim time) vs this model."""
     import sys
-    sys.path.insert(0, HERE)
+    sys.path.insert(0, f"{R}/shared/px4_gazebo")
     from px4_steps import STEPS
-    g = np.load(f"{R}/gazebo_wind/steps/steps.npz")
+    g = np.load(f"{R}/outputs/gazebo_wind/steps/steps.npz")
     tr, c = g["truth"], g["cmds"]
     tg = tr[:, 0]
     w_, x_, y_, z_ = tr[:, 4:8].T                         # the CoM (the model origin is at the feet, which swing back

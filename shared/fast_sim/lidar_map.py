@@ -33,7 +33,7 @@ from osgeo import gdal, osr
 
 gdal.UseExceptions()
 
-ZIP = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "DATA_2462013.zip"))
+ZIP = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "DATA_2462013.zip"))
 E0, N0, W = 511000, 6937000, 5000        # the 25 tiles: MGA SW corner and width (m)
 HELIPAD_LL = (-27.67039, 153.14105)      # must match logan_map.py
 HALF, RES = 2000, 1.0                    # the map: 4 x 4 km, 1 m, row index grows NORTH

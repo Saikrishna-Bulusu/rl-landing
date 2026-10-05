@@ -39,7 +39,9 @@ import time
 
 import numpy as np
 
-from px4_perception import ArucoEye, SigmaSource, Recorder, ARUCO_ID
+from px4_perception import ArucoEye, SigmaSource, Recorder, ARUCO_ID, POOL
+
+HERE = os.path.dirname(os.path.abspath(__file__))        # trees.json and cam_B.npy sit beside this file
 
 # 8 m, not 14 m. The theoretical ceiling for a 0.5 m tag is 18.4 m, but at 14.8 m
 # the tag spans only ~18 px against a 20 px decode minimum and detection was
@@ -155,7 +157,7 @@ CENTRE_PX = 40             # pixels: close enough to call it centred
 PAD_XY = (0.0, 120.0)      # NED; the SDF pose "120 0 0" is ENU = 120 m EAST
 
 
-def load_trees(path="trees.json"):
+def load_trees(path=f"{HERE}/trees.json"):
     """
     The obstacles in the world, in the frame the mission flies in.
 
@@ -172,10 +174,10 @@ def load_trees(path="trees.json"):
     return d["trees"]
 
 
-TREES = load_trees(os.environ.get("TREES_JSON", "trees.json"))   # gz_logan/trees_logan.json for the Logan world
+TREES = load_trees(os.environ.get("TREES_JSON", f"{HERE}/trees.json"))   # shared/px4_gazebo/gz_logan/trees_logan.json for the Logan world
 
-# GEO_MISSION (the dashboard's mission planner, geo/fly_mission.sh): land on the mission's pad -- any of the sixteen in
-# gz_logan/pads_logan.json. Same mat, other ids: position j of its ids is position j of ours (2, 1, 0).
+# GEO_MISSION (the dashboard's mission planner, gnss_denied/fly_mission.sh): land on the mission's pad -- any of the sixteen in
+# shared/px4_gazebo/gz_logan/pads_logan.json. Same mat, other ids: position j of its ids is position j of ours (2, 1, 0).
 if os.environ.get("GEO_MISSION"):
     _pad = json.load(open(os.environ["GEO_MISSION"]))["pad"]
     _ours = dict(zip(_pad["ids"], (2, 1, 0)))                   # its id -> our equivalent
@@ -237,7 +239,7 @@ REACQUIRE_ALT = 6.0
 # calibration's singular values came out 0.964 and 0.947 -- the model's own
 # consistency check, which the old fit failed.
 F_PX = 539.94                 # from the camera_info topic, not assumed
-CAM_B = np.load("cam_B.npy") if __import__("os").path.exists("cam_B.npy") else None
+CAM_B = np.load(f"{HERE}/cam_B.npy") if os.path.exists(f"{HERE}/cam_B.npy") else None
 # RIG=v2 (gz_unified.py, Sai 25 Sept): the landing camera is PX4's CGO3 gimbal camera, which PX4's gimbal module
 # holds straight down (MNT_DO_STAB: the airframe's roll and pitch taken out); cam_ray projects with the camera's own
 # measured attitude (GimbalAtt), checked on flights by gz_unified.py --check. 1280x720, 2.0 rad: f = 640/tan(1.0).
@@ -430,7 +432,7 @@ class PolicyBrain:
 
 
 class Mission:
-    def __init__(self, endpoint="udpin:0.0.0.0:14540", pool="sigma_pool.npz",
+    def __init__(self, endpoint="udpin:0.0.0.0:14540", pool=POOL,
                  expect_id=ARUCO_ID, seed=0, scale=1.0, video=None,
                  search_k=2.5, expect_ids=None, policy=None, aim_mean=True, search_alt=SEARCH_ALT):
         from pymavlink import mavutil
@@ -957,7 +959,7 @@ class Mission:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--runs", type=int, default=1)
-    ap.add_argument("--pool", default="sigma_pool.npz")
+    ap.add_argument("--pool", default=POOL)
     ap.add_argument("--scale", type=float, default=1.0)
     ap.add_argument("--aim", choices=["mean", "latest"], default="mean",
                     help="aim at the running mean of fixes, or the newest one")

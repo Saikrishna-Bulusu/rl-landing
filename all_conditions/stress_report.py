@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-stress_report.py -- the full-stack stress test's flights (queue/stress_30sep.sh), one row each plus the totals, into
+stress_report.py -- the full-stack stress test's flights (all_conditions/queue/stress_30sep.sh), one row each plus the totals, into
 results/stress_2026-09-30.json. Every value comes from the flight's own files: run.log (the result line and the
 GNSS-denied report), <stem>_geo.json (the cruise's rows: phase, simulated and wall-clock time), <stem>.csv (the decider's
 loop: marker reads), manifest.json (what flew) and wall.json (wall-clock seconds, queue side).
 
-    python3 geo/stress_report.py                       # every gazebo_geo/stress_e*/
-    python3 geo/stress_report.py geo_magpie6 magpie    # one earlier flight: checks the reader, writes nothing
+    python3 all_conditions/stress_report.py                       # every outputs/gazebo_geo/stress_e*/
+    python3 all_conditions/stress_report.py geo_magpie6 magpie    # one earlier flight: checks the reader, writes nothing
 """
 import csv
 import glob
@@ -17,12 +17,12 @@ import sys
 import numpy as np
 
 R = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CLEAR_M = 2.0     # urban/local_planner.py C_CLEAR: the planner keeps this far from anything blocked
+CLEAR_M = 2.0     # shared/fast_sim/local_planner.py C_CLEAR: the planner keeps this far from anything blocked
 PAD_M = 1.0       # gz_learner.py: a touchdown farther than this from the pad center is "landed_off_pad"
 
 
 def flight(run, stem="stress"):
-    d = f"{R}/gazebo_geo/{run}"
+    d = f"{R}/outputs/gazebo_geo/{run}"
     log = open(f"{d}/run.log").read().splitlines()
     res = json.loads([l for l in log if l.startswith("{") and '"outcome"' in l][-1])
     geo = json.loads([l for l in log if l.startswith("geo ")][-1][4:])
@@ -56,7 +56,7 @@ def flight(run, stem="stress"):
 def main():
     if len(sys.argv) > 2:                       # the reader on an earlier flight
         print(json.dumps(flight(sys.argv[1], sys.argv[2]), indent=1)); return
-    runs = sorted(os.path.basename(p) for p in glob.glob(f"{R}/gazebo_geo/stress_e*") if os.path.exists(f"{p}/wall.json"))
+    runs = sorted(os.path.basename(p) for p in glob.glob(f"{R}/outputs/gazebo_geo/stress_e*") if os.path.exists(f"{p}/wall.json"))
     F = [flight(r) for r in runs]
     assert F, "no flights yet"
     # frozen: every flight ran the same commit and the same code, checkpoint, detector and world
@@ -73,7 +73,8 @@ def main():
                est_err_max_m=max(f["est_err_m"]["max"] for f in F), agp_on_after_denial_pct=rng("agp_on_after_denial_pct"),
                rtf_whole=rng("rtf_whole"), rtf_landing=rng("rtf_landing"), wall_h=round(sum(f["wall_s"] for f in F) / 3600, 2),
                commit=F[0]["commit"])
-    json.dump(dict(flights=F, totals=tot), open(f"{R}/results/stress_2026-09-30.json", "w"), indent=1)
+    os.makedirs(f"{R}/all_conditions/results", exist_ok=True)
+    json.dump(dict(flights=F, totals=tot), open(f"{R}/all_conditions/results/stress_2026-09-30.json", "w"), indent=1)
     for f in F:
         print(f"{f['run']:10s} {f['outcome']:15s} miss {f['miss_m']:.2f}  crane {f['crane_clear_m']}  bird {f['closest_bird_m']} "
               f"({f['swoops']} swoops)  marker at {f['marker_first_alt_m']} m  rtf {f['rtf_landing']}  {f['violations']}")

@@ -20,9 +20,12 @@ level rather than a number someone eyeballed.
 import argparse
 import json
 import math
+import os
 import time
 
 import numpy as np
+
+HERE = os.path.dirname(os.path.abspath(__file__))
 
 from px4_bridge import PX4Link
 from px4_perception import ArucoEye
@@ -40,7 +43,7 @@ def main():
     ap.add_argument("--top", type=float, default=60.0)
     ap.add_argument("--bottom", type=float, default=1.0)
     ap.add_argument("--rate", type=float, default=0.6, help="descent m/s")
-    ap.add_argument("--out", default="detect_curve.json")
+    ap.add_argument("--out", default=f"{HERE}/detect_curve.json")
     a = ap.parse_args()
 
     link = PX4Link()

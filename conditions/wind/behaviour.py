@@ -3,7 +3,7 @@
 behaviour.py -- what the wind learner does that the rule doesn't: the same MJX flights (evaluation seed 10000) flown
 by both, logged step by step. Height against time, the vertical option by height, and whether its feed-forward
 pushes against the gusts (its correlation with the wind's deviation from the mean, across the flight).
-    python wind/behaviour.py runs/both95_s0.npz --w10 15 18       -> gazebo_wind/figs/behaviour.png, printed table
+    python conditions/wind/behaviour.py runs/both95_s0.npz --w10 15 18       -> outputs/gazebo_wind/figs/behaviour.png, printed table
 """
 import argparse
 import json
@@ -20,7 +20,7 @@ import land_env as E
 import ppo as P
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-R = os.path.dirname(HERE)
+R = os.path.dirname(os.path.dirname(HERE))
 
 
 def fly(policy_fn, w10, fly_, decide_, shield=0.0, n=512, seed=10_000):
@@ -94,9 +94,9 @@ def main():
     ax[-1].set_xlabel("share of decisions (%)"); ax[-1].set_title(f"learner's vertical choice, {last['w10']:.0f} m/s")
     ax[-1].legend(frameon=False, fontsize=9, loc="lower right")
     fig.tight_layout()
-    os.makedirs(f"{R}/gazebo_wind/figs", exist_ok=True)
-    fig.savefig(f"{R}/gazebo_wind/figs/behaviour.png", dpi=110)
-    json.dump(table, open(f"{R}/gazebo_wind/figs/behaviour.json", "w"), indent=1)
+    os.makedirs(f"{R}/outputs/gazebo_wind/figs", exist_ok=True)
+    fig.savefig(f"{R}/outputs/gazebo_wind/figs/behaviour.png", dpi=110)
+    json.dump(table, open(f"{R}/outputs/gazebo_wind/figs/behaviour.json", "w"), indent=1)
     for r in table:
         print(json.dumps(r))
 

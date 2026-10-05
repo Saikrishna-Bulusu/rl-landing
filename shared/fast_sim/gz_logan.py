@@ -27,13 +27,13 @@ from scipy.ndimage import label, maximum_filter
 import logan_map_lidar as ML
 
 import sys
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "px4_gazebo"))
 import make_pad                                          # noqa: E402  the pad painter, reused for neighbours
 
 PAD = (135.5, 1135.5)               # Logan metres: one of the 12 pads safe for an 18 m search
 HALF_CROP, SITE = 240, (120.0, 0.0)
 N_NEIGH = 15                        # DICT_4X4_50 holds 16 three-marker pads: ours + 15 neighbours
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "gz_logan")
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "px4_gazebo", "gz_logan")
 WORLD_SRC = "/home/sai/thesis_2.0/PX4-Autopilot/Tools/simulation/gz/worlds/aruco.sdf"
 
 
@@ -141,7 +141,7 @@ def model(name, visuals):
     d = os.path.join(OUT, "models", name); os.makedirs(os.path.join(d, "meshes"), exist_ok=True)
     open(os.path.join(d, "model.config"), "w").write(
         f'<?xml version="1.0"?>\n<model><name>{name}</name><version>1.0</version><sdf version="1.9">model.sdf</sdf>'
-        f'<description>Logan 2023 LiDAR, see urban/gz_logan.py</description></model>\n')
+        f'<description>Logan 2023 LiDAR, see shared/fast_sim/gz_logan.py</description></model>\n')
     vis = "".join(
         f'<visual name="{v}"><geometry><mesh><uri>model://{name}/meshes/{v}.obj</uri></mesh></geometry>'
         f'<material><ambient>{c} 1</ambient><diffuse>{c} 1</diffuse><double_sided>true</double_sided></material></visual>'

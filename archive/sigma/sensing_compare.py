@@ -15,7 +15,9 @@ if that fails, the setup is broken and nothing can be concluded.
 Scored on REWARD. Delivery rate prices flying into a tree the same as a
 cautious abort, which inverted every obstacle result measured before this.
 """
+import os, sys
 import numpy as np, torch
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "shared", "px4_gazebo"))   # forest_spec
 import forest_spec as F
 import sensing_headroom as S
 import rule_agent as R

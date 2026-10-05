@@ -2,7 +2,7 @@
 # Hourly health check on the outdoor campaign. Reports the NUMBERS, not just
 # that processes are alive -- a run where every arm sits at 98% looks perfectly
 # healthy by process count and is already worthless.
-cd /home/sai/RL_projects/rl-landing
+cd /home/sai/RL_projects/rl-landing/archive/sigma   # these drivers run from their own folder
 while true; do
   A=$(ls out_sweep/*/ablation.json 2>/dev/null | wc -l)
   B=$(ls out_final/*/ablation.json 2>/dev/null | wc -l)

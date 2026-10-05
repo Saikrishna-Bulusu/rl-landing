@@ -129,6 +129,7 @@ def report(title, envfn, run_glob, unc_idx, unc_lo, unc_hi,
 
 
 def main():
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tello"))
     import approach_env, cage_env
 
     report(

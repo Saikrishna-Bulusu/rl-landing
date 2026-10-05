@@ -284,7 +284,7 @@ if __name__ == "__main__":
     ap.add_argument("--rule-ladder", action="store_true", help="today's landing rule from calm to 18 m/s")
     ap.add_argument("--n", type=int, default=1024)
     ap.add_argument("--seed", type=int, default=10_000, help="ppo.py evaluates on seed 10000: the same yards, starts, winds")
-    ap.add_argument("--out", default=f"{X.R}/gazebo_wind/rule_ladder.json")
+    ap.add_argument("--out", default=f"{X.R}/outputs/gazebo_wind/rule_ladder.json")
     a = ap.parse_args()
     if a.rule_ladder:
         rule = lambda obs, st: jnp.tile(jnp.array([0.0, 0.0, 0.0]), (obs.shape[0], 1))

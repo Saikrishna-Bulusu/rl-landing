@@ -50,7 +50,8 @@ def gazebo(paths):
 
 def fast(n):
     import torch
-    sys.path.insert(0, __file__.rsplit("/", 1)[0])
+    import os
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "shared", "fast_sim"))
     import urban_agents as A
     import urban_env as U
     env = U.UrbanEnv(n, "corridor", seed=2026, map_path=f"{U.HERE}/logan_map_lidar.npz", nav="gps", p_swoop=1.0,

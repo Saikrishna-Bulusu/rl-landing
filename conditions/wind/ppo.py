@@ -4,10 +4,10 @@ ppo.py -- PPO in plain JAX for the wind landing (land_env.py), with a wind curri
 wind, and the wind rises as it lands reliably (Sai, 26 Sept: RL on gradually increasing wind, flying + deciding).
 No RL library (none installed; nothing downloaded): an MLP, Adam and the PPO loss, ~200 lines.
 
-    python wind/ppo.py --tag both   --seed 0                  flying + deciding
-    python wind/ppo.py --tag fly    --no-decide --seed 0      flying only (the rule keeps its height and gate)
-    python wind/ppo.py --tag decide --no-fly    --seed 0      deciding only (no feed-forward)
-Outputs wind/runs/<tag>_s<seed>.{npz,jsonl}: the checkpoint is numpy (the Gazebo loop runs it without JAX).
+    python conditions/wind/ppo.py --tag both   --seed 0                  flying + deciding
+    python conditions/wind/ppo.py --tag fly    --no-decide --seed 0      flying only (the rule keeps its height and gate)
+    python conditions/wind/ppo.py --tag decide --no-fly    --seed 0      deciding only (no feed-forward)
+Outputs conditions/wind/runs/<tag>_s<seed>.{npz,jsonl}: the checkpoint is numpy (the Gazebo loop runs it without JAX).
 
 Curriculum: each flight's W10 is drawn from [0, W] (half) or the top 3 m/s of it (half); W starts at 4 m/s and
 rises 1 m/s whenever 80% of the finished flights in that top band landed (or after 150 rounds stuck), up to 20 m/s.

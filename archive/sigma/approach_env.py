@@ -49,13 +49,16 @@ told about them.
 """
 
 import math
+import os
 
 import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
 
+DETECT_CURVE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "shared", "px4_gazebo", "detect_curve_60m.json")
 
-def decode_curve(path="detect_curve_60m.json", marker="0"):
+
+def decode_curve(path=DETECT_CURVE, marker="0"):
     """
     p(decode) against apparent marker size, FITTED TO THE MEASURED COUNTS.
 

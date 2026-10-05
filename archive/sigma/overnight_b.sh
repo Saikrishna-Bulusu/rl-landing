@@ -12,9 +12,9 @@
 #   point-mass job 864 MB, cage job 972 MB, both CPU-only, GPU 15 MiB idle.
 #   8 jobs -> ~7.8 GB of 23 GB, leaving 10+ GB available. Disk: 0.25 MB/run.
 set -u
-cd /home/sai/RL_projects/rl-landing
+cd /home/sai/RL_projects/rl-landing/archive/sigma   # these drivers run from their own folder
 PY=/home/sai/miniconda3/envs/mujoco_drones/bin/python
-say(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" | tee -a overnight.log; }
+say(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" | tee -a ../../outputs/logs/overnight.log; }
 
 # Refuse to start a stage if the machine is already short on memory.
 guard(){
@@ -32,7 +32,7 @@ guard(){
 run_jobs(){   # $1 = jobs file
   # train.py needs --tb "" -- tensorboard is not installed and SB3 dies if it is
   # asked for. An empty string cannot survive word-splitting inside the hp
-  # field, so it is passed explicitly here. train_cage.py has no --tb flag.
+  # field, so it is passed explicitly here. ../tello/train_cage.py has no --tb flag.
   cat "$1" | xargs -P 8 -I{} bash -c '
     IFS="|" read -r script out steps rho seed hp <<< "{}"
     arm="${out##*/}"; arm="${arm%%_*}"
@@ -51,7 +51,7 @@ run_jobs(){   # $1 = jobs file
 }
 
 say "=== SECOND HALF: waiting for the first chain to finish ==="
-until grep -q "ALL OVERNIGHT STAGES COMPLETE" overnight.log 2>/dev/null; do sleep 60; done
+until grep -q "ALL OVERNIGHT STAGES COMPLETE" ../../outputs/logs/overnight.log 2>/dev/null; do sleep 60; done
 say "=== SECOND HALF: first chain done, continuing ==="
 
 # ---------- 4. rho=0.363 up to 20 seeds ----------
@@ -73,7 +73,7 @@ mkdir -p cage_sweep; : > cage_sweep/jobs.txt
 for arm in none staleness sigma; do i=0
   for lr in 1e-4 3e-4 1e-3; do for ent in 0.003 0.02; do for net in "128 64" "256 128"; do
     i=$((i+1))
-    echo "train_cage.py|cage_sweep/${arm}_c${i}|1000000|0.707|0|--n-envs 4 --lr $lr --ent-coef $ent --net $net" >> cage_sweep/jobs.txt
+    echo "../tello/train_cage.py|cage_sweep/${arm}_c${i}|1000000|0.707|0|--n-envs 4 --lr $lr --ent-coef $ent --net $net" >> cage_sweep/jobs.txt
   done; done; done
 done
 run_jobs cage_sweep/jobs.txt
@@ -83,7 +83,7 @@ say "STAGE 5 done: $(ls cage_sweep/*/ablation.json 2>/dev/null | wc -l)/36"
 guard
 say "STAGE 6: CAGE 16-seed ablation (48 runs @ 2M)"
 mkdir -p cage_final
-$PY - <<'PYEOF' | tee -a overnight.log
+$PY - <<'PYEOF' | tee -a ../../outputs/logs/overnight.log
 import json, os
 GRID=[f"--lr {lr} --ent-coef {e} --net {n}" for lr in ("1e-4","3e-4","1e-3")
       for e in ("0.003","0.02") for n in ("128 64","256 128")]
@@ -102,7 +102,7 @@ json.dump(best, open("cage_sweep/best.json","w"), indent=2)
 with open("cage_final/jobs.txt","w") as fh:
     for s in range(16):
         for arm,hp in best.items():
-            fh.write(f"train_cage.py|cage_final/{arm}_s{s}|2000000|0.707|{s}|--n-envs 4 {hp}\n")
+            fh.write(f"../tello/train_cage.py|cage_final/{arm}_s{s}|2000000|0.707|{s}|--n-envs 4 {hp}\n")
 PYEOF
 run_jobs cage_final/jobs.txt
 say "STAGE 6 done: $(ls cage_final/*/ablation.json 2>/dev/null | wc -l)/48"

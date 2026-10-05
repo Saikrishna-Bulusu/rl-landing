@@ -1,10 +1,10 @@
 """Put past training logs into ClearML (history projects). Idempotent: a task whose name already exists in its project is skipped.
   python clearml_import.py [--dry-run] [--only wind|fast_sim]
-Wind scalars mirror wind/ppo.py's clearml_log (kept in step by hand: importing ppo would pull in jax)."""
+Wind scalars mirror conditions/wind/ppo.py's clearml_log (kept in step by hand: importing ppo would pull in jax)."""
 import argparse, glob, json, math, os
 import numpy as np
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 WIND, FAST = "rl-landing/wind/history", "rl-landing/fast_sim/history"
 PPO_NAMES = ["total loss", "policy loss", "value loss", "entropy (deciding)", "approx KL", "stopped early (KL)"]   # as ppo.py
 
@@ -26,7 +26,7 @@ def wind_points(row):
 
 
 def wind_jobs():
-    for p in sorted(glob.glob(f"{ROOT}/wind/runs/*.jsonl")):
+    for p in sorted(glob.glob(f"{ROOT}/conditions/wind/runs/*.jsonl")):
         rs = rows(p)
         if not rs or "it" not in rs[0]:
             yield os.path.basename(p), None, "not a training log (no 'it' rows)"
@@ -41,7 +41,7 @@ def wind_jobs():
 
 
 def fast_jobs():
-    for p in sorted(glob.glob(f"{ROOT}/urban/rl_*.json")):
+    for p in sorted(glob.glob(f"{ROOT}/shared/fast_sim/rl_*.json")):
         d = json.load(open(p))
         runs = {k: v for k, v in d.items() if isinstance(v, dict) and "log" in v}
         if not runs:

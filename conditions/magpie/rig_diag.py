@@ -17,8 +17,8 @@ import time
 
 import numpy as np
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, HERE)
+R = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))      # repo root
+sys.path.insert(0, f"{R}/shared/px4_gazebo")
 import gz_learner as G
 import gz_rig as GR
 
@@ -79,8 +79,9 @@ def main():
                   f"{None if q_gz is None else tuple(round(v, 1) for v in q_gz)}, with PX4's attitude "
                   f"{None if q_px4 is None else tuple(round(v, 1) for v in q_px4)}")
             out.append(dict(rel=rel, cam=n, seen=seen, q_gz=q_gz, q_px4=q_px4))
-            np.save(f"/tmp/claude-1000/-home-sai-RL-projects/128bb831-cfb2-4ef5-aef7-fdaa908caf06/scratchpad/rig_diag_{n}_{rel[0]}_{rel[1]}_{rel[2]}.npy", img[n])
-    json.dump(out, open(f"{HERE}/gazebo_rig/diag.json", "w"), default=float)
+            os.makedirs(f"{R}/outputs/tmp", exist_ok=True)
+            np.save(f"{R}/outputs/tmp/rig_diag_{n}_{rel[0]}_{rel[1]}_{rel[2]}.npy", img[n])
+    json.dump(out, open(f"{R}/outputs/gazebo_rig/diag.json", "w"), default=float)
     os._exit(0)
 
 

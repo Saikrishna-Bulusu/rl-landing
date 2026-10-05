@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# gazebo_matchers.sh -- does a better matcher deliver more parcels, ON REAL FIRMWARE?
+# archive/part2/gazebo_matchers.sh -- does a better matcher deliver more parcels, ON REAL FIRMWARE?
 #
 # The point-mass environment could not answer this. It samples each episode by
 # sigma decile and draws errors from that decile, so swapping the error pool
@@ -21,10 +21,10 @@ set +u
 source /opt/ros/jazzy/setup.bash 2>/dev/null
 set -u
 
-for pool in sigma_pool.npz sigma_pool_litesam_n.npz sigma_pool_roma_n.npz; do
+for pool in shared/fast_sim/sigma_pool.npz archive/sigma/pools/sigma_pool_litesam_n.npz archive/sigma/pools/sigma_pool_roma_n.npz; do
   tag=$(basename "$pool" .npz | sed 's/sigma_pool_*//; s/_n$//; s/^$/xfeat/')
   echo "=== $tag ($pool) ==="
-  $PY -u px4_mission.py --runs "$N" --pool "$pool" --aim mean \
+  $PY -u shared/px4_gazebo/px4_mission.py --runs "$N" --pool "$pool" --aim mean \
       > "$OUT/$tag.log" 2>&1
   grep -E "^  =>" "$OUT/$tag.log" | tail -3
 done

@@ -2,8 +2,8 @@
 # wind_recipes_29sep.sh -- seeds 1-2 of the two decider recipes that beat stage2_c100 on VALIDATION with seed 0
 # (stage2_c300: crash -300; stage2_c100h100: hard -100), same settings as overnight_27sep.sh, two runs at a time on
 # the GPU (one run leaves it underused: 8192 drones cost 1.6x the time of 4096). Test-yard logging off (--log-test).
-# Then each new best checkpoint on the 1024-flight test ladder. Log: queue/wind_recipes.log
-R=/home/sai/RL_projects/rl-landing; cd $R/wind; LOG=$R/queue/wind_recipes.log
+# Then each new best checkpoint on the 1024-flight test ladder. Log: outputs/queue/wind_recipes.log
+R=/home/sai/RL_projects/rl-landing; cd $R/conditions/wind; LOG=$R/outputs/queue/wind_recipes.log
 PY=/home/sai/miniconda3/envs/mujoco_drones/bin/python
 S2="--flyer runs/fly_s0_best.npz --no-fly --lr 1e-4 --iters 600"
 train () { tag=$1; seed=$2; shift 2

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
 gz_windland.py -- one land_env flight flown for real: Gazebo + PX4 with rig v2, the WindDrag wind, and the yard, start
-and wind direction of MJX evaluation episode i (gazebo_wind/yards_s10000.json). The drone flies out from the depot in
+and wind direction of MJX evaluation episode i (outputs/gazebo_wind/yards_s10000.json). The drone flies out from the depot in
 still air, holds at the start point, the wind switches on (from its seed: the same gusts for every decider), and today's
-rule or a trained policy (wind/runs/*.npz, run here in numpy) lands it. Judged on Gazebo's truth as land_env judges MJX.
+rule or a trained policy (conditions/wind/runs/*.npz, run here in numpy) lands it. Judged on Gazebo's truth as land_env judges MJX.
 
-    python3 wind/gz_windland.py --setup --episodes 20            worlds gz_logan/windyard/e<i>/ (pad + house + tree)
-    (wind/gz_ladder.sh)   ... gz_windland.py --episode 3 --w10 12 --decider rule | wind/runs/both_s0.npz
+    python3 conditions/wind/gz_windland.py --setup --episodes 20            worlds shared/px4_gazebo/gz_logan/windyard/e<i>/ (pad + house + tree)
+    (conditions/wind/gz_ladder.sh)   ... gz_windland.py --episode 3 --w10 12 --decider rule | conditions/wind/runs/both_s0.npz
 The learner acts as in MJX, through MAVLink: velocity setpoint (the rule's, its own vertical choice) plus an
 acceleration feed-forward -- PX4 adds it to its velocity loop's output, as x500_mjx.position_control does.
 """
@@ -20,7 +20,7 @@ import time
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-R = os.path.dirname(HERE)
+R = os.path.dirname(os.path.dirname(HERE))
 PAD = np.array(json.load(open(os.environ["GEO_MISSION"]))["pad"]["enu"], float) if os.environ.get("GEO_MISSION") \
     else np.array([120.0, 0.0])                   # the world's arucotag, ENU (px4_mission.PAD_XY is its NED); a mission's
 DT_C = 0.04
@@ -29,12 +29,12 @@ PAD_R, R_DRONE, V_SINK_OK, V_SLIDE_OK = 0.75, 0.35, 1.0, 0.5
 COM_Z = 0.224                                     # CoM above the feet: MJX heights are the CoM's
 A_FF, MODES = 3.0, np.array([0.0, -1.5, -0.6, 0.0, 1.0])     # land_env.MODES: 0 = the rule's own
 TAU_LAT, A_MAX, K_LIN = 0.69, 1.5, 0.8
-YARDS = f"{R}/gazebo_wind/yards_s10000.json"
+YARDS = f"{R}/outputs/gazebo_wind/yards_s10000.json"
 
 
 # ---- the test yard: land_env.yard_new's house and tree around the world's pad ---------------------------------------------
 def yard_world(y, i):
-    base = open(f"{R}/gz_logan/voxfast_v2/aruco.sdf").read()
+    base = open(f"{R}/shared/px4_gazebo/gz_logan/voxfast_v2/aruco.sdf").read()
     head = base[:base.index("    <include>\n      <uri>model://arucotag</uri>")]
     hc, ang, hh = np.array(y["hc"]) + PAD, y["hang"], y["hh"]
     parts = [head,
@@ -57,7 +57,7 @@ def yard_world(y, i):
     parts.append("    <wind><linear_velocity>0 0 0</linear_velocity></wind>\n"
                  "    <include><uri>model://x500_unified</uri><name>x500_mono_cam_down_0</name><pose>0 0 0 0 0 0</pose></include>\n"
                  "  </world>\n</sdf>\n")
-    d = f"{R}/gz_logan/windyard/e{i}"
+    d = f"{R}/shared/px4_gazebo/gz_logan/windyard/e{i}"
     os.makedirs(d, exist_ok=True)
     open(f"{d}/aruco.sdf", "w").write("".join(parts))
     return d
@@ -104,7 +104,7 @@ def rule_cmd(d_h, h, v_est):
 
 
 def observe(y, p_est, v_est, lean, cmd, prev_act, hist):
-    """land_env.observe in numpy (checked against it: python wind/gz_windland.py --check-obs)."""
+    """land_env.observe in numpy (checked against it: python conditions/wind/gz_windland.py --check-obs)."""
     dh, dt_ = clearance(y, p_est)
     rel_t = np.array(y["tc"]) - p_est[:2] if y["tree"] else np.array([30.0, 30.0])
     return np.r_[-p_est[:2] / 10, p_est[2:] / 10, v_est / 3, lean * 5, cmd / 3, (np.array(y["hc"]) - p_est[:2]) / 10,
@@ -172,11 +172,11 @@ def main():
     ap.add_argument("--episode", type=int)
     ap.add_argument("--w10", type=float, default=0.0)
     ap.add_argument("--decider", default="rule")
-    ap.add_argument("--out", default=f"{R}/gazebo_wind/ladder/flights.jsonl")
-    ap.add_argument("--geo", action="store_true", help="geo/geofly.sh: GeoAnchor's GNSS-free cruise first, then the "
+    ap.add_argument("--out", default=f"{R}/outputs/gazebo_wind/ladder/flights.jsonl")
+    ap.add_argument("--geo", action="store_true", help="gnss_denied/geofly.sh: GeoAnchor's GNSS-free cruise first, then the "
                     "lander from 30 m over our real pad (its yard from the survey), the pad marker's fixes to PX4")
     ap.add_argument("--log-obs", action="store_true", help="save every decision's inputs and choice (sim-to-sim checks)")
-    ap.add_argument("--video", default=None, help="--geo: the film (geo/geo_film.py)")
+    ap.add_argument("--video", default=None, help="--geo: the film (gnss_denied/geo_film.py)")
     a = ap.parse_args()
     if a.check_obs:
         return check_obs()
@@ -185,7 +185,7 @@ def main():
         for i in range(a.episodes):
             print(yard_world(yards[i]["yard"], i))
         return
-    sys.path.insert(0, R); sys.path.insert(0, HERE)
+    sys.path.insert(0, f"{R}/shared/px4_gazebo"); sys.path.insert(0, HERE)
     import px4_mission as PM
     from px4_steps import TruthLog
     from gz.transport13 import Node
@@ -193,7 +193,7 @@ def main():
     ep = yards[a.episode]
     y = ep["yard"]
     if a.geo:
-        sys.path.insert(0, f"{R}/geo")
+        sys.path.insert(0, f"{R}/gnss_denied")
         import geo_cruise as GC
         y = GC.logan_yard()                                   # the real pad's nearest house and tree
         print("yard", json.dumps(y), flush=True)

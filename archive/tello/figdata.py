@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-figdata.py -- what the paper's Tello figure draws (urban/paper_figs.py reads it; that script has no torch):
+figdata.py -- what the paper's Tello figure draws (shared/fast_sim/paper_figs.py reads it; that script has no torch):
 the ladder's outcomes on the 4,096 test flights, and one flight where the unmapped pole stands on the way --
 the rule's path into it and the planner's around it.        python figdata.py  -> cage_fig.json
 """

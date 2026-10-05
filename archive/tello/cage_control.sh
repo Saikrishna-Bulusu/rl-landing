@@ -17,9 +17,9 @@
 # Skipping it would under-tune the control, make it score low, and falsely
 # confirm the hypothesis -- the exact asymmetry this project keeps hitting.
 set -u
-cd /home/sai/RL_projects/rl-landing
+cd /home/sai/RL_projects/rl-landing/archive/tello   # these drivers run from their own folder
 PY=/home/sai/miniconda3/envs/mujoco_drones/bin/python
-say(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" | tee -a cage_control.log; }
+say(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" | tee -a ../../outputs/logs/cage_control.log; }
 guard(){
   local r=$(awk '/MemAvailable/{printf "%d", $2/1024}' /proc/meminfo)
   local d=$(df -BG --output=avail / | tail -1 | tr -dc '0-9')
@@ -50,7 +50,7 @@ say "STAGE A done: $(ls ctrl_sweep/*/ablation.json 2>/dev/null | wc -l)/24"; gua
 
 say "STAGE B: control 16-seed ablation (32 runs @ 3M)"
 rm -rf ctrl_final; mkdir -p ctrl_final
-$PY - <<'PYEOF' | tee -a cage_control.log
+$PY - <<'PYEOF' | tee -a ../../outputs/logs/cage_control.log
 import json, os
 GRID=[f"--lr {lr} --ent-coef {e} --net {n}" for lr in ("1e-4","3e-4","1e-3")
       for e in ("0.003","0.02") for n in ("128 64","256 128")]

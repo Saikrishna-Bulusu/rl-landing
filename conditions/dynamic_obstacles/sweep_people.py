@@ -8,7 +8,9 @@ measurement. Rerun the ladder at an impatient, the current, and a patient
 setting. If only the ceiling moves, the ladder is a property of the deciders;
 if its shape changes, it was a property of the assumption.
 """
+import os, sys
 import torch
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "shared", "fast_sim"))   # run from shared/fast_sim
 import urban_agents as A
 import urban_env as U
 from urban_headroom import paired

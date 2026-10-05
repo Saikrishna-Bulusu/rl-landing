@@ -16,15 +16,19 @@ the real shape: a ramp from 0% at 10-15 px to 100% by 35 px, reaching 50% at
 So the cliff was PESSIMISTIC about the small marker, and the effect it produced
 should shrink. Run both detectors over the same layouts and see by how much.
 """
+import os
+import sys
+
 import numpy as np
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "archive", "sigma"))   # part 1: rule_agent, sensing_compare
 import rule_agent as R
 from sensing_compare import Base
 
 
 def score(pad_size, detect, make_agent, n=400, seed0=7_500_000):
     cls = type("E", (Base,), {"PAD_SIZE": float(pad_size), "DETECT": detect})
-    env = cls(pool="sigma_pool.npz", arm="sigma", seed=0, t_max=35,
+    env = cls(pool=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "shared", "fast_sim", "sigma_pool.npz"), arm="sigma", seed=0, t_max=35,
               rho=0.707, sigma_scale=3.5, sense_mode="sectors")
     rew, ok, cr = [], [], []
     for i in range(n):

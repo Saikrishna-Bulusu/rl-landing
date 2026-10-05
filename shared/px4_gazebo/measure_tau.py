@@ -27,9 +27,12 @@ tune, and guessing it wrong means tuning the wrong loop.
 import argparse
 import json
 import math
+import os
 import time
 
 import numpy as np
+
+HERE = os.path.dirname(os.path.abspath(__file__))
 
 from px4_bridge import PX4Link
 
@@ -68,7 +71,7 @@ def tau_of(t, v, target):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--out", default="px4_response.json")
+    ap.add_argument("--out", default=f"{HERE}/px4_response.json")
     a = ap.parse_args()
 
     link = PX4Link()

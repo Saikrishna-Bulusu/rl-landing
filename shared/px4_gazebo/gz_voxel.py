@@ -3,17 +3,17 @@
 gz_voxel.py -- stage 3 in Gazebo: things the 2023 survey does not show, PX4's x500 carrying a depth camera,
 and a voxel map built from that camera's real depth images.
 
-The world is Logan (gz_logan/worlds/aruco.sdf, built from the survey) plus what came since: a tower crane in
+The world is Logan (shared/px4_gazebo/gz_logan/worlds/aruco.sdf, built from the survey) plus what came since: a tower crane in
 the open field on the way in (58 m, above the 50 m cruise), street lights, a traffic light whose arm reaches
 toward the pad, a new tree and a shed. The drone is x500_mono_cam_down (the landing camera) plus the depth
 camera of PX4's x500_depth (OAK-D Lite: 640x480, 73 deg, 0.2-19.1 m), added as its own link: both PX4
 models name their camera link "camera_link", so they cannot simply be merged.
 
-    python3 gz_voxel.py --setup     -> gz_logan/models/x500_depth_down, gz_logan/voxfly/aruco.sdf (flights),
-                                       gz_logan/voxbench/aruco.sdf (bench), gz_logan/voxfly/unmapped.json
+    python3 gz_voxel.py --setup     -> shared/px4_gazebo/gz_logan/models/x500_depth_down, shared/px4_gazebo/gz_logan/voxfly/aruco.sdf (flights),
+                                       shared/px4_gazebo/gz_logan/voxbench/aruco.sdf (bench), shared/px4_gazebo/gz_logan/voxfly/unmapped.json
     python3 gz_voxel.py --bench     -> Gazebo in partition "vox", the depth camera flown along the approach
                                        by set_pose; its images -> voxel map, checked against the objects'
-                                       true geometry (fails loudly); gz_logan/voxbench/voxels.npz, bench.png
+                                       true geometry (fails loudly); shared/px4_gazebo/gz_logan/voxbench/voxels.npz, bench.png
 Frames: Gazebo ENU (x east, y north, z up). The deciders' training map is Gazebo + OFFSET (gz_learner).
 """
 import argparse
@@ -28,6 +28,7 @@ import time
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+R = os.path.dirname(os.path.dirname(HERE))
 PX4 = "/home/sai/thesis_2.0/PX4-Autopilot"
 PARTITION = "vox"
 DW, DH, DFOV, DHZ = 640, 480, 1.274, 15            # the OAK-D Lite depth stream, as PX4's OakD-Lite model
@@ -63,11 +64,11 @@ def crane_at(seed=None):
     the line either side -- always in the way, at a different distance and side each flight."""
     if seed is None and not os.environ.get("CRANE_AT"):
         return CRANE0
-    m = np.load(f"{HERE}/urban/logan_map_lidar.npz")
+    m = np.load(f"{R}/shared/fast_sim/logan_map_lidar.npz")
     H, half = m["H"], float(m["half"])
     q0 = np.array([135.5 - 120.0, 1135.5])
     ok = lambda x, y: H[int(y + q0[1] + half) - 1:int(y + q0[1] + half) + 2, int(x + q0[0] + half) - 1:int(x + q0[0] + half) + 2].max() < 0.5
-    if os.environ.get("CRANE_AT"):                     # a flight's own spot (geo/: on the planner's last stretch)
+    if os.environ.get("CRANE_AT"):                     # a flight's own spot (gnss_denied/: on the planner's last stretch)
         x, y = map(float, os.environ["CRANE_AT"].split(","))
         assert ok(x, y), f"CRANE_AT {x},{y}: not clear ground in the survey"
         return (x, y)
@@ -289,7 +290,7 @@ def _dist(p, parts):
 
 def survey_top(xy, r=1):
     """The survey's tallest obstacle within r m of each Gazebo xy (the Logan houses and trees Gazebo shows)."""
-    m = np.load(f"{HERE}/urban/logan_map_lidar.npz")
+    m = np.load(f"{R}/shared/fast_sim/logan_map_lidar.npz")
     H, half, res = m["H"], float(m["half"]), float(m["res"])
     q = xy + np.array([135.5 - 120.0, 1135.5])                  # Gazebo -> training map (gz_learner.OFFSET)
     i, j = ((q[:, 1] + half) / res).astype(int), ((q[:, 0] + half) / res).astype(int)
@@ -343,7 +344,7 @@ def render(occ, poses, path):
     import matplotlib.pyplot as plt
     from matplotlib.patches import Rectangle, Circle
     fig, (ax, bx) = plt.subplots(2, 1, figsize=(12, 8), height_ratios=[1, 1], layout="constrained")
-    m = np.load(f"{HERE}/urban/logan_map_lidar.npz")
+    m = np.load(f"{R}/shared/fast_sim/logan_map_lidar.npz")
     H, half = m["H"], float(m["half"])
     q0 = np.array([135.5 - 120.0, 1135.5])
     x0, x1, y0, y1 = 35, 140, -20, 20

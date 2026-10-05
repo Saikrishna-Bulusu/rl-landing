@@ -2,7 +2,7 @@
 """
 paper_figs.py -- the ACRA paper's figures in one style, drawn from saved results only (nothing re-simulated).
 
-    python paper_figs.py [world headroom learning birds rig gazebo]   -> ../paper/figs/<name>.pdf (+ .png preview)
+    python paper_figs.py [world headroom learning birds rig gazebo]   -> ../../outputs/paper/figs/<name>.pdf (+ .png preview)
 
 Text is set by LaTeX in Computer Modern, like the paper; widths are the ACRA column (3.375 in) and page
 (7 in). Each decider keeps one colour throughout, and the learner is always orange. The learner is scored
@@ -20,8 +20,8 @@ import numpy as np
 import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-HERE = os.path.dirname(os.path.abspath(__file__)); R = os.path.dirname(HERE)
-OUT = f"{R}/paper/figs"
+HERE = os.path.dirname(os.path.abspath(__file__)); R = os.path.dirname(os.path.dirname(HERE))
+OUT = f"{R}/outputs/paper/figs"
 COL, PAGE = 3.375, 7.0
 plt.rcParams.update({
     "text.usetex": True, "font.family": "serif", "font.size": 8, "axes.labelsize": 8, "axes.titlesize": 8,
@@ -166,7 +166,7 @@ def rig(yolo=True):
     """(a) how big the magpie looks to the rig; (b) how often each detector finds it in one frame, by that size,
     on drone places it never trained on. (Coverage -- some camera sees 100% of directions above the drone,
     96-100% below -- is one sentence in the text, not a panel.)"""
-    d = json.load(open(f"{R}/gz_logan/rig/cover2/cover.json"))
+    d = json.load(open(f"{R}/shared/px4_gazebo/gz_logan/rig/cover2/cover.json"))
     size = lambda row: max((max(c["box"][2] - c["box"][0], c["box"][3] - c["box"][1]) + 1
                             for c in row["cams"].values() if c["px"]), default=0)
     fig, (ax, cx) = plt.subplots(1, 2, figsize=(PAGE, 1.9), width_ratios=[1, 1.5], layout="constrained")
@@ -179,11 +179,11 @@ def rig(yolo=True):
     ax.minorticks_off(); ax.grid(alpha=0.4); ax.legend(loc="lower left")
     ax.text(0.97, 0.97, "(a)", transform=ax.transAxes, va="top", ha="right", fontweight="bold")
     dets = [("score.json", "Small CNN (ours)", "#566573")]
-    if yolo and os.path.exists(f"{R}/gz_logan/rig/data2/score_yolo.json"):
+    if yolo and os.path.exists(f"{R}/shared/px4_gazebo/gz_logan/rig/data2/score_yolo.json"):
         dets.append(("score_yolo.json", "YOLO26n, fine-tuned", "#d35400"))
     bins, bw = None, 0.8 / len(dets)
     for j, (f, lab, col) in enumerate(dets):
-        sc = json.load(open(f"{R}/gz_logan/rig/data2/{f}"))
+        sc = json.load(open(f"{R}/shared/px4_gazebo/gz_logan/rig/data2/{f}"))
         bins = [(k, v) for k, v in sc["found_by_size_px"].items() if v["n"] >= 10]
         fa = sc["by_threshold"][str(sc["operating_threshold"])]["false_alarms_per_image"]
         cx.bar(np.arange(len(bins)) + (j - (len(dets) - 1) / 2) * bw, [100 * v["found"] for _, v in bins], bw * 0.92,
@@ -198,7 +198,7 @@ def rig(yolo=True):
 
 def gazebo():
     """PX4 + Gazebo: ten landings per sky, landed on the pad vs aborted, median miss."""
-    w = json.load(open(f"{R}/weather_report.json"))
+    w = json.load(open(f"{R}/conditions/weather/weather_report.json"))
     skies = ["calm", "breeze", "gusty", "mist", "fog"]
     fig, ax = plt.subplots(figsize=(COL, 1.55))
     on = [w[s]["on_pad"] for s in skies]; ab = [w[s]["outcomes"].get("abort", 0) for s in skies]
@@ -280,7 +280,7 @@ def tello():
     """(a) One cage flight with the unmapped pole in the way: the rule flies into it, the planner round it;
     (b) the cage ladder's outcomes on 4,096 test flights (+ the learner once trained)."""
     from matplotlib.patches import Circle, Rectangle
-    d = json.load(open(f"{R}/tello/cage_fig.json"))
+    d = json.load(open(f"{R}/archive/tello/cage_fig.json"))
     f = d["flight"]
     fig, (ax, bx) = plt.subplots(1, 2, figsize=(PAGE, 2.3), width_ratios=[1.5, 1], layout="constrained")
     ax.add_patch(Rectangle((0, 0), 3, 2, fill=False, lw=0.8, ec="black"))
@@ -303,7 +303,7 @@ def tello():
     ax.set(xlim=(-0.02, 3.02), ylim=(-0.02, 2.02), aspect="equal", xlabel="x (m)", ylabel="y (m)")
     ax.legend(loc="lower left", fontsize=6.5)
     ax.text(0.01, 0.99, "(a)", transform=ax.transAxes, va="top", fontweight="bold")
-    lad = d["ladder"]                                   # every decider on the same 4,096 flights (tello/figdata.py)
+    lad = d["ladder"]                                   # every decider on the same 4,096 flights (archive/tello/figdata.py)
     order = [k for k in ("rule", "planner", "learner", "all_knowing") if k in lad]
     parts = [("delivered", "Delivered", "#27ae60"), ("off pad", "Off the pad", "#f5b041"), ("crash", "Crash", "#17202a"),
              ("timeout", "Timeout", "#aab7b8"), ("net", "Net", "#c0392b"), ("wrong pad", "Wrong pad", "#8e44ad")]

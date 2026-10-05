@@ -119,15 +119,15 @@ export default function MissionPlanner() {
   const post = (path, body) => fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' },
                                              body: JSON.stringify(body) }).then(async (r) => [r.ok, await r.json()]);
   const save = () => post('/fl/missions', m).then(([ok, r]) => {
-    setMsg(ok ? ['ok', `saved geo/missions/${r.name}.json`] : ['bad', r.error]);
+    setMsg(ok ? ['ok', `saved outputs/gnss_denied/missions/${r.name}.json`] : ['bad', r.error]);
     if (ok) loadSaved();
     return ok;
   });
   const fly = () => save().then((ok) => ok && post('/fl/fly', { mission: m.name }).then(([ok2, r]) => setMsg(
-    ok2 ? ['ok', `flying in Gazebo: gazebo_geo/${r.started} -- watch it on the Flight log, Live`] : ['bad', r.error])));
+    ok2 ? ['ok', `flying in Gazebo: outputs/gazebo_geo/${r.started} -- watch it on the Flight log, Live`] : ['bad', r.error])));
 
   const set = (k, v) => setM((q) => ({ ...q, [k]: v }));
-  const cmd = `geo/fly_mission.sh geo/missions/${m.name}.json mission_${m.name}`;
+  const cmd = `gnss_denied/fly_mission.sh outputs/gnss_denied/missions/${m.name}.json mission_${m.name}`;
 
   return (
     <main>

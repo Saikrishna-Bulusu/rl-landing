@@ -2,7 +2,7 @@
 """
 export_yards.py -- the first N flights of an MJX evaluation seed (land_env.evaluate: episode i uses
 split(PRNGKey(seed), n)[i]) as plain numbers, so Gazebo flies the same yards, starts and wind directions:
-gazebo_wind/yards_s<seed>.json.   python wind/export_yards.py --seed 10000 --n 512 --first 40
+outputs/gazebo_wind/yards_s<seed>.json.   python conditions/wind/export_yards.py --seed 10000 --n 512 --first 40
 """
 import argparse
 import json
@@ -27,5 +27,5 @@ for i in range(a.first):
     p = np.array(st["sim"]["d"].qpos[:3])
     out.append(dict(i=i, start=p.tolist(), yaw=float(st["yaw"]), wind_dir=float(st["wind"]["th"]),
                     bias=np.array(st["bias"]).tolist(), yard=y))
-json.dump(out, open(f"{X.R}/gazebo_wind/yards_s{a.seed}.json", "w"), indent=1)
-print(len(out), "yards ->", f"{X.R}/gazebo_wind/yards_s{a.seed}.json")
+json.dump(out, open(f"{X.R}/outputs/gazebo_wind/yards_s{a.seed}.json", "w"), indent=1)
+print(len(out), "yards ->", f"{X.R}/outputs/gazebo_wind/yards_s{a.seed}.json")

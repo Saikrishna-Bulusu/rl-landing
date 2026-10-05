@@ -12,9 +12,9 @@
 # a handicap, but applied EQUALLY to every arm, so arm comparisons stay fair and
 # the curve becomes readable across scales for the first time.
 set -u
-cd /home/sai/RL_projects/rl-landing
+cd /home/sai/RL_projects/rl-landing/archive/sigma   # these drivers run from their own folder
 PY=/home/sai/miniconda3/envs/mujoco_drones/bin/python
-say(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" | tee -a v2_fixed.log; }
+say(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" | tee -a ../../outputs/logs/v2_fixed.log; }
 guard(){
   local r=$(awk '/MemAvailable/{printf "%d",$2/1024}' /proc/meminfo)
   local d=$(df -BG --output=avail / | tail -1 | tr -dc '0-9')

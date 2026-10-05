@@ -1,6 +1,6 @@
 session:
   tag: logan_replay
-  runs_dir: /home/sai/RL_projects/rl-landing/geo/runs
+  runs_dir: /home/sai/RL_projects/rl-landing/outputs/gnss_denied/runs
 bus:
   data_pub: ipc:///tmp/geoanchor_rl/data.sock
   processing_pub: ipc:///tmp/geoanchor_rl/processing.sock
@@ -10,8 +10,8 @@ bus:
   output_ctl: ipc:///tmp/geoanchor_rl/output.ctl
 data_layer:
   map:
-    source: /home/sai/RL_projects/rl-landing/gz_logan/imagery/ref_tile_2021-07-21.tif
-    store_dir: /home/sai/RL_projects/rl-landing/geo/stores
+    source: /home/sai/RL_projects/rl-landing/shared/px4_gazebo/gz_logan/imagery/ref_tile_2021-07-21.tif
+    store_dir: /home/sai/RL_projects/rl-landing/gnss_denied/stores
     method: edgepoint2_s64
     tile_px: 1024
     overlap_px: 128
@@ -19,8 +19,8 @@ data_layer:
     rebuild: false
   feed:
     type: file
-    path: /home/sai/RL_projects/rl-landing/gazebo_geo/floor/flight.mp4
-    sidecar: /home/sai/RL_projects/rl-landing/gazebo_geo/floor/flight_gt.jsonl
+    path: /home/sai/RL_projects/rl-landing/outputs/gazebo_geo/floor/flight.mp4
+    sidecar: /home/sai/RL_projects/rl-landing/outputs/gazebo_geo/floor/flight_gt.jsonl
     fps: auto
     fps_margin: 1.15
     fps_bounds:

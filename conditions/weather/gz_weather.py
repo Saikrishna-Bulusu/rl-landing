@@ -2,8 +2,8 @@
 """
 gz_weather.py -- the Logan Gazebo world under five skies, for the robustness check.
 
-    python gz_weather.py            write gz_logan/weather/<sky>/{aruco.sdf, server.config}
-    python gz_weather.py report     summarise weather_runs/<sky>/ into weather_report.json
+    python gz_weather.py            write shared/px4_gazebo/gz_logan/weather/<sky>/{aruco.sdf, server.config}
+    python gz_weather.py report     summarise outputs/weather_runs/<sky>/ into weather_report.json
 
   calm    the world as flown so far (the baseline, re-flown the same night, same seeds)
   breeze  3 m/s from the south-east (the SE trades), swelling +/-20%          Beaufort 2
@@ -38,10 +38,10 @@ import sys
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-R = os.path.dirname(HERE)
-BASE_WORLD = f"{R}/gz_logan/worlds/aruco.sdf"
+R = os.path.dirname(os.path.dirname(HERE))
+BASE_WORLD = f"{R}/shared/px4_gazebo/gz_logan/worlds/aruco.sdf"
 BASE_CONFIG = "/home/sai/thesis_2.0/PX4-Autopilot/src/modules/simulation/gz_bridge/server.config"
-OUT = f"{R}/gz_logan/weather"
+OUT = f"{R}/shared/px4_gazebo/gz_logan/weather"
 SE = np.array([-1.0, 1.0]) / math.sqrt(2)          # FROM the south-east = blowing toward the north-west (ENU)
 
 # sky: (mean wind m/s, gust swell as a fraction, gust period s, direction wander deg, particles)
@@ -144,7 +144,7 @@ def report():
     import csv
     out = {}
     for sky in SKIES:
-        runs = sorted(glob.glob(f"{R}/weather_runs/{sky}/m_*.json"), key=lambda p: int(re.findall(r"(\d+)\.json", p)[0]))
+        runs = sorted(glob.glob(f"{R}/outputs/weather_runs/{sky}/m_*.json"), key=lambda p: int(re.findall(r"(\d+)\.json", p)[0]))
         if not runs:
             continue
         rs = [json.load(open(p))[0] for p in runs]
@@ -171,7 +171,7 @@ def report():
         print(f"{sky:<7} on pad {o['on_pad']}/{o['flights']}  miss {f(o['miss_m_median'], '5.2f')} m  "
               f"first read {f(o['first_read_alt_m_median'], '5.1f')} m  tilt {f(o['tilt_deg_median_centring'], '4.1f')} deg  "
               f"time {f(o['t_sim_s_median'], '4.0f')} s  {o['outcomes']}")
-    json.dump(out, open(f"{R}/weather_report.json", "w"), indent=1)
+    json.dump(out, open(f"{R}/conditions/weather/weather_report.json", "w"), indent=1)
     return out
 
 

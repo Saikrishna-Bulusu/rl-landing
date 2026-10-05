@@ -4,21 +4,21 @@ gz_learner.py -- the fast simulator's planner or learner flying PX4's x500 in th
 world, with the magpie. Stage 5's first bridge: nothing about the decider changes, only where its
 inputs come from.
 
-    once:   python3 gz_learner.py --setup           writes gz_logan/birds/aruco.sdf
+    once:   python3 gz_learner.py --setup           writes shared/px4_gazebo/gz_logan/birds/aruco.sdf
     SITL:   WORLDS_DIR=$PWD/gz_logan/birds EXTRA_MODELS=$PWD/gz_logan/models ./launch_px4.sh
-    fly:    TREES_JSON=gz_logan/trees_logan.json python3 gz_learner.py --decider learner --seed 0 --video out.mp4
+    fly:    TREES_JSON=shared/px4_gazebo/gz_logan/trees_logan.json python3 gz_learner.py --decider learner --seed 0 --video out.mp4
     pair:   python3 gz_learner.py --compose planner.mp4 learner.mp4 out.mp4
     all:    python3 gz_learner.py --final DIR/final.mp4   (DIR holds flights.jsonl and the flights)
 
 Every 0.25 s of SIMULATED time (PX4's clock, lockstep with Gazebo) this builds the observation the
 decider trained on -- position, velocity, the pad, the marker lock from px4_mission's perception,
-the magpie when within 40 m -- sends it to urban/decider_server.py (PyTorch lives in the training
+the magpie when within 40 m -- sends it to shared/fast_sim/decider_server.py (PyTorch lives in the training
 environment; PX4's and Gazebo's Python libraries live here) and flies the velocity it returns. The
 magpie follows urban_env's rules, its constants read from urban_env.py itself, and is moved in
 Gazebo by set_pose; so is a chase camera, for the video.
 
 Frames: training map (x east, y north) = Gazebo (x east, y north) + OFFSET, a pure shift
-(urban/gz_logan.py cut the world out of the same map); PX4 local NED (north, east) = Gazebo (y, x),
+(shared/fast_sim/gz_logan.py cut the world out of the same map); PX4 local NED (north, east) = Gazebo (y, x),
 both from the depot.
 """
 import argparse
@@ -36,6 +36,7 @@ import time
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+R = os.path.dirname(os.path.dirname(HERE))
 CONDA_PY = "/home/sai/miniconda3/envs/mujoco_drones/bin/python"
 
 
@@ -50,14 +51,10 @@ def _consts(path, *names):
 
 
 R_TERR, Z_TERR, V_SWOOP, REARM, HIT_BIRD, D_BIRD, MISS, DT, LOST_S = _consts(
-    f"{HERE}/urban/urban_env.py", "R_TERR", "Z_TERR", "V_SWOOP", "REARM", "HIT_BIRD", "D_BIRD", "MISS", "DT", "LOST_S")
-PAD_MAP, SITE = _consts(f"{HERE}/urban/gz_logan.py", "PAD", "SITE")
+    f"{R}/shared/fast_sim/urban_env.py", "R_TERR", "Z_TERR", "V_SWOOP", "REARM", "HIT_BIRD", "D_BIRD", "MISS", "DT", "LOST_S")
+PAD_MAP, SITE = _consts(f"{R}/shared/fast_sim/gz_logan.py", "PAD", "SITE")
 OFFSET = np.array(PAD_MAP) - np.array(SITE)              # Gazebo -> training map
 WORLD, OBS_Z, OBS_HALF = "aruco", 60.0, 480              # the overhead observer camera
-def VOX_BGR(z):
-    """Turbo colour for a height (0 m blue ... 60 m red)."""
-    import cv2
-    return tuple(int(v) for v in cv2.applyColorMap(np.uint8([[int(np.clip(z / 60.0 * 255, 0, 255))]]), cv2.COLORMAP_TURBO)[0, 0])
 R_HIT = 0.45                                             # x500 half-span with propellers, + a little
 YAW_RATE = math.radians(90.0)                            # how fast the nose may turn toward the way it flies
 V_COMMIT = 0.4                                           # m/s: the committed descent below 5 m (see the landing)
@@ -190,7 +187,7 @@ class Magpie:
 
 
 BEHIND, STAGE_ANG, STAGE_BACK, STAGE_UP, V_STAGE, A_TURN, T_COMMIT, DIVE_R, DIVE_S = _consts(
-    f"{HERE}/urban/urban_env.py", "BEHIND", "STAGE_ANG", "STAGE_BACK", "STAGE_UP", "V_STAGE", "A_TURN", "T_COMMIT",
+    f"{R}/shared/fast_sim/urban_env.py", "BEHIND", "STAGE_ANG", "STAGE_BACK", "STAGE_UP", "V_STAGE", "A_TURN", "T_COMMIT",
     "DIVE_R", "DIVE_S")
 
 
@@ -269,7 +266,7 @@ class Decider:
         self.path = None                    # the local 3D planner's latest path (training map frame), for the video
         self.p = subprocess.Popen([CONDA_PY, "decider_server.py", "--decider", kind] + (["--ckpt", ckpt] if ckpt else [])
                                   + (["--voxel"] if voxel else []) + (["--local3d"] if local3d else []),
-                                  cwd=f"{HERE}/urban",
+                                  cwd=f"{R}/shared/fast_sim",
                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=open(log, "w"),
                                   text=True, bufsize=1, env=env)
         ready = self.p.stdout.readline()
@@ -329,7 +326,7 @@ class NoBird:
 
 # ---- the six-camera rig, seen through the detector and the tracker ----------------------
 class RigEye:
-    """The rig's six cameras (gz_rig.py) streamed to urban/rig_perceive.py -- detector + tracker, in
+    """The rig's six cameras (gz_rig.py) streamed to conditions/magpie/rig_perceive.py -- detector + tracker, in
     the training environment's PyTorch -- on a thread of its own; the flight loop reads the newest
     belief. Each frame set goes out with the drone's OWN position and attitude estimate (PX4's),
     not Gazebo's truth. If perception falls behind, older sets are skipped (and counted)."""
@@ -338,7 +335,7 @@ class RigEye:
         from gz.msgs10.image_pb2 import Image
         import gz_rig as GR
         self.CAMS = tuple(GR.RIG)           # the six-camera rig; RIG=v2: the OAK-D's colour camera and three wide ones
-        self.p = subprocess.Popen([CONDA_PY, "rig_perceive.py"], cwd=f"{HERE}/urban", stdin=subprocess.PIPE,
+        self.p = subprocess.Popen([CONDA_PY, f"{R}/conditions/magpie/rig_perceive.py"], cwd=f"{R}/shared/fast_sim", stdin=subprocess.PIPE,
                                   stdout=subprocess.PIPE, stderr=open(log, "w"))
         assert b"ready" in self.p.stdout.readline(), f"perception did not start -- see {log}"
         self.last, self.cv = {}, threading.Condition()
@@ -758,10 +755,10 @@ def fly(kind, seed, video, tmax=300.0, magpie="straight", sense="omni", ckpt=Non
         Film.PADCAM = True                               # touchdown point, level (a clear sight line in the LiDAR map;
         a = math.radians(210.0)                          # the old side-to-side wobble shows left-right); the last ~6 m
         mover.put("observer_cam", (pad_gz[0] + 4.5 * math.cos(a), pad_gz[1] + 4.5 * math.sin(a), 2.0), yaw=a - math.pi)
-    eye = RigEye(f"{HERE}/weather_runs/rig_perceive_{kind}_{seed}.log") if sense == "rig" else None
+    eye = RigEye(f"{R}/outputs/weather_runs/rig_perceive_{kind}_{seed}.log") if sense == "rig" else None
     cr = None
-    if geo:                           # geo/geofly.sh: GeoAnchor's GNSS-free cruise first; its film (geo/geo_film.py)
-        sys.path[:0] = [f"{HERE}/geo", f"{HERE}/wind"]
+    if geo:                           # gnss_denied/geofly.sh: GeoAnchor's GNSS-free cruise first; its film (gnss_denied/geo_film.py)
+        sys.path[:0] = [f"{R}/gnss_denied"]
         import geo_cruise as GC
         from geo_film import GeoFilm
         from px4_steps import TruthLog
@@ -781,7 +778,7 @@ def fly(kind, seed, video, tmax=300.0, magpie="straight", sense="omni", ckpt=Non
     log.write("t,x,y,z,vx,vy,vz,roll,pitch,yaw,bird_x,bird_y,bird_z,bird_dive,seen,locked,cmd_x,cmd_y,cmd_z,in_airspace,"
               "rig_seen,rig_x,rig_y,rig_z,gz_x,gz_y,gz_z,mk_ex,mk_ey,mk_id,cam_tilt,cq_w,cq_x,cq_y,cq_z,vox_here,landing\n")
     n_iter, hd = 0, (pad_gz - np.zeros(2)) / np.linalg.norm(pad_gz)
-    dec = Decider(kind, f"{HERE}/weather_runs/decider_{kind}_{seed}.log", ckpt, voxel, local3d)
+    dec = Decider(kind, f"{R}/outputs/weather_runs/decider_{kind}_{seed}.log", ckpt, voxel, local3d)
     truth, gz_truth = [], Truth()                            # (t_abs, drone, bird) for scoring the rig afterwards
     if magpie != "none":                                     # stage 3's worlds have no magpie to move
         mover.put("magpie_nest", bird.nest - [0, 0, 0.2]); mover.put("magpie", bird.pos)
@@ -1077,7 +1074,7 @@ def compose(a, b, out):
     vw.release(); print(out)
 
 
-def final(out, folder=f"{HERE}/gazebo_birds"):
+def final(out, folder=f"{R}/outputs/gazebo_birds"):
     """Every recorded flight, planner above learner, with a card of results before each."""
     import cv2
     rs = [json.loads(l) for l in open(f"{folder}/flights.jsonl")]
@@ -1138,8 +1135,8 @@ if __name__ == "__main__":
     ap.add_argument("--short", action="store_true", help="stage 3: quick climb, end past the crane (with video)")
     ap.add_argument("--full", action="store_true", help="stage 3 with --fast: no video, but the whole delivery (landing)")
     ap.add_argument("--sense", choices=("omni", "rig"), default="omni")
-    ap.add_argument("--ckpt", default=None, help="learner checkpoint (urban/), default decider_server's")
-    ap.add_argument("--geo", action="store_true", help="geo/geofly.sh: GeoAnchor's GNSS-free cruise first (geo/geo_cruise.py)")
+    ap.add_argument("--ckpt", default=None, help="learner checkpoint (shared/fast_sim/), default decider_server's")
+    ap.add_argument("--geo", action="store_true", help="gnss_denied/geofly.sh: GeoAnchor's GNSS-free cruise first (gnss_denied/geo_cruise.py)")
     ap.add_argument("--mover", action="store_true", help=argparse.SUPPRESS)          # Mover(asyn=True)'s helper
     a = ap.parse_args()
     if a.mover:

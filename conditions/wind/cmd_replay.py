@@ -1,7 +1,7 @@
 """Does MJX's PX4 model answer Gazebo's own vertical commands the way PX4 in Gazebo did? Open loop: one Gazebo flight's
 logged vz_cmd (and horizontal path, tracked) is fed to x500_mjx with the same wind speed and direction, each command held
 as Gazebo held it and delivered `lat` s late. Prints both vertical speeds side by side and, below 6 m, mean and swing.
-    python cmd_replay.py ../gazebo_wind/obscheck/e4_w9_stage2_c100h100_s1_best.csv --yard 4 --w 9"""
+    python cmd_replay.py ../../outputs/gazebo_wind/obscheck/e4_w9_stage2_c100h100_s1_best.csv --yard 4 --w 9"""
 import argparse, json
 import numpy as np
 import jax, jax.numpy as jnp
@@ -17,7 +17,7 @@ ap.add_argument("--show", type=float, nargs=2, help="print this time window (def
 a = ap.parse_args()
 X.SPEED_LOSS, X.THR_MAX, X.TQ_BODY = a.speed_loss, a.thr_max, jnp.array([0.0, a.tq_pitch, 0.0])
 d = np.genfromtxt(a.csv, delimiter=",", names=True)
-y = json.load(open(f"{E.__file__.rsplit('/', 2)[0]}/gazebo_wind/yards_s10000.json"))[a.yard]
+y = json.load(open(f"{E.__file__.rsplit('/', 3)[0]}/outputs/gazebo_wind/yards_s10000.json"))[a.yard]
 p0 = np.array([d["x"][0], d["y"][0], d["z"][0]])
 assert np.hypot(*(p0[:2] - np.array(y["start"][:2]))) < 1.0, f"CSV start {p0} is not the yard's ENU start {y['start']}"
 step = jax.jit(lambda s, v, af, w: X.control_step(s, v, af, y["yaw"], w))

@@ -144,7 +144,7 @@ def main():
     for k in agents:
         print(f"  {k:<14} {res['corridor'][k]['clean'] - res['random'][k]['clean']:+5.1f} pp")
     json.dump(res, open(f"headroom{tag}.json", "w"), indent=1)
-    print(f"\nsaved urban/headroom{tag}.json")
+    print(f"\nsaved shared/fast_sim/headroom{tag}.json")
 
 
 if __name__ == "__main__":

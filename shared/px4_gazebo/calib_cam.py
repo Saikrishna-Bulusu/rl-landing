@@ -29,11 +29,14 @@ constraint is exactly what the old free-form fit was missing.
 """
 
 import math
+import os
 import time
 
 import numpy as np
 
 from px4_bridge import PX4Link
+
+HERE = os.path.dirname(os.path.abspath(__file__))
 from px4_perception import ArucoEye
 
 # The tag's SDF pose is "20 0 0", and Gazebo's world frame here is ENU
@@ -137,7 +140,7 @@ def main():
     print("   ", np.round(B_orth, 4).tolist())
     print(f"  residual {resid.mean():.2f} px-equivalent over {len(samples)} "
           f"samples, offsets up to {px_scale.max():.0f} px")
-    np.save("cam_B.npy", B_orth)
+    np.save(f"{HERE}/cam_B.npy", B_orth)
     print("  saved cam_B.npy")
 
 

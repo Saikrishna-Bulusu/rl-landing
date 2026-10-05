@@ -15,7 +15,7 @@ position from the marker and the pad's surveyed place (--marker), so the landing
 It also logs, for the flight script and the film: every fix it sent or skipped, and PX4's own estimator flags
 (cs_gnss_pos, cs_aux_gpos -- is the EKF fusing GPS, GeoAnchor, both?) once a second.
 
-    (ROS 2 + ~/GeoAnchor/ros2_ws sourced) python3 geo/agp_sim_bridge.py --config <run>/config.yaml --ns px4_5 --log <run>/agp.jsonl
+    (ROS 2 + ~/GeoAnchor/ros2_ws sourced) python3 gnss_denied/agp_sim_bridge.py --config <run>/config.yaml --ns px4_5 --log <run>/agp.jsonl
 """
 import argparse
 import json

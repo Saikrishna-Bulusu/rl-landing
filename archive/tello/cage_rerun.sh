@@ -1,13 +1,13 @@
 #!/bin/bash
 # Cage re-run, 19 Sept. Replaces the 84 runs wasted by the un-normalised
 # action space. Preflight (checks 1-4) passed before launch; resources verified.
-#   CPU-only, 8 parallel, niced -- see overnight.sh header for the measurements.
+#   CPU-only, 8 parallel, niced -- see ../sigma/overnight.sh header for the measurements.
 #   3M steps per ablation run: the repo's own train_landing.py uses 3M, and an
 #   800k smoke run only reached 11% success (rising), so shorter is too short.
 set -u
-cd /home/sai/RL_projects/rl-landing
+cd /home/sai/RL_projects/rl-landing/archive/tello   # these drivers run from their own folder
 PY=/home/sai/miniconda3/envs/mujoco_drones/bin/python
-say(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" | tee -a cage_rerun.log; }
+say(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" | tee -a ../../outputs/logs/cage_rerun.log; }
 guard(){
   local r=$(awk '/MemAvailable/{printf "%d", $2/1024}' /proc/meminfo)
   local d=$(df -BG --output=avail / | tail -1 | tr -dc '0-9')
@@ -42,7 +42,7 @@ guard
 
 say "STAGE B: cage 16-seed ablation (48 runs @ 3M)"
 rm -rf cage_final2; mkdir -p cage_final2
-$PY - <<'PYEOF' | tee -a cage_rerun.log
+$PY - <<'PYEOF' | tee -a ../../outputs/logs/cage_rerun.log
 import json, os
 GRID=[f"--lr {lr} --ent-coef {e} --net {n}" for lr in ("1e-4","3e-4","1e-3")
       for e in ("0.003","0.02") for n in ("128 64","256 128")]

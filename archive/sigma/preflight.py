@@ -141,6 +141,7 @@ def main():
     a = ap.parse_args()
 
     if a.env == "cage":
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "tello"))
         import cage_env
         script, extra = "train_cage.py", ["--rho", a.rho]
         print("\n[1/4] env self-check (incl. flight authority)")

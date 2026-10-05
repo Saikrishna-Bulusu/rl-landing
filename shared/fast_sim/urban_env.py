@@ -59,7 +59,7 @@ CEIL, PEOPLE_R, HLS_R = 120.0, 30.0, 1400.0
 NMAC_H, NMAC_V, WC_H, WC_V = 152.4, 30.5, 609.6, 76.2
 # ---- assumed ------------------------------------------------------------------
 OVER_R, DRONE_SEP, GRACE = 10.0, 30.0, 3.0
-# SENSITIVITY RUNS ONLY (urban/sens.py): unset, every value below is the one the paper reports
+# SENSITIVITY RUNS ONLY (shared/fast_sim/sens.py): unset, every value below is the one the paper reports
 DRONE_SEP = float(os.environ.get("SENS_DRONE_SEP", DRONE_SEP))
 D_HELI, D_DRONE = 1000.0, 200.0
 HIT_DRONE, HIT_HELI = 3.0, 15.0
@@ -98,7 +98,7 @@ A_TURN, T_COMMIT, DIVE_R, DIVE_S = 20.0, 0.3, (8.0, 35.0), 6.0
 A_TURN = float(os.environ.get("HUNTER_A_TURN", A_TURN))
 T_COMMIT = float(os.environ.get("HUNTER_T_COMMIT", T_COMMIT))
 # ---- fog: off unless p_fog > 0 ---------------------------------------------------------
-# MEASURED in Gazebo (24 Sept, urban/gz_weather.py mist + fog skies, 20 flights pooled): the
+# MEASURED in Gazebo (24 Sept, conditions/weather/gz_weather.py mist + fog skies, 20 flights pooled): the
 # share of frames the marker was read while well inside the view, fog / calm, by height --
 # the higher the drone, the more fog the line of sight crosses. Patches drift, so a hidden
 # pad stays hidden: gaps ran to 7-10 s (90th pct 1.4-2.7 s) against 0.6 s in calm. The same
@@ -172,7 +172,7 @@ def _load_map(path):
 
 class UrbanEnv:
     def __init__(self, n, world="corridor", seed=0, device=DEV,
-                 map_path=f"{HERE}/logan_map.npz", pool=f"{HERE}/../sigma_pool.npz",
+                 map_path=f"{HERE}/logan_map.npz", pool=f"{HERE}/sigma_pool.npz",
                  p_heli=P_HELI, p_people=P_PEOPLE, d_heli=D_HELI, d_drone=D_DRONE,
                  leave=LEAVE, nav="geoanchor", p_swoop=0.0, p_fog=0.0, p_new=0.0,
                  bird_sense="omni", magpie="straight"):

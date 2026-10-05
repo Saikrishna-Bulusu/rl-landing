@@ -16,9 +16,9 @@
 # Stage C is the measurement that matters for the safety layer: the SAME arm
 # with id_check off, so the cost of omitting the layer is measured, not asserted.
 set -u
-cd /home/sai/RL_projects/rl-landing
+cd /home/sai/RL_projects/rl-landing/archive/sigma   # these drivers run from their own folder
 PY=/home/sai/miniconda3/envs/mujoco_drones/bin/python
-say(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" | tee -a v3_run.log; }
+say(){ echo "[$(date '+%m-%d %H:%M:%S')] $*" | tee -a ../../outputs/logs/v3_run.log; }
 guard(){
   local r=$(awk '/MemAvailable/{printf "%d",$2/1024}' /proc/meminfo)
   local d=$(df -BG --output=avail / | tail -1 | tr -dc '0-9')
@@ -50,7 +50,7 @@ say "STAGE A done: $(ls v3_sweep/*/ablation.json 2>/dev/null|wc -l)/48"; guard
 
 say "STAGE B+C: 16-seed ablation, 4 arms + sigma-without-safety-layer (80 runs)"
 rm -rf v3_final; mkdir -p v3_final
-$PY - <<'PYEOF' | tee -a v3_run.log
+$PY - <<'PYEOF' | tee -a ../../outputs/logs/v3_run.log
 import json, os
 GRID=[f"--lr {lr} --ent-coef {e} --net {n}" for lr in ("1e-4","3e-4","1e-3")
       for e in ("0.003","0.02") for n in ("128 64","256 128")]

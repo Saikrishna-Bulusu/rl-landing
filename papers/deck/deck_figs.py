@@ -8,7 +8,7 @@ deck_figs.py -- the graphs for the deck's wind and GeoAnchor parts (27 Sept), in
   geo_navtrace.png      one GNSS-free delivery: PX4's position error and height, GPS -> GeoAnchor -> the pad marker
   pad_markers.png       the pad's three markers (make_pad.py's texture) and the heights each can be read from
 None of them shows the Esri imagery (numbers only), so they can go anywhere.
-    python3 geo/deck_figs.py -> gazebo_geo/deck/
+    python3 papers/deck/deck_figs.py -> outputs/gazebo_geo/deck/
 """
 import collections
 import glob
@@ -21,8 +21,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-R = os.path.dirname(HERE)
-OUT = f"{R}/gazebo_geo/deck"
+R = os.path.dirname(os.path.dirname(HERE))
+OUT = f"{R}/outputs/gazebo_geo/deck"
 RULE, FLY, DEC, GREY, INK = "#b8620a", "#1f7a4d", "#2b6cb0", "#8a9099", "#14181f"
 plt.rcParams.update({"font.size": 19, "axes.spines.top": False, "axes.spines.right": False, "axes.edgecolor": "#6a7179",
                      "axes.labelcolor": INK, "xtick.color": "#3d444d", "ytick.color": "#3d444d", "font.family": "DejaVu Sans"})
@@ -30,7 +30,7 @@ plt.rcParams.update({"font.size": 19, "axes.spines.top": False, "axes.spines.rig
 
 def ladders(recipe):
     out = {}
-    for f in sorted(glob.glob(f"{R}/wind/runs/{recipe}_s*_best_ladder.json")):
+    for f in sorted(glob.glob(f"{R}/conditions/wind/runs/{recipe}_s*_best_ladder.json")):
         d = json.load(open(f))
         d = d if isinstance(d, list) else d.get("rows", [])
         out[f] = {float(r["w10"]): r for r in d}
@@ -38,7 +38,7 @@ def ladders(recipe):
 
 
 def wind_mjx():
-    rule = json.load(open(f"{R}/wind/runs/rule_ladder.json"))
+    rule = json.load(open(f"{R}/conditions/wind/runs/rule_ladder.json"))
     rule = {float(r["w10"]): r for r in (rule if isinstance(rule, list) else rule.get("rows", []))}
     fig, ax = plt.subplots(1, 2, figsize=(16.6, 5.4))
     ws = sorted(rule)
@@ -62,7 +62,7 @@ def wind_mjx():
 
 
 def wind_gz():
-    fl = [json.loads(l) for l in open(f"{R}/gazebo_wind/ladder_rule/flights.jsonl")]
+    fl = [json.loads(l) for l in open(f"{R}/outputs/gazebo_wind/ladder_rule/flights.jsonl")]
     by = collections.defaultdict(list)
     for r in fl:
         by[(r["decider"], r["w10"])].append(r["outcome"])
@@ -91,7 +91,7 @@ def wind_gz():
 def geo_matcher():
     runs = {}
     for tag in ("plain", "floor", "draped", "draped_yaw5", "draped_yaw10", "draped_yaw15"):
-        f = sorted(glob.glob(f"{R}/geo/runs/{tag}_2*/score.json"))
+        f = sorted(glob.glob(f"{R}/outputs/gnss_denied/runs/{tag}_2*/score.json"))
         if f:
             runs[tag] = json.load(open(f[-1]))
     fig, ax = plt.subplots(1, 2, figsize=(16.6, 5.2), gridspec_kw={"width_ratios": [1.15, 1]})
@@ -121,7 +121,7 @@ def geo_matcher():
 
 
 def geo_read():
-    rows = json.load(open(f"{R}/gazebo_geo/read_height.json"))
+    rows = json.load(open(f"{R}/outputs/gazebo_geo/read_height.json"))
     h = [r["h"] for r in rows]
     p = [100 * np.mean([2 in f["ids"] for f in r["frames"]]) for r in rows]
     fig, a = plt.subplots(figsize=(8.2, 5.2))
@@ -135,7 +135,7 @@ def geo_read():
     fig.savefig(f"{OUT}/geo_readheight.png", dpi=100)
 
 
-def geo_trace(src=f"{R}/gazebo_geo/geo_obst3/obstacles_geo.json"):
+def geo_trace(src=f"{R}/outputs/gazebo_geo/geo_obst3/obstacles_geo.json"):
     d = json.load(open(src))
     rows = [r for r in d["rows"] if r["gz"]]
     t0 = rows[0]["t"]
@@ -167,6 +167,7 @@ def pad_markers():
     import cv2
     tex = cv2.cvtColor(cv2.imread("/home/sai/thesis_2.0/PX4-Autopilot/Tools/simulation/gz/models/arucotag/arucotag.png"),
                        cv2.COLOR_BGR2RGB)
+    import sys; sys.path.insert(0, f"{R}/shared/px4_gazebo")
     from make_pad import MARKERS, MAT                       # (id, size m, centre x m) on a MAT m square
     bands = {2: (0.76, 28.6), 0: (0.51, 19.0), 1: (0.06, 2.4)}   # make_pad.py's design table
     col = {2: RULE, 0: FLY, 1: DEC}

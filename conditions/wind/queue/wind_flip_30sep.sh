@@ -3,7 +3,7 @@
 # climb/descend (MJX 0.75 reversals/s, Gazebo 1.74/s at 9 m/s) and held PX4 at its thrust limit, where Gazebo sank the drone
 # (cmd_replay.py). Same recipe plus a price on each climb<->descend reversal (land_env.FLIP_R): 0.2 on seeds 0-2, 0.5 on
 # seed 0 as a price check. Two runs at a time, then each best checkpoint on the test ladder and timing_check (reversals).
-R=/home/sai/RL_projects/rl-landing; cd $R/wind; LOG=$R/queue/wind_flip.log
+R=/home/sai/RL_projects/rl-landing; cd $R/conditions/wind; LOG=$R/outputs/queue/wind_flip.log
 PY=/home/sai/miniconda3/envs/mujoco_drones/bin/python
 S2="--flyer runs/fly_s0_best.npz --no-fly --lr 1e-4 --iters 600 --crash-r -100 --hard-r -100"
 train () { tag=$1; seed=$2; shift 2

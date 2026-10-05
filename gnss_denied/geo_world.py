@@ -4,7 +4,7 @@ geo_world.py -- Logan in Gazebo with a real aerial capture laid on the floor, fo
 the map of Logan exactly of the square plot ... check with both overlapping the map onto the gazebo floor and don't
 overlap and see if the matcher works in both cases").
 
-    <GeoAnchor venv python> geo/geo_world.py        -> gz_logan/geo_floor/ (aruco.sdf + the floor texture), geo_clean/,
+    <GeoAnchor venv python> gnss_denied/geo_world.py        -> shared/px4_gazebo/gz_logan/geo_floor/ (aruco.sdf + the floor texture), geo_clean/,
                                                        geo_magpie/ -- all with the films' chase camera
 
 The floor is the 2023-06-29 Esri Wayback capture (the year of the LiDAR survey the houses and trees come from); the
@@ -29,8 +29,8 @@ R = os.path.dirname(HERE)
 LAT0, LON0 = -27.67039, 153.14105                 # logan_map.HELIPAD_LL
 PAD = (135.5, 1135.5)                             # gz_logan.PAD: the pad in Logan map metres
 SITE = (120.0, 0.0)                               # where Gazebo puts it
-FLOOR = f"{R}/gz_logan/imagery/ref_tile_2023-06-29.tif"
-MAP = f"{R}/gz_logan/imagery/ref_tile_2021-07-21.tif"
+FLOOR = f"{R}/shared/px4_gazebo/gz_logan/imagery/ref_tile_2023-06-29.tif"
+MAP = f"{R}/shared/px4_gazebo/gz_logan/imagery/ref_tile_2021-07-21.tif"
 RES = 0.13                                        # m per floor-texture pixel (the capture's own ~0.132)
 EXTENT = (-140.0, 380.0, -260.0, 260.0)           # Gazebo x0, x1, y0, y1: the 480 m crop and a 20 m margin
 
@@ -84,7 +84,7 @@ def drape(src, dst):
 
 def draped_model(name, textured, colour):
     """logan_buildings / logan_trees inline, the `textured` visual's mesh draped with the capture, the rest as it was."""
-    src = open(f"{R}/gz_logan/models/{name}/model.sdf").read()
+    src = open(f"{R}/shared/px4_gazebo/gz_logan/models/{name}/model.sdf").read()
     m = src[src.index("<model"):src.index("</model>") + len("</model>")]
     m = m.replace(f"model://{name}/meshes/{textured}.obj", f"meshes/{textured}_uv.obj")
     old = (f"<material><ambient>{colour}</ambient><diffuse>{colour}</diffuse><double_sided>true</double_sided></material>")
@@ -92,8 +92,8 @@ def draped_model(name, textured, colour):
     m = m.replace(old, "<material><ambient>1 1 1 1</ambient><diffuse>1 1 1 1</diffuse><specular>0 0 0 1</specular>"
                        "<double_sided>true</double_sided><pbr><metal><albedo_map>materials/textures/logan_2023.png"
                        "</albedo_map></metal></pbr></material>")
-    os.makedirs(f"{R}/gz_logan/geo_floor/meshes", exist_ok=True)
-    drape(f"{R}/gz_logan/models/{name}/meshes/{textured}.obj", f"{R}/gz_logan/geo_floor/meshes/{textured}_uv.obj")
+    os.makedirs(f"{R}/shared/px4_gazebo/gz_logan/geo_floor/meshes", exist_ok=True)
+    drape(f"{R}/shared/px4_gazebo/gz_logan/models/{name}/meshes/{textured}.obj", f"{R}/shared/px4_gazebo/gz_logan/geo_floor/meshes/{textured}_uv.obj")
     return "    " + m
 
 
@@ -110,20 +110,20 @@ LIDAR = ("<link name='lidar_sensor_link'><pose relative_to='base_link'>0 0 -0.05
 
 def variant(var, src="geo_magpie"):
     """A GeoAnchor world flown by another rig (gz_unified.VARIANTS, e.g. v2l: the up camera): that drone plus the
-    rangefinder -> gz_logan/models/<name>_rng, and src with its drone swapped -> gz_logan/<src>_<var>/ (floor linked)."""
+    rangefinder -> shared/px4_gazebo/gz_logan/models/<name>_rng, and src with its drone swapped -> shared/px4_gazebo/gz_logan/<src>_<var>/ (floor linked)."""
     import sys
-    sys.path.insert(0, R)
+    sys.path.insert(0, f"{R}/shared/px4_gazebo")
     import gz_unified as GU
     name = GU.model_name(var)
-    m = open(f"{R}/gz_logan/models/{name}/model.sdf").read()
+    m = open(f"{R}/shared/px4_gazebo/gz_logan/models/{name}/model.sdf").read()
     assert m.count("</model>") == 1 and "lidar_sensor_link" not in m
-    d = f"{R}/gz_logan/models/{name}_rng"
+    d = f"{R}/shared/px4_gazebo/gz_logan/models/{name}_rng"
     os.makedirs(d, exist_ok=True)
     open(f"{d}/model.sdf", "w").write(m.replace(f"<model name='{name}'>", f"<model name='{name}_rng'>").replace("</model>", LIDAR + "</model>"))
-    open(f"{d}/model.config", "w").write(open(f"{R}/gz_logan/models/{name}/model.config").read().replace(name, f"{name}_rng"))
-    w = open(f"{R}/gz_logan/{src}/aruco.sdf").read()
+    open(f"{d}/model.config", "w").write(open(f"{R}/shared/px4_gazebo/gz_logan/models/{name}/model.config").read().replace(name, f"{name}_rng"))
+    w = open(f"{R}/shared/px4_gazebo/gz_logan/{src}/aruco.sdf").read()
     assert w.count("<uri>model://x500_unified_rng</uri>") == 1
-    g = f"{R}/gz_logan/{src}_{var}"
+    g = f"{R}/shared/px4_gazebo/gz_logan/{src}_{var}"
     os.makedirs(g, exist_ok=True)
     for sub in ("materials", "meshes"):
         if not os.path.islink(f"{g}/{sub}"):
@@ -135,11 +135,11 @@ def variant(var, src="geo_magpie"):
 def world():
     import cv2
     tex, cov = floor_texture()
-    d = f"{R}/gz_logan/geo_floor"
+    d = f"{R}/shared/px4_gazebo/gz_logan/geo_floor"
     os.makedirs(f"{d}/materials/textures", exist_ok=True)
     cv2.imwrite(f"{d}/materials/textures/logan_2023.png", cv2.cvtColor(tex, cv2.COLOR_RGB2BGR))
     x0, x1, y0, y1 = EXTENT
-    src = open(f"{R}/gz_logan/voxfast_v2/aruco.sdf").read()
+    src = open(f"{R}/shared/px4_gazebo/gz_logan/voxfast_v2/aruco.sdf").read()
     # the ground plane keeps its collision; its green visual goes, the capture takes its place
     a = src.index('    <model name="ground_plane">')
     b = src.index("    </model>", a) + len("    </model>")
@@ -170,7 +170,7 @@ def world():
     assert "logan_roads" not in out and "capture_2023" in out and "roofs_uv.obj" in out and "crowns_uv.obj" in out
     # the films' chase camera (gz_learner's, moved by set_pose from a helper process), in every GeoAnchor world
     import sys
-    sys.path.insert(0, R)
+    sys.path.insert(0, f"{R}/shared/px4_gazebo")
     from gz_learner import chase_sdf, bird_sdf
     assert out.count("  </world>") == 1
     out = out.replace("  </world>", f"    {chase_sdf()}\n  </world>")
@@ -181,19 +181,19 @@ def world():
     import re
     clean, n = re.subn(r"    <model name='(crane|light_\d|traffic_light|tree_\d|shed)'>.*?</model>\n", "", out, flags=re.S)
     assert n == 10 and "name='crane'" not in clean, n            # crane, 4 lights, traffic light, 3 trees, shed
-    c = f"{R}/gz_logan/geo_clean"
+    c = f"{R}/shared/px4_gazebo/gz_logan/geo_clean"
     os.makedirs(c, exist_ok=True)
     for sub in ("materials", "meshes"):
         if not os.path.islink(f"{c}/{sub}"):
-            os.symlink(f"{d}/{sub}", f"{c}/{sub}")
+            os.symlink(f"../geo_floor/{sub}", f"{c}/{sub}")
     open(f"{c}/aruco.sdf", "w").write(clean)
     print(f"{c}/aruco.sdf  without the {n} stage-3 obstacles")
     # geo_magpie: geo_clean with gz_learner's magpie and its nest (moved by set_pose during the flight)
-    g = f"{R}/gz_logan/geo_magpie"
+    g = f"{R}/shared/px4_gazebo/gz_logan/geo_magpie"
     os.makedirs(g, exist_ok=True)
     for sub in ("materials", "meshes"):
         if not os.path.islink(f"{g}/{sub}"):
-            os.symlink(f"{d}/{sub}", f"{g}/{sub}")
+            os.symlink(f"../geo_floor/{sub}", f"{g}/{sub}")
     magpie, nest = bird_sdf()
     open(f"{g}/aruco.sdf", "w").write(clean.replace("  </world>", f"    {magpie}\n    {nest}\n  </world>"))
     print(f"{g}/aruco.sdf  geo_clean + the magpie and its nest")
@@ -203,15 +203,15 @@ def stress():
     """geo_stress_v2l (30 Sept, the full-stack stress test): geo_floor -- stage 3's crane, lights, trees and shed --
     with the magpie and its nest, flown by rig v2l. Built from geo_floor's file, so the floor is not rebuilt."""
     import sys
-    sys.path.insert(0, R)
+    sys.path.insert(0, f"{R}/shared/px4_gazebo")
     from gz_learner import bird_sdf
-    w = open(f"{R}/gz_logan/geo_floor/aruco.sdf").read()
+    w = open(f"{R}/shared/px4_gazebo/gz_logan/geo_floor/aruco.sdf").read()
     assert "name='crane'" in w and "name='magpie'" not in w and w.count("  </world>") == 1
-    g = f"{R}/gz_logan/geo_stress"
+    g = f"{R}/shared/px4_gazebo/gz_logan/geo_stress"
     os.makedirs(g, exist_ok=True)
     for sub in ("materials", "meshes"):
         if not os.path.islink(f"{g}/{sub}"):
-            os.symlink(f"{R}/gz_logan/geo_floor/{sub}", f"{g}/{sub}")
+            os.symlink(f"../geo_floor/{sub}", f"{g}/{sub}")
     magpie, nest = bird_sdf()
     open(f"{g}/aruco.sdf", "w").write(w.replace("  </world>", f"    {magpie}\n    {nest}\n  </world>"))
     variant("v2l", src="geo_stress")
@@ -226,9 +226,9 @@ if __name__ == "__main__":
     la, lo = gz_to_ll(120.0, 0.0)
     assert abs(la - -27.660121) < 2e-6 and abs(lo - 153.142424) < 2e-6, (la, lo)   # the pad, as computed before
     import sys
-    if "--stress" in sys.argv:                  # geo/geo_world.py --stress: crane + magpie, rig v2l
+    if "--stress" in sys.argv:                  # gnss_denied/geo_world.py --stress: crane + magpie, rig v2l
         stress()
-    elif "--variant" in sys.argv:                 # geo/geo_world.py --variant v2l: the magpie world with the up camera
+    elif "--variant" in sys.argv:                 # gnss_denied/geo_world.py --variant v2l: the magpie world with the up camera
         variant(sys.argv[sys.argv.index("--variant") + 1])
     else:
         world()

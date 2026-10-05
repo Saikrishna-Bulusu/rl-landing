@@ -3,7 +3,7 @@
 # with training returns above a landing's: the shaping's discount 0.997 (learner 0.9998) pays ~+15 for hovering 90 s, and the
 # price made descending dearer. Now shaping at the learner's discount (--shape-g 0.9998): flip 0.2 on seeds 0-2, and shaping
 # alone (no price) on seed 0 as the control. Also scores the two first-try bests. Two runs at a time.
-R=/home/sai/RL_projects/rl-landing; cd $R/wind; LOG=$R/queue/wind_flip.log
+R=/home/sai/RL_projects/rl-landing; cd $R/conditions/wind; LOG=$R/outputs/queue/wind_flip.log
 PY=/home/sai/miniconda3/envs/mujoco_drones/bin/python
 S2="--flyer runs/fly_s0_best.npz --no-fly --lr 1e-4 --iters 600 --crash-r -100 --hard-r -100 --shape-g 0.9998"
 score () { $PY ppo.py --ladder runs/$1_best.npz > runs/$1_ladder.out 2>&1

@@ -30,10 +30,6 @@ import math
 import numpy as np
 
 
-def erfinv(x):
-    return np.vectorize(lambda v: math.erf(v))  # placeholder, unused
-
-
 def make_pool(err, sigma_ref, rho, rng):
     """Sigma with rank-correlation `rho` to the error, real sigma's marginals."""
     from scipy.stats import norm, rankdata

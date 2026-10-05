@@ -40,9 +40,12 @@ gaining realistic time structure.
 
 import argparse
 import math
+import os
 import time
 
 import numpy as np
+
+POOL = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "fast_sim", "sigma_pool.npz")
 
 BEARING_STEP = math.sqrt(-2.0 * math.log(0.25))   # 1.665 rad
 ARUCO_DICT = "DICT_4X4_50"
@@ -168,7 +171,7 @@ class ArucoEye:
 class SigmaSource:
     """Replays GeoAnchor's measured (sigma, error) pairs with AR(1) structure."""
 
-    def __init__(self, pool="sigma_pool.npz", rho=None, scale=1.0, seed=0):
+    def __init__(self, pool=POOL, rho=None, scale=1.0, seed=0):
         # allow_pickle is needed only for the string scene-name array. The pool
         # is generated locally by calibrate.py from GeoAnchor's own CSVs and is
         # never fetched from anywhere, so it is not untrusted input.
@@ -356,7 +359,7 @@ class Recorder:
 
 
 # ---------------------------------------------------------------------------
-def selftest(pool="sigma_pool.npz"):
+def selftest(pool=POOL):
     import cv2
     print("1. ArUco dictionary identification")
     from PIL import Image
@@ -443,7 +446,7 @@ def selftest(pool="sigma_pool.npz"):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--selftest", action="store_true")
-    ap.add_argument("--pool", default="sigma_pool.npz")
+    ap.add_argument("--pool", default=POOL)
     a = ap.parse_args()
     if a.selftest:
         selftest(a.pool)

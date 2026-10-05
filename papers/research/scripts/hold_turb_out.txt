@@ -1,0 +1,22 @@
+Failed to import warp: No module named 'warp'
+Failed to import mujoco_warp: No module named 'warp'
+CdA 0.04 h   30 W10    9: lost   0.0%  drift med   1.10 p95    1.45  rms  0.32  tilt max(med)  26.0  at 45deg   0.0%  coll>=.995   0.0%  peak wind(med)  17.2
+CdA 0.04 h   30 W10   12: lost   0.0%  drift med   1.64 p95    2.15  rms  0.48  tilt max(med)  38.7  at 45deg   0.0%  coll>=.995   0.0%  peak wind(med)  23.2
+CdA 0.04 h   30 W10   15: lost   0.0%  drift med   2.49 p95    8.67  rms  0.73  tilt max(med)  45.5  at 45deg   5.0%  coll>=.995   0.1%  peak wind(med)  29.3
+CdA 0.04 h   30 W10   18: lost  37.5%  drift med  22.24 p95   85.20  rms  7.80  tilt max(med)  45.9  at 45deg  40.6%  coll>=.995   2.2%  peak wind(med)  35.2
+CdA 0.04 h   30 W10   20: lost  95.3%  drift med  97.84 p95  267.98  rms 54.00  tilt max(med)  46.1  at 45deg  75.1%  coll>=.995   6.2%  peak wind(med)  39.2
+CdA 0.04 h    6 W10    9: lost   0.0%  drift med   0.70 p95    1.02  rms  0.26  tilt max(med)  18.7  at 45deg   0.0%  coll>=.995   0.0%  peak wind(med)  13.9
+CdA 0.04 h    6 W10   12: lost   0.0%  drift med   1.04 p95    1.54  rms  0.40  tilt max(med)  28.2  at 45deg   0.0%  coll>=.995   0.0%  peak wind(med)  18.6
+CdA 0.04 h    6 W10   15: lost   0.0%  drift med   1.43 p95    2.08  rms  0.55  tilt max(med)  38.5  at 45deg   0.1%  coll>=.995   0.0%  peak wind(med)  23.6
+CdA 0.04 h    6 W10   18: lost   0.0%  drift med   2.12 p95    4.92  rms  0.75  tilt max(med)  45.4  at 45deg   1.9%  coll>=.995   0.0%  peak wind(med)  28.5
+CdA 0.04 h    6 W10   20: lost   0.0%  drift med   4.31 p95   15.14  rms  1.09  tilt max(med)  45.9  at 45deg   6.3%  coll>=.995   0.3%  peak wind(med)  31.9
+CdA 0.08 h   30 W10    9: lost   0.0%  drift med   1.58 p95    2.15  rms  0.47  tilt max(med)  37.6  at 45deg   0.0%  coll>=.995   0.0%  peak wind(med)  17.3
+CdA 0.08 h   30 W10   12: lost   0.0%  drift med   4.12 p95   21.28  rms  1.15  tilt max(med)  45.5  at 45deg  11.3%  coll>=.995   2.0%  peak wind(med)  23.2
+CdA 0.08 h   30 W10   15: lost  92.2%  drift med  82.56 p95  229.11  rms 46.31  tilt max(med)  45.7  at 45deg  70.2%  coll>=.995  25.1%  peak wind(med)  29.3
+CdA 0.08 h   30 W10   18: lost 100.0%  drift med 417.58 p95  608.13  rms 245.86  tilt max(med)  45.9  at 45deg  75.0%  coll>=.995  30.8%  peak wind(med)  35.2
+CdA 0.08 h   30 W10   20: lost 100.0%  drift med 662.73 p95  862.84  rms 385.43  tilt max(med)  46.0  at 45deg  72.1%  coll>=.995  32.0%  peak wind(med)  39.2
+CdA 0.08 h    6 W10    9: lost   0.0%  drift med   1.00 p95    1.50  rms  0.38  tilt max(med)  27.2  at 45deg   0.0%  coll>=.995   0.0%  peak wind(med)  13.9
+CdA 0.08 h    6 W10   12: lost   0.0%  drift med   1.56 p95    2.40  rms  0.59  tilt max(med)  40.9  at 45deg   0.3%  coll>=.995   0.0%  peak wind(med)  18.7
+CdA 0.08 h    6 W10   15: lost   0.0%  drift med   3.78 p95   13.86  rms  1.03  tilt max(med)  45.6  at 45deg   6.1%  coll>=.995   1.0%  peak wind(med)  23.7
+CdA 0.08 h    6 W10   18: lost  26.6%  drift med  20.73 p95   58.54  rms  6.23  tilt max(med)  46.0  at 45deg  26.2%  coll>=.995   8.6%  peak wind(med)  28.6
+CdA 0.08 h    6 W10   20: lost  76.6%  drift med  49.15 p95  133.86  rms 20.76  tilt max(med)  46.2  at 45deg  45.7%  coll>=.995  19.0%  peak wind(med)  32.0

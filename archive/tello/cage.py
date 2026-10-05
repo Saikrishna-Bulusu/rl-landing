@@ -4,7 +4,7 @@ cage.py -- the last metres of a delivery at Tello scale, in Sai's cage (3 m x 2 
 
 A DJI Tello takes off from the hub pad and must land on its customer's ArUco pad -- not a neighbour's --
 among tiny model houses and trees, one obstacle possibly missing from the map. Thousands of flights advance
-in lock-step as tensors, like urban/urban_env.py; a decider reads obs() and hands step() a velocity command,
+in lock-step as tensors, like shared/fast_sim/urban_env.py; a decider reads obs() and hands step() a velocity command,
 as the Tello SDK's `rc` command does, or asks to land (the SDK's `land`: once started, it finishes).
 
 WHAT THE TELLO KNOWS

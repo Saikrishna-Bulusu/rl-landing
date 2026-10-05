@@ -6,10 +6,10 @@ R=/home/sai/RL_projects/rl-landing; cd $R
 pids=(); i=4
 for s in 1 2 3; do
     RIG=v2 OUT=rigv2_land2/i$i SEEDS="$s" RUNS="rule:survey rule:voxel rule:local3d" SPEED=1.0 FAST=1 FULL=1 INSTANCE=$i \
-        ./voxfly.sh > /dev/null 2>&1 &
+        ./conditions/static_obstacles/voxfly.sh > /dev/null 2>&1 &
     pids+=($!); i=$((i + 1)); sleep 15
 done
 wait "${pids[@]}"
-cat gazebo_voxel/rigv2_land2/i*/flights.jsonl > gazebo_voxel/rigv2_land2/flights.jsonl
-cp gazebo_voxel/rigv2_land2/i*/*.csv gazebo_voxel/rigv2_land2/
-echo "$(date +%H:%M) rigv2_land2 done: $(grep -c outcome gazebo_voxel/rigv2_land2/flights.jsonl) flights" >> queue/rig.log
+cat outputs/gazebo_voxel/rigv2_land2/i*/flights.jsonl > outputs/gazebo_voxel/rigv2_land2/flights.jsonl
+cp outputs/gazebo_voxel/rigv2_land2/i*/*.csv outputs/gazebo_voxel/rigv2_land2/
+echo "$(date +%H:%M) rigv2_land2 done: $(grep -c outcome outputs/gazebo_voxel/rigv2_land2/flights.jsonl) flights" >> outputs/queue/rig.log

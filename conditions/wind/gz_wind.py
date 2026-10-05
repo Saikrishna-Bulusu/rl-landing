@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """
 gz_wind.py -- Gazebo worlds for the wind study: the rig v2 world (voxfast_v2, no video cameras) with a wind entity,
-and one server config per wind (PX4's own systems + wind/gz_winddrag's WindDrag: the same gusty wind and body drag
-as wind/x500_mjx.py).
+and one server config per wind (PX4's own systems + conditions/wind/gz_winddrag's WindDrag: the same gusty wind and body drag
+as conditions/wind/x500_mjx.py).
 
-    python wind/gz_wind.py                                    -> gz_logan/wind_v2/aruco.sdf
-    python wind/gz_wind.py --config w7 --mean 7 --dir 90     -> gz_logan/wind_v2/w7.config
-Fly one: WORLD=wind_v2 SERVER_CONFIG=gz_logan/wind_v2/w7.config ./wind/sitl.sh ...
+    python conditions/wind/gz_wind.py                                    -> shared/px4_gazebo/gz_logan/wind_v2/aruco.sdf
+    python conditions/wind/gz_wind.py --config w7 --mean 7 --dir 90     -> shared/px4_gazebo/gz_logan/wind_v2/w7.config
+Fly one: WORLD=wind_v2 SERVER_CONFIG=shared/px4_gazebo/gz_logan/wind_v2/w7.config ./shared/px4_gazebo/sitl.sh ...
 """
 import argparse
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-R = os.path.dirname(HERE)
-OUT = f"{R}/gz_logan/wind_v2"
-BASE_WORLD = f"{R}/gz_logan/voxfast_v2/aruco.sdf"
+R = os.path.dirname(os.path.dirname(HERE))
+OUT = f"{R}/shared/px4_gazebo/gz_logan/wind_v2"
+BASE_WORLD = f"{R}/shared/px4_gazebo/gz_logan/voxfast_v2/aruco.sdf"
 BASE_CONFIG = "/home/sai/thesis_2.0/PX4-Autopilot/src/modules/simulation/gz_bridge/server.config"
 PLUGINS = f"{HERE}/gz_winddrag/build"                  # libWindDrag.so: sitl.sh puts it on GZ_SIM_SYSTEM_PLUGIN_PATH
 
