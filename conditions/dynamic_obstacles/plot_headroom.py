@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Checkpoint-1 figure from headroom.json: where the failures are, per decider."""
-import json
+import json, os
 import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-r = json.load(open("headroom.json"))
+R = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../..")
+r = json.load(open(os.path.join(R, "shared/fast_sim/headroom.json")))
 groups = [("helicopter (NMAC, helipad duty)", ["near mid-air (NMAC)", "helipad duty"], "#c0392b"),
           ("other drones", ["drone separation"], "#8e3b8e"),
           ("people / vehicles / overhead", ["people 30 m", "vehicle 30 m", "over a person"], "#e08a00"),
@@ -34,4 +35,4 @@ ax.set_xticks(range(3)); ax.set_xticklabels([lab for _, lab in names])
 ax.set_ylabel("% of deliveries with any CASA/ASTM\nviolation, near mid-air, or crash"); ax.legend(fontsize=9)
 ax.set_title("Regulatory violations: ~10x fewer with foresight"); ax.grid(axis="y", alpha=0.25)
 fig.suptitle("Checkpoint 1, Logan QLD: the room above the rule is violations, and 2/3 of it needs no new sensor", fontsize=13)
-fig.tight_layout(); fig.savefig("headroom.png", dpi=130); print("headroom.png")
+fig.tight_layout(); fig.savefig(out := os.path.join(R, "outputs/headroom.png"), dpi=130); print(out)
