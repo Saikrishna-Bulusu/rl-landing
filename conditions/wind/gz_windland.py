@@ -194,7 +194,8 @@ class Policy:
     def __call__(self, obs):
         if self.pi[0][0].shape[0] == len(obs) + 2:                # trained with --dob-in: ppo.with_dob
             obs = np.r_[obs, np.clip(dob_push(obs), -3.0, 3.0)]
-        x = np.clip((obs - self.mean) / np.sqrt(self.var + 1e-8), -10, 10)
+        n = len(obs)                                             # a --priv-critic normalizer is longer: the actor's part
+        x = np.clip((obs - self.mean[:n]) / np.sqrt(self.var[:n] + 1e-8), -10, 10)
         for W, b in self.pi[:-1]:
             x = np.tanh(x @ W + b)
         W, b = self.pi[-1]

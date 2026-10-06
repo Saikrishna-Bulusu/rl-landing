@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-phase3_compare.py -- PLAN.md Phase 3, upgrade 1 (Sai, 6 Oct: "DOB first"): does the DOB's estimate of the wind's push,
-as two more decider inputs, help? Every arm flies the same 1,024 test flights (seed 10000) per wind, in the Phase 2
+phase3_compare.py -- PLAN.md Phase 3 upgrades against the retrained control: 1, the DOB's estimate of the wind's push
+as two more decider inputs (Sai, 6 Oct: "DOB first"); 2, a privileged critic (when its runs exist). Every arm flies the same 1,024 test flights (seed 10000) per wind, in the Phase 2
 world (sensing, drone and gusts randomized per flight) and in the nominal one.
 
   standard rule, hand-tuned rule     no learning
@@ -39,8 +39,10 @@ def arms():
     yield "standard rule", [(rule, False, False, 0.0)], (1.0, 1e9)
     yield "hand-tuned rule", [(rule, False, False, 0.0)], (tuned["scale"], tuned["patience"])
     for name, tag, wind_in in (("paper decider", "stage2_c100h100g", True), ("retrained (control)", "base_rand", True),
-                               ("retrained + DOB input", "dobin_rand", True), ("retrained + DOB input, zeroed", "dobin_rand", False)):
-        yield name, [ppo.load_policy(f"{HERE}/runs/{tag}_s{s}_best.npz", wind_in=wind_in) for s in (0, 1, 2)], (1.0, 1e9)
+                               ("retrained + DOB input", "dobin_rand", True), ("retrained + DOB input, zeroed", "dobin_rand", False),
+                               ("retrained + privileged critic", "priv_rand", True)):
+        if all(os.path.exists(f"{HERE}/runs/{tag}_s{s}_best.npz") for s in (0, 1, 2)):
+            yield name, [ppo.load_policy(f"{HERE}/runs/{tag}_s{s}_best.npz", wind_in=wind_in) for s in (0, 1, 2)], (1.0, 1e9)
 
 
 def ci(d, rng=np.random.default_rng(0), n_boot=10_000):
@@ -74,6 +76,9 @@ def main():
             "landed: DOB input - control": [ci(land["retrained + DOB input"][i] - land["retrained (control)"][i]) for i in range(len(WINDS))],
             "crashed: DOB input - control": [ci(crash["retrained + DOB input"][i] - crash["retrained (control)"][i]) for i in range(len(WINDS))],
             "landed: control - paper decider": [ci(land["retrained (control)"][i] - land["paper decider"][i]) for i in range(len(WINDS))],
+            **({"landed: privileged critic - control": [ci(land["retrained + privileged critic"][i] - land["retrained (control)"][i]) for i in range(len(WINDS))],
+                "crashed: privileged critic - control": [ci(crash["retrained + privileged critic"][i] - crash["retrained (control)"][i]) for i in range(len(WINDS))]}
+               if "retrained + privileged critic" in land else {}),
             "landed, split: policy without wind - standard rule": [ci(land["retrained + DOB input, zeroed"][i] - land["standard rule"][i]) for i in range(len(WINDS))],
             "landed, split: wind channel on - off": [ci(land["retrained + DOB input"][i] - land["retrained + DOB input, zeroed"][i]) for i in range(len(WINDS))]}
         for k, rows in res[cname]["paired"].items():
@@ -81,7 +86,7 @@ def main():
     json.dump(res, open(f"{HERE}/runs/phase3_dobin.json", "w"), indent=1)
 
     col = {"standard rule": "#8a939e", "hand-tuned rule": "#1d8475", "paper decider": "#9db7d9", "retrained (control)": "#1f5ea8",
-           "retrained + DOB input": "#c9520c", "retrained + DOB input, zeroed": "#e8a87c"}
+           "retrained + DOB input": "#c9520c", "retrained + DOB input, zeroed": "#e8a87c", "retrained + privileged critic": "#7656c0"}
     fig, ax = plt.subplots(1, 2, figsize=(12, 4.2), sharey=True)
     for a, cname in zip(ax, CONDS):
         for name, r in res[cname].items():
@@ -93,7 +98,7 @@ def main():
 
     try:
         from clearml import Task
-        t = Task.init(project_name="rl-landing/wind", task_name="phase 3: DOB estimate as decider input", reuse_last_task_id=False,
+        t = Task.init(project_name="rl-landing/wind", task_name="phase 3: upgrades against the retrained control", reuse_last_task_id=False,
                       auto_connect_frameworks=False, auto_connect_arg_parser=False)
         lg = t.get_logger()
         for cname in CONDS:

@@ -305,6 +305,21 @@ def step(st, act, key, fly=True, decide=True, shield=0.0, hp_tau=0.0):
     return st, r, done
 
 
+def privileged(st):
+    """What only the critic sees, in training (PLAN.md Phase 3, privileged critic; the actor never does): this flight's
+    drone (drag, mass, thrust, motor lag, command delay), its sensing errors right now (pad estimate, height, velocity,
+    delay, marker lost) and the wind (strength, direction, the gust now). Under randomization these hidden numbers decide
+    whether a landing can work; a critic that sees them gives the actor advantages that are not noise. 18 numbers."""
+    prm, e, w = st["sim"]["prm"], st["sen"], st["wind"]
+    return jnp.concatenate([prm[:2] / jnp.array([X.CDA_H, X.CDA_V]), prm[2:5], prm[5:6] / 20.0,
+                            (e["b"] + st["ep"] + st["jump"]) * 5.0, (e["hb"] + st["eh"])[None] * 10.0, st["ev"] * 3.0,
+                            e["lat"][None] / 3.0, (st["drop"] > 0)[None] * 1.0,
+                            jnp.array([w["w10"] / 20.0, jnp.cos(w["th"]), jnp.sin(w["th"]), w["gA"] * (w["gt"] >= 0) / 10.0])])
+
+
+N_PRIV = 18
+
+
 def obs_of(st, key):
     p_est, v_est = estimates(st, key)
     cmd, _ = rule_cmd(-p_est[:2], p_est[2], v_est, st["held"])

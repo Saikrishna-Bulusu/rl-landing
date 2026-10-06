@@ -173,7 +173,10 @@ Gate: how brittle is today's decider? Gazebo smoke: the same yards as Phase 1, e
 - Checks: `python conditions/wind/land_env.py --check-rand` (each group behaves as promised) and
   `x500_mjx.py --check` (check_drone: every corner of the fleet hovers level at its expected throttle).
 - `evaluate()` takes a list of winds: one compile per list (about 14 s), about 3 s per wind.
-- The tuned rule now also flies in Gazebo (`gz_windland.py --decider tuned`, checked against land_env's).
+- The tuned rule now also flies in Gazebo (`gz_windland.py --decider tuned`, checked against land_env's). On the
+  ladder's 20 yards and gusts (`outputs/gazebo_wind/ladder_rule`): W10 15 landed 20/20, W10 18 7/20 (12 gave up, 1
+  hard). Same yards: rule 12/19 and 0/19, paper decider s0 19/20 and 18/20. MJX said 95 / 41 (tuned), 66 / 3 (rule),
+  98 / 88 (decider s0): the ranking and the gaps carry over.
 
 Robustness, without retraining (`robustness.py` -> `runs/robustness_2c.json`, ClearML "phase 2c"). Landed % at W10 18
 (the learned decider as the mean of its 3 seeds, crashed in brackets):

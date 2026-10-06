@@ -53,16 +53,17 @@ def mlp(ps, x):
     return x @ W + b
 
 
-def init_params(key, n_in=E.OBS_DIM):
+def init_params(key, n_in=E.OBS_DIM, n_v=None):
+    """n_in: the actor's inputs; n_v: the critic's (more with --priv-critic; default n_in)."""
     k1, k2 = jax.random.split(key)
     pi = mlp_init(k1, [n_in, 256, 256, 7])
     W, b = pi[-1]
     pi[-1] = (W, b.at[2].set(4.0))            # the 'rule' option first (p ~ 0.93): the learner starts as the rule
-    return dict(pi=pi, logstd=jnp.full(2, -1.2), v=mlp_init(k2, [n_in, 256, 256, 1], last=1.0))
+    return dict(pi=pi, logstd=jnp.full(2, -1.2), v=mlp_init(k2, [n_v or n_in, 256, 256, 1], last=1.0))
 
 
 def heads(p, obs_n):
-    out = mlp(p["pi"], obs_n)
+    out = mlp(p["pi"], obs_n[..., :p["pi"][0][0].shape[0]])     # the actor's own inputs (--priv-critic appends the critic's)
     return out[..., :2], p["logstd"], out[..., 2:]
 
 
@@ -148,11 +149,14 @@ def with_dob(obs, wind_in=True):
     return jnp.concatenate([obs, d if wind_in else jnp.zeros_like(d)], -1)
 
 
-def make_fns(n_env, t_roll, fly, decide, shield=0.0, flyer=None, hp_tau=0.0, dob_in=False):
+def make_fns(n_env, t_roll, fly, decide, shield=0.0, flyer=None, hp_tau=0.0, dob_in=False, priv=False):
     fly_f, dec_f = (0.0 if flyer is not None else float(fly)), float(decide)
     vstep = jax.vmap(lambda s, a, k: E.step(s, a, k, fly, decide, shield, hp_tau))
     vreset = jax.vmap(E.reset)
     vobs = (lambda st, ks: with_dob(jax.vmap(E.obs_of)(st, ks))) if dob_in else jax.vmap(E.obs_of)   # --dob-in: 2 more inputs
+    if priv:                                       # --priv-critic: the hidden numbers last, for the critic only
+        vobs_a = vobs
+        vobs = lambda st, ks: jnp.concatenate([vobs_a(st, ks), jax.vmap(E.privileged)(st)], -1)
 
     def where_tree(c, a, b):
         return jax.tree_util.tree_map(lambda x, y: jnp.where(c.reshape((-1,) + (1,) * (x.ndim - 1)), x, y), a, b)
@@ -163,7 +167,7 @@ def make_fns(n_env, t_roll, fly, decide, shield=0.0, flyer=None, hp_tau=0.0, dob
             ks = jax.random.split(k, 5)
             a_c, a_d = policy_act(p, rms, obs, ks[0])
             if flyer is not None:                      # the flyer's weights come in as an argument, not baked-in
-                a_c = dob_ff(fl, obs) if flyer[0] == "dob" else flyer_mean(fl, obs[..., :E.OBS_DIM] if dob_in else obs)   # constants (they broke XLA, 26 Sept)
+                a_c = dob_ff(fl, obs) if flyer[0] == "dob" else flyer_mean(fl, obs[..., :E.OBS_DIM] if dob_in or priv else obs)   # constants (they broke XLA, 26 Sept)
             mean, logstd, logits = heads(p, normalize(rms, obs))
             lp = log_prob(mean, logstd, logits, a_c, a_d, fly_f, dec_f)
             val = mlp(p["v"], normalize(rms, obs))[:, 0]
@@ -255,8 +259,11 @@ def load(path):
 
 def greedy_policy(p, rms, flyer=None, greedy=True, wind_in=True):
     """The policy as evaluate() calls it; greedy=False samples (the key is env 0's, which every step renews). A policy
-    trained with --dob-in (its input 2 wider) gets the DOB's estimate, or zeros with wind_in=False."""
-    dob_in = p["pi"][0][0].shape[0] == E.OBS_DIM + 2
+    trained with --dob-in (its input 2 wider) gets the DOB's estimate, or zeros with wind_in=False. --priv-critic
+    checkpoints keep the critic's extra inputs at the end of the normalizer; the actor uses only its own."""
+    n_a = p["pi"][0][0].shape[0]
+    dob_in = n_a == E.OBS_DIM + 2
+    rms = dict(rms, mean=rms["mean"][:n_a], var=rms["var"][:n_a])
 
     def f(obs, st):
         x = with_dob(obs, wind_in) if dob_in else obs
@@ -336,6 +343,7 @@ def main():
     ap.add_argument("--rand", default="", help="PLAN.md 2c's per-flight randomization for training and validation: "
                     "sense,drone,gust or all (empty: none, the Phase 0-2a environment)")
     ap.add_argument("--dob-in", action="store_true", help="Phase 3: the DOB's estimate of the wind's push as 2 more inputs (with_dob)")
+    ap.add_argument("--priv-critic", action="store_true", help="Phase 3: the critic also sees land_env.privileged (training only)")
     a = ap.parse_args()
     E.RAND = frozenset(("sense", "drone", "gust") if a.rand == "all" else [g for g in a.rand.split(",") if g])
     assert E.RAND <= {"sense", "drone", "gust"}, f"unknown --rand group in {a.rand!r}"
@@ -381,10 +389,11 @@ def main():
     base = f"{HERE}/runs/{a.tag}_s{a.seed}"
     log = open(base + ".jsonl", "w")
     hp = a.hp_tau or (hp_of(a.flyer) if a.flyer and not a.flyer.startswith("dob") else 0.0)
-    rollout, gae, update, vreset, vobs = make_fns(a.envs, a.steps, fly, decide, a.shield, flyer, hp, a.dob_in)
+    rollout, gae, update, vreset, vobs = make_fns(a.envs, a.steps, fly, decide, a.shield, flyer, hp, a.dob_in, a.priv_critic)
     key = jax.random.PRNGKey(a.seed)
     key, k1, k2, k3 = jax.random.split(key, 4)
-    p = init_params(k1, E.OBS_DIM + 2 if a.dob_in else E.OBS_DIM)
+    n_a = E.OBS_DIM + 2 if a.dob_in else E.OBS_DIM
+    p = init_params(k1, n_a, n_a + E.N_PRIV if a.priv_critic else n_a)
     opt = adam_init(p)
     w_cur, stuck, band_oc, best_val = a.w_start, 0, [], -1.0
     w10 = jax.vmap(draw_w10, in_axes=(0, None))(jax.random.split(k2, a.envs), w_cur)
@@ -424,7 +433,7 @@ def main():
             # choose on VALIDATION yards (seed 20000), never on the test yards above
             row["val"] = [E.evaluate(pol, float(w), n=512, seed=20_000, fly=fly, decide=decide, shield=a.shield, hp_tau=hp)["landed"] for w in (9, 12, 15, 18)]
             meta = dict(tag=a.tag, seed=a.seed, it=it, w_cur=w_cur, fly=fly, decide=decide, shield=a.shield, val=row["val"], hp_tau=a.hp_tau,
-                        crash_r=a.crash_r, hard_r=a.hard_r, flip_r=a.flip_r, shape_g=a.shape_g, rand=sorted(E.RAND), dob_in=a.dob_in,
+                        crash_r=a.crash_r, hard_r=a.hard_r, flip_r=a.flip_r, shape_g=a.shape_g, rand=sorted(E.RAND), dob_in=a.dob_in, priv_critic=a.priv_critic,
                         flyer=(a.flyer if a.flyer.startswith("dob") else os.path.abspath(a.flyer)) if a.flyer else None)
             save(base + ".npz", p, rms, meta)
             save(f"{base}_it{it}.npz", p, rms, meta)
