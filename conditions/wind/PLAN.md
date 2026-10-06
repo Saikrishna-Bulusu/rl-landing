@@ -255,6 +255,60 @@ before flying.
   - Still: the randomized-trained recipe lands less than the hand-tuned rule in a gale (34.2 vs 37.2) and far less
     than the paper decider in the nominal world (35.7 vs 84.6 at W10 18): it learned to give up (61% timeouts).
 
+### Phase 3, upgrades 3-4: the paper decider fine-tuned (Sai, 7 Oct: "Warm start + critic", "Re-price the outcomes")
+
+- `ppo.py --init` starts from the paper decider's actor (its input statistics pinned exactly), the privileged critic
+  fresh; `--critic-warmup 50` holds the actor while the critic learns (a flight lasts 15-35 rounds), then a fresh Adam.
+  All winds from the start (`--w-start 20`), randomized world, 600 rounds, the paper's prices (crash and hard -100).
+  `--offpad-r -10` re-prices a gentle touchdown off the pad (too fast and crashes stay -100). Queue:
+  `queue/phase3_warm.sh` (leash sweep, seed 0), `queue/phase3_warm2.sh 0` (seeds 1-2, re-priced 0-2, comparison).
+- First try (warm_rand s0-s1; stopped, archived in ClearML): critic warm-up 20, and Adam's step count ran on through
+  it, so the released actor stepped 2-5x lr. Validation landed fell 0.96 -> 0.00 at EVERY wind within ~30 rounds of
+  the release, then slowly recovered. In a gale a damaging touchdown (-100) outweighs a landing (+12.5), so holding
+  paid there; the network spread the habit to calm wind, where one more held step costs almost nothing, so nothing
+  pushed back. (A third fault: count=1e8 had frozen the critic's extra inputs at the first states' spread.)
+- Leash sweep (`--anchor b`: b x the deciding's KL from the paper decider, per decision), seed 0, chosen on
+  validation flights by the summed reward per flight at the training prices (`phase3_compare.py leash` ->
+  `runs/phase3_leash.json`; choosing on landed would pick the paper decider). Randomized world, W10 9 / 12 / 15 / 18:
+
+  | decider (seed 0, last checkpoint) | landed % | damaging % | mean reward |
+  |---|---|---|---|
+  | hand-tuned rule | 98.1 / 90.7 / 64.7 / 37.3 | 1.7 / 2.1 / 5.4 / 4.9 | -0.97 |
+  | paper decider | 96.0 / 92.0 / 78.0 / 57.5 | 4.0 / 7.4 / 16.4 / 26.7 | -9.98 |
+  | fine-tuned, leash 0 | 97.1 / 91.3 / 73.9 / 50.3 | 2.9 / 6.8 / 12.3 / 14.3 | -6.06 |
+  | leash 0.1 / 0.3 / 1 | 56-58 at W10 18 | 23-25 at W10 18 | -8.6 / -9.6 / -9.4 |
+
+  Chosen: leash 0. With the fixes the unleashed fine-tune does not collapse, and any leash that matters holds the
+  decider near its start.
+- What the damage is (validation, W10 18, `land_env.summary` sink / slide flags): touching down while sliding
+  sideways (>= 0.5 m/s). Paper decider: slid 18.1% of flights, sank too fast (not sliding) 0.6%, gentle off the pad
+  2.9%, crashed 5.1%; fine-tuned: 8.3 / 0.3 / 3.2 / 2.5 (it gives up more: 35.4% vs 15.8%); hand-tuned rule: 3.2 / 0.0
+  / 1.3 / 0.5 (gives up 57.8%). The rule's gate descends only when the drone looks still; the learners commit in
+  gusts. Re-pricing touches only the gentle off-pad share (~3%).
+- Test flights (`phase3_compare.py` -> `runs/phase3_dobin.json`, ClearML "phase 3: every arm, paired (landed and
+  damaging)"; 1,024 flights x 3 seeds, fine-tuned arms at their last checkpoint; the earlier arms reproduce exactly).
+  Randomized world, W10 18 (W10 20), % of flights; reward = summed reward per flight at the paper's prices:
+
+  | decider | landed | damaging | of which slid | gave up | reward W10 9 / 12 / 15 / 18 / 20 |
+  |---|---|---|---|---|---|
+  | hand-tuned rule | 37.2 (23.0) | 3.7 (3.8) | 2.1 | 59.1 | 11.6 / 7.6 / -1.4 / -19.5 / -33.6 |
+  | paper decider | 55.4 (39.8) | 23.8 (30.5) | 15.6 | 20.8 | 3.1 / -2.3 / -12.6 / -29.8 / -43.2 |
+  | retrained + privileged critic | 34.2 (20.7) | 5.0 (4.5) | 3.5 | 60.7 | 1.6 / -5.1 / -17.5 / -33.2 / -45.7 |
+  | fine-tuned + privileged critic | 53.5 (39.1) | 15.1 (16.9) | 8.7 | 31.5 | 6.2 / -0.2 / -8.7 / -21.1 / -28.8 |
+  | fine-tuned, re-priced | 48.5 (35.5) | 27.3 (26.2) | 9.4 | 24.1 | 4.8 / -7.0 / -21.4 / -33.1 / -38.2 |
+
+  - Fine-tuned + privileged critic: KEPT, the best learned decider. Against the paper decider (paired, 95%
+    intervals): damaging -3.1 [-4.6, -1.6] / -8.7 [-10.5, -7.0] / -13.6 [-15.6, -11.7] at W10 15 / 18 / 20, landed
+    -1.8 / -2.0 / -0.7 (the first two just below 0); higher reward at every wind in both worlds (nominal W10 18: 83.0
+    landed, 5.0 damaging vs 84.6 and 8.9). Against the hand-tuned rule: lands +10.3 / +16.2 / +16.0 at W10 15 / 18 / 20
+    but damages +7.7 / +11.4 / +13.1; the rule's reward is higher at W10 9-18, the learner's at W10 20.
+  - Re-priced: NOT kept. Paired against the fine-tuned: landed -1.0 to -8.5, damaging +1.0 to +12.4 (all intervals
+    clear of 0). Cheap misses made it settle off the pad (13.7% gentle off-pad at W10 18, nominal 19.1%) instead of
+    waiting, and it slid no less.
+  - Still open: no learned decider matches the rule's reward below a gale. The damage left is sliding at touchdown,
+    the safety layer's job (Phase 5; `land_env.shield_block` already blocks descent below 6 m unless within k x the
+    rule's centring and stillness limits, untried since September).
+
 ## Phase 4: architecture ablation (Sai: not satisfied with the common default)
 
 Width 64/128/256/512, depth 1-3, history length 0/4/8/16, tanh vs ReLU, history MLP vs GRU; 2-3 seeds each; ClearML

@@ -118,7 +118,7 @@ def main():
     for a, cname in zip(ax, CONDS):
         for name, r in res[cname].items():
             if name != "paired":
-                a.plot(WINDS, r["landed"], "o-", ms=3, color=col[name], label=name, ls="--" if "zeroed" in name else "-")
+                a.plot(WINDS, r["landed"], "o", ms=3, color=col[name], label=name, ls="--" if "zeroed" in name else "-")
         a.set(title=f"{cname} world", xlabel="W10 (m/s)", xticks=WINDS, ylim=(0, 102)); a.grid(alpha=0.3)
     ax[0].set_ylabel("landed, % of 1,024 flights (3 seeds averaged)"); ax[0].legend(fontsize=7, loc="lower left")
     fig.tight_layout(); os.makedirs(f"{R}/outputs/wind", exist_ok=True); fig.savefig(f"{R}/outputs/wind/phase3_dobin.png", dpi=120)
