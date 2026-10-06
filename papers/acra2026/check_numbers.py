@@ -328,7 +328,7 @@ chk("any direction", "s7_discussion", "The learner's gain over its copied planne
 cs += [("shared/fast_sim/urban_rl.py", r"N_ACT, HOLD, GAMMA, LAM = \d+, \d+, ([\d.]+, [\d.]+)", "0.997, 0.95"),
        ("shared/fast_sim/urban_rl.py", r"def ppo_update\(net, opt, batch, epochs=(\d+), mb=(\d+), clip=([\d.]+), ent=[\d.]+, vcoef=([\d.]+)", "4, 32768, 0.2, 0.5"),
        ("shared/fast_sim/urban_rl.py", r"clip_grad_norm_\(net.parameters\(\), ([\d.]+)\)", "0.5"),
-       ("shared/fast_sim/urban_rl.py", r"def fit\(net, X, Y, epochs=(\d+), mb=\d+, smooth=[\d.]+\):\n    opt = torch.optim.Adam\(net.parameters\(\), lr=([\de.-]+)\)", "8, 1e-3"),
+       ("shared/fast_sim/urban_rl.py", r"def fit\(net, X, Y, epochs=(\d+), mb=\d+, smooth=[\d.]+(?:, stats=None)?\):\n    opt = torch.optim.Adam\(net.parameters\(\), lr=([\de.-]+)\)", "8, 1e-3"),
        ("shared/fast_sim/urban_rl.py", r"copy_planner\(world, net, eyes, betas=\(([\d., ]+)\), seed0=20_000 \+ 100 \* seed, smooth=([\d.]+)", "1.0, 0.5, 0.0, 0.05"),
        ("shared/fast_sim/urban_rl.py", r"warm, lr, \(ent0, ent1\) = (\d+), ([\de.-]+), \(\(0.0, 0.0\) if kl else \(([\d.]+), ([\d.]+)\)\)", "5, 1e-4, 0.002, 0.0002"),
        ("shared/fast_sim/urban_rl.py", r"def __init__\(self, f, h=(\d+)\)", "256"), ("shared/fast_sim/urban_rl.py", r"eyes=False, eval_every=(\d+)", "10"),

@@ -4,23 +4,36 @@ Landing a delivery drone on the right pad in a Logan (QLD) suburb, with GPS deni
 (a separate project) gives it an absolute position from a downward camera; the pad's markers take over for the last
 30 m; a rule, a local 3D planner and reinforcement-learned policies decide the landing past cranes, wind and a magpie.
 
-The study grew in five parts. Each part's code is still here and still runs:
+## Where things are
 
-| part | question | where |
-|---|---|---|
-| 1. sigma | does GeoAnchor's own uncertainty help a landing policy? (it does not; staleness hurts) | `approach_env*.py`, `train*.py`, `archive/sigma/baselines.py`, `archive/sigma/calibrate.py` |
-| 2. obstacles | trees, a bigger marker, the forest study on real PX4 | `shared/px4_gazebo/px4_mission.py`, `shared/px4_gazebo/make_pad.py`, `forest*.py`, `conditions/static_obstacles/bigger_marker.py` |
-| 3. last mile | Logan under CASA rules: headroom, a learner that beats the planner, birds | `shared/fast_sim/` |
-| 4. Gazebo | PX4 with real pictures: a crane, the voxel map, a 360 camera rig, the magpie | `shared/px4_gazebo/gz_learner.py`, `shared/px4_gazebo/gz_voxel.py`, `shared/px4_gazebo/gz_rig.py`, `shared/px4_gazebo/gz_unified.py` |
-| 5. wind + GeoAnchor | landing in gusts (MuJoCo MJX twin of PX4); whole deliveries with GPS denied | `conditions/wind/`, `gnss_denied/` |
+Each folder has a README that is the runbook for that part: how to run it alone, what it produces, how long it takes.
+
+| folder | what is in it |
+|---|---|
+| [`conditions/wind/`](conditions/wind/README.md) | landing in gusty wind: the MuJoCo MJX twin of the x500 + PX4, the PPO learners, rule-vs-learner videos, the Gazebo wind plugin |
+| [`conditions/magpie/`](conditions/magpie/README.md) | the territorial magpie: the camera rig, the YOLO detector, magpie flights |
+| [`conditions/dynamic_obstacles/`](conditions/dynamic_obstacles/README.md) | the air ambulance, other delivery drones, people and cars (fast simulator) |
+| [`conditions/static_obstacles/`](conditions/static_obstacles/README.md) | the unmapped crane, the voxel map, the local 3D planner (weighted A*), trees, marker size |
+| [`conditions/weather/`](conditions/weather/README.md) | fog and mist |
+| [`all_conditions/`](all_conditions/README.md) | everything in one flight: the full-stack stress test |
+| [`mix_and_match/`](mix_and_match/README.md) | one launcher: any combination of wind, crane, magpie, sky, GNSS and decider for a Gazebo flight (`--dry-run` first) |
+| [`gnss_denied/`](gnss_denied/README.md) | GeoAnchor's visual fixes in PX4's loop: whole deliveries with GPS denied |
+| [`shared/fast_sim/`](shared/fast_sim/README.md) | the GPU fast simulator of the Logan suburb that the obstacle, magpie and fog conditions train in |
+| [`shared/px4_gazebo/`](shared/px4_gazebo/README.md) | PX4 SITL launch, missions, perception, the pad, the Gazebo flight core and the Logan worlds |
+| `dashboard/` | flight logs and the mission planner (section 4) |
+| [`papers/`](papers/README.md) | the frozen ACRA draft, four fact-checked research reports (`papers/research/`), the deck's source |
+| [`archive/`](archive/README.md) | earlier studies that still run: sigma (part 1), forest and marker (part 2), the Tello cage |
+| `outputs/` | everything a run writes: logs, films, run folders (never in git) |
+
+The study grew in five parts (sigma, obstacles, the last mile, Gazebo, wind + GNSS-denied); `archive/README.md` and
+`papers/acra2026/` keep that history.
 
 The slide deck (all five parts, with the films) is a private Claude artifact:
 <https://claude.ai/artifact/QaYeAMh7cZThMmffKxjjNA>. Its source is in `papers/slides/` (one HTML file per slide, order in
 `papers/slides/deck.json`); the charts are in `papers/docs/figures/`. The films are **not** in git (see rule 1).
 
-**How to use this README.** Sections 1-2 set up a machine once. Section 3 is the whole study as a runbook, part by
-part, in the order it was run; each step says what it produces and roughly how long it takes on the Legion (RTX 5070
-Laptop 8 GB, 32 threads, 23 GB RAM). Each part needs only sections 1-2, not the parts before it, unless a step says so.
+**How to use this README.** Sections 0-2 set up a machine once. Section 3 proves the stack is alive and says where to
+go next. Times are for the Legion (RTX 5070 Laptop 8 GB, 32 threads, 23 GB RAM).
 
 ---
 
@@ -97,10 +110,10 @@ Small checkpoints the films use are in git: `conditions/wind/runs/fly_hp_s0_best
 Everything else section 3 regenerates.
 
 ---
+## 3. Start here
 
-## 3. Run the whole study, step by step
+### Prove the stack is alive (10 min)
 
-### Before any part: prove the stack is alive (10 min)
 
 ```bash
 python3 gnss_denied/geo_cruise.py --check                                          # the route follower (no sim)
@@ -110,143 +123,34 @@ OUT=smoke WORLD=geo_clean INSTANCE=5 gnss_denied/geofly.sh /usr/bin/python3 -u g
 tail -3 outputs/gazebo_geo/smoke/run.log                                           # expect "GNSS denied", a geo {...} line
 ```
 
-### Part 1 -- sigma (the fast point-mass study; `archive/sigma/HANDOFF.md` has the full story and its run log)
+### Run one condition, all of them, or a mix
 
-| step | command | produces, time |
-|---|---|---|
-| 1. calibrate sigma on GeoAnchor's results | `python3 archive/sigma/calibrate.py ~/GeoAnchor/results/s8_train --exclude-scene Scene_21` | `shared/fast_sim/sigma_pool.npz`, ENCE, conformal coverage; 1 min |
-| 2. the scripted baselines (the decision gate) | `python3 archive/sigma/baselines.py --pool shared/fast_sim/sigma_pool.npz --tune --episodes 400` | `archive/sigma/results/baselines.json`; 10 min |
-| 3. train the three arms (none / staleness / sigma) | `$P archive/sigma/train.py --pool shared/fast_sim/sigma_pool.npz --all --steps 2000000 --n-envs 8` | `runs/ablation.json`; 30-60 min per arm |
-| 4. the powered ablation (trees, 8+ seeds, resumable) | `bash archive/sigma/run_overnight.sh` (runs `archive/sigma/train_v5.py` per arm and seed; `archive/sigma/watchdog.sh` guards memory) | `<run>/*/ablation.json`; overnight |
-| 5. the same missions on real PX4 | `./shared/px4_gazebo/launch_px4.sh` in one terminal, then `python3 shared/px4_gazebo/px4_mission.py --runs 5` | landings per sigma; ~5 min per mission |
+Pick a folder from the table at the top; its README is the runbook. `all_conditions/` flies everything at once,
+`mix_and_match/fly.py` any combination you choose (it refuses combinations the code cannot do, and `--dry-run` prints
+the commands without starting anything).
 
-Compare `runs/ablation.json` with `archive/sigma/results/baselines.json`; the claim lives in the high-sigma column.
+### Watch training in ClearML
 
-### Part 2 -- the marker and the forest, on real PX4
+Both trainers log live to ClearML (hosted app.clear.ml; credentials in `~/clearml.conf`, never in git):
 
-| step | command | produces, time |
-|---|---|---|
-| 1. how big must the marker be (fast study) | `python3 conditions/static_obstacles/bigger_marker.py` | delivery vs marker size; 5 min |
-| 2. old pad vs new pad, same five missions | `./conditions/static_obstacles/ab_pad.sh old`, then `./conditions/static_obstacles/ab_pad.sh new` | the A/B table; 30 min per arm |
-| 3. twenty different forests, both pads | `./conditions/static_obstacles/run_forest20.sh` (switches the pad itself between arms) | `forest12_*.json`, delivered/crashed per pad; 3 h |
-| 4. does a better matcher deliver more? | `./archive/part2/gazebo_matchers.sh` | matched-seed landings per matcher; 3 h |
+| project | what |
+|---|---|
+| `rl-landing/wind` | every `conditions/wind/ppo.py` training run, one task per run: outcomes, return, curriculum, PPO losses, validation landed per wind, speed; the best checkpoint as an artifact; the rule-vs-learner videos |
+| `rl-landing/fast_sim` | every `shared/fast_sim/urban_rl.py` seed: DAgger rounds, clean deliveries, rewards, PPO losses, validation |
+| `rl-landing/wind/history`, `rl-landing/fast_sim/history` | the training logs from before ClearML, imported by `shared/fast_sim/clearml_import.py` |
 
-### Part 3 -- the last mile in Logan (fast simulator; run from `shared/fast_sim/`)
+Open a run, then the SCALARS tab; tick several runs and press Compare to overlay them. `--no-clearml` trains without
+it. `python shared/fast_sim/clearml_import.py --dry-run` must report 0 to import once the history is in.
 
-| step | command | produces, time |
-|---|---|---|
-| 1. headroom: how far is the rule from a perfect decider | `$P urban_headroom.py --map logan_map_lidar.npz --nav gps` (add `--birds --hunter` for the magpie; `--rig --tag _v2l` with `RIG_CALIB=rig_calib_v2l.json` for the camera rig) | `headroom_*.json`; 30-60 min per ladder |
-| 2. train the learner (copies the planner, then PPO) | `$P urban_rl.py --world corridor --gens 200 --eyes --map logan_map_lidar.npz --nav gps --seeds 0 1 2` (same extra flags as step 1) | `rl_corridor_*_s<k>_mean.pt`, `rl_*.json`; 2-3 h per seed |
-| 3. can the network hold the planner at all | `$P clone_check.py` | `clone_check.json` |
-| 4. the figures | `$P paper_figs.py world headroom learning birds rig gazebo` | `../../outputs/paper/figs/*.pdf` |
+### Research reports
 
-The chains that ran these for the deck are `all_conditions/queue/overnight_24sep.sh`, `conditions/magpie/rig_queue.sh`, `conditions/magpie/rig_train.sh`, `conditions/magpie/rig_after.sh`:
-their headers say which ladders and trainings, in what order, and why.
+`papers/research/` holds four reports, each checked source by source: the nearest published architectures to ours,
+Aerial Gym against our simulators, how much wind the x500 can take, and the algorithm options for the wind learner.
 
-### Part 4 -- PX4 in Gazebo: the crane and the magpie
+---
 
-The crane (`conditions/static_obstacles/voxfly.sh` starts PX4 + Gazebo per run; RUNS are decider:map):
+## 4. The dashboard: flight logs and missions
 
-```bash
-OUT=first SEEDS="0 1 2" RUNS="planner:survey rule:voxel rule:local3d" ./conditions/static_obstacles/voxfly.sh   # survey vs voxel map vs 3D planner
-```
-
-The camera rig, measured before it is trusted (the bench is a static drone in Gazebo, in its own partition):
-
-```bash
-RIG=v2l /usr/bin/python3 shared/px4_gazebo/gz_rig.py --bench                       # headless bench; prints its PID
-RIG=v2l /usr/bin/python3 shared/px4_gazebo/gz_rig.py --cover shared/px4_gazebo/gz_logan/rig_v2l/cover        # which camera sees the magpie where (~15 min)
-RIG=v2l /usr/bin/python3 shared/px4_gazebo/gz_rig.py --data shared/px4_gazebo/gz_logan/rig_v2l/data --poses 600    # labelled pictures (~25 min)
-kill <bench PID>
-RIG=v2l PYTHONPATH=.yolo_pkgs $P conditions/magpie/rig_yolo.py --data shared/px4_gazebo/gz_logan/rig_v2l/data
-RIG=v2l PYTHONPATH=.yolo_pkgs $P conditions/magpie/rig_yolo.py --train --epochs 30 --init $PWD/shared/px4_gazebo/gz_logan/rig_v2/yolo/run/weights/best.pt
-RIG=v2l PYTHONPATH=.yolo_pkgs $P conditions/magpie/rig_yolo.py --score shared/px4_gazebo/gz_logan/rig_v2l/data        # found / false alarms by size
-RIG=v2l /usr/bin/python3 shared/px4_gazebo/gz_rig.py --calib shared/px4_gazebo/gz_logan/rig_v2l/cover shared/px4_gazebo/gz_logan/rig_v2l/data --score score_yolo.json \
-    --out shared/fast_sim/rig_calib_v2l.json                                # the calibration the fast simulator (part 3) flies
-```
-
-Retrain the detector on photo ground (what fixed "trees seen as magpies"; about 2 h, one command):
-
-```bash
-conditions/magpie/queue/yolo_photo.sh    # photo bench -> 800 places -> fine-tune on plain + photo -> old vs new in outputs/queue/yolo_photo.log
-```
-
-The magpie flights on the plain Logan world (`SENSE=rig`: the decider knows the bird only through the rig):
-
-```bash
-OUT=planner_rig SEEDS="0 1 2 3" DECIDERS=planner SENSE=rig RIG=v2l ./conditions/magpie/rigfly.sh
-OUT=learner_rig SEEDS="0 1 2 3" DECIDERS=learner SENSE=rig RIG=v2l \
-  CKPT=rl_corridor_eyes_lidar_gps_birds_hunter_rig_v2l_s0_mean.pt ./conditions/magpie/rigfly.sh
-```
-
-### Part 5a -- wind (MuJoCo MJX twin of PX4; details in `conditions/wind/README.md`; run from `conditions/wind/`)
-
-| step | command | produces, time |
-|---|---|---|
-| 1. the rule's ladder (1,024 paired flights per wind) | `$P ppo.py --ladder rule` | `runs/rule_ladder.json`; 5 min |
-| 2. the flying learner (8 seeds) | `$P ppo.py --tag fly_hp --seed 0 --no-decide --hp-tau 4 --iters 1000 --w-ok 0.95 --envs 4096 --steps 64 --eval-every 100` | `runs/fly_hp_s0_best.npz`; 45 min |
-| 3. the crash-priced decider on a frozen flyer (3 seeds) | `$P ppo.py --tag stage2_c100 --seed 0 --flyer runs/fly_s0_best.npz --no-fly --lr 1e-4 --iters 600 --crash-r -100 --hard-r -30 --w-ok 0.95 --envs 4096 --steps 64 --eval-every 100` | `runs/stage2_c100_s0_best.npz`; 30 min |
-| 4. each checkpoint's ladder | `$P ppo.py --ladder runs/fly_hp_s0_best.npz` | `runs/*_best_ladder.json` |
-| 5. the same in Gazebo (from the repo root) | `N=1 EPISODES="$(seq 0 19)" WINDS="18" DECIDERS="rule conditions/wind/runs/stage2_c100_s0_best.npz" OUT=ladder ./conditions/wind/gz_ladder.sh` | `outputs/gazebo_wind/ladder/flights.jsonl`; ~6 min a flight |
-| 6. the charts | `python3 papers/deck/deck_figs.py` (from the repo root) | `outputs/gazebo_geo/deck/wind_*.png` |
-
-`conditions/wind/queue/overnight_27sep.sh` is the chain that trained every seed and variant in the deck.
-
-### Part 5b -- whole deliveries with GPS denied (GeoAnchor in PX4's loop)
-
-`gnss_denied/geofly.sh` starts PX4 + Gazebo on a photo-floor world, GeoAnchor's own three layers on the live gimbal camera,
-the uXRCE-DDS agent and `gnss_denied/agp_sim_bridge.py` (GeoAnchor's accepted fixes -> PX4's EKF2 as auxiliary position),
-then runs one flight command and cleans everything up. It never uses GeoAnchor's `run.sh` (that syncs every run to
-the logs repo); `GEOANCHOR_SYNC_ON_EXIT=0` is set for you.
-
-Every flight: climbs on GPS to 75 m at the depot; flies the route at 7 m/s on PX4's own estimate (corners flown
-through, the nose turned the short way); over the suburb, once GeoAnchor's fixes are arriving and PX4 is fusing them,
-**GNSS is switched off** (`EKF2_GPS_CTRL 0`) for the rest of the flight; 50 m before the pad it comes down to 55 m,
-settles, drops to 30 m where the pad's 1.80 m marker reads, and a lander takes over. Every marker read is also a
-position fix for PX4 (GeoAnchor fades below 50 m). A rangefinder gives the height.
-
-1. Does GeoAnchor match this floor at all (a 75 m sweep, replayed through GeoAnchor; ~20 min):
-
-```bash
-OUT=geo_rec_floor WORLD=geo_floor INSTANCE=5 ./shared/px4_gazebo/sitl.sh /usr/bin/python3 -u gnss_denied/record_sweep.py --out outputs/gazebo_geo/floor
-$GA gnss_denied/frame_check.py outputs/gazebo_geo/floor                               # the image-top heading, measured
-gnss_denied/replay.sh outputs/gazebo_geo/floor floor                                   # GeoAnchor's own layers on the recording
-python3 gnss_denied/score.py outputs/gnss_denied/runs/<run> outputs/gazebo_geo/floor/flight_gt.jsonl   # fixes against the truth (median, p90, %<10 m)
-OUT=geo_readh WORLD=geo_floor INSTANCE=5 ./shared/px4_gazebo/sitl.sh /usr/bin/python3 -u gnss_denied/read_height.py   # marker read by height
-```
-
-2. The four films (one at a time; outputs in `outputs/gazebo_geo/<OUT>/`; 5-10 min each, the magpie ~12 min):
-
-```bash
-# calm air, the rule lands it
-OUT=geo_calm4 WORLD=geo_clean INSTANCE=5 gnss_denied/geofly.sh /usr/bin/python3 -u conditions/wind/gz_windland.py --geo \
-  --episode 0 --w10 0 --decider rule --out outputs/gazebo_geo/geo_calm4/flights.jsonl --video outputs/gazebo_geo/geo_calm4/calm.mp4
-
-# 9 m/s wind at 10 m (WindDrag plugin), the flying learner lands it
-OUT=geo_wind10 WORLD=geo_clean SERVER_CONFIG=shared/px4_gazebo/gz_logan/geo_clean/geo_w9.config INSTANCE=5 gnss_denied/geofly.sh \
-  /usr/bin/python3 -u conditions/wind/gz_windland.py --geo --episode 0 --w10 9 --decider conditions/wind/runs/fly_hp_s0_best.npz \
-  --out outputs/gazebo_geo/geo_wind10/flights.jsonl --video outputs/gazebo_geo/geo_wind10/wind9.mp4
-
-# an unmapped 58 m crane on the way in: hand-over 90 m out at 75 m, rule + local 3D planner on the voxel map
-CRANE_AT=147.33,-23.43 GEO_GOAL_OUT=90 OUT=geo_obst5 WORLD=geo_floor INSTANCE=5 gnss_denied/geofly.sh /usr/bin/python3 -u \
-  shared/px4_gazebo/gz_learner.py --geo --decider rule --seed 1 --magpie none --voxel --local3d --video outputs/gazebo_geo/geo_obst5/obstacles.mp4
-
-# a hunter magpie, seen only through rig v2l (with the up camera) and the retrained detector; the learner trained
-# with birds lands it (its landing runs at 0.1x speed, for the detector)
-TREES_JSON=shared/px4_gazebo/gz_logan/trees_logan.json RIG=v2l RIG_YOLO=$PWD/shared/px4_gazebo/gz_logan/rig_v2/yolo/run_geo/weights/best.pt \
-  RIG_CALIB=$PWD/urban/rig_calib_v2l.json GEO_LAND_SPEED=0.1 OUT=geo_magpie6 WORLD=geo_magpie_v2l INSTANCE=5 gnss_denied/geofly.sh \
-  /usr/bin/python3 -u shared/px4_gazebo/gz_learner.py --geo --decider learner --seed 0 --magpie hunter --sense rig \
-  --ckpt rl_corridor_eyes_lidar_gps_birds_hunter_rig_v2l_s0_mean.pt --video outputs/gazebo_geo/geo_magpie6/magpie.mp4
-```
-
-3. Deck material (internal only):
-
-```bash
-python3 papers/deck/to_webm.py outputs/gazebo_geo/geo_calm4/calm.mp4 outputs/gazebo_geo/deck/calm4.webm   # VP8 clip + still
-python3 papers/deck/deck_figs.py                                                            # charts -> outputs/gazebo_geo/deck/*.png
-```
-
-### Part 5c -- the dashboard: flight logs and missions
 
 `dashboard/` is a copy of GeoAnchor's dashboard (the original in `geoanchor-rt/dashboard` is untouched) with two
 new pages and its own small server:
@@ -271,7 +175,7 @@ neighbour's), `conditions/wind/gz_windland.py` the pad. `geofly.sh` copies PX4's
 
 ---
 
-## 4. Reading a result
+## 5. Reading a result
 
 Each GeoAnchor flight leaves in `outputs/gazebo_geo/<OUT>/`: `run.log` (`GNSS denied at ...`, a `geo {...}` report, the
 landing line), the film (`.mp4`, 1600x900), PX4's own log (`*.ulg`), the record (`*_geo.json` / `geo_*.json`: every
@@ -299,7 +203,7 @@ The magpie detector retrained on photo ground: held-out pictures, threshold 0.5 
 phantom alarms fell from 54% to 18% (11% with the up camera), and the up camera doubled how often a magpie above
 the drone was truly seen (20% -> 40%).
 
-## 5. Self-checks (each fails loudly if its logic breaks)
+## 6. Self-checks (each fails loudly if its logic breaks)
 
 ```bash
 python3 gnss_denied/geo_cruise.py --check                 # the route follower: corners flown through, turned the short way
@@ -308,7 +212,7 @@ python3 dashboard/flight_server.py --check        # PX4's log and the GeoAnchor 
 $P conditions/wind/x500_mjx.py --check                       # the MJX drone against PX4's step responses
 ```
 
-## 6. Things that bit us (read before changing the flight code)
+## 7. Things that bit us (read before changing the flight code)
 
 * The world's GPS origin must be the Logan depot, or PX4 rejects every GeoAnchor fix.
 * gz-sim 8's magnetometer ignores the world's field once spherical coordinates are set: PX4's heading is 10-20 deg
@@ -321,18 +225,22 @@ $P conditions/wind/x500_mjx.py --check                       # the MJX drone aga
 * A detector trained on plain Gazebo ground fires on tree crowns over the photo floor: train on the ground you fly.
 * Frames: measure them (`gnss_denied/frame_check.py`), never derive them.
 * Stop simulators by PID or by their world file, never `pkill -f "gz sim"` (it kills the other partition's bench).
+* A stage-2 wind checkpoint names its frozen flyer by absolute path; after the 5 Oct reorganization the loaders fall
+  back to `conditions/wind/runs/` (re-scored afterwards: identical ladder).
+* ClearML drops scalars sent to a task created with `Task.create` until it is marked started (the first history import
+  came out empty). Check a run's graphs after any new logging code.
 
 ## Layout
 
 ```
 conditions/        one folder per condition: wind, magpie, dynamic_obstacles, static_obstacles, weather (scripts, queue/ chains, results/)
 all_conditions/    the stress test and the chains that mix conditions
-mix_and_match/     launcher for any subset of conditions (stub)
-gnss_denied/       part 5: worlds, the live GeoAnchor loop, cruise, films, missions
+mix_and_match/     fly.py: any combination of conditions for one Gazebo flight
+gnss_denied/       GeoAnchor's loop: worlds, cruise, films, missions
 shared/fast_sim/   the last-mile fast simulator, maps, deciders, RL, the local 3D planner (run its scripts from this folder)
-shared/px4_gazebo/ PX4 launch, missions, perception, the Gazebo landers and the rig; gz_logan/ = generated worlds and models (not in git)
+shared/px4_gazebo/ PX4 launch, missions, perception, the Gazebo landers and the rig; gz_logan/ = generated worlds and models
 dashboard/         the forked dashboard + flight_server.py
-papers/            acra2026 (frozen), slides/ (the deck's source) and docs/ (its charts), report/, paper/, deck/, research/
+papers/            acra2026 (frozen), research/ (four checked reports), slides/ (the deck's source), docs/, report/, paper/, deck/
 archive/           sigma/ (part 1), part2/, tello/ (the Tello cage)
 outputs/           everything a run writes: logs, films, run folders (never in git)
 ```

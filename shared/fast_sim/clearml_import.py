@@ -66,7 +66,7 @@ def fast_jobs():
 
 def existing(project):
     from clearml import Task
-    return {t["name"] for t in Task.query_tasks(project_name=project, additional_return_fields=["name"], task_filter={"page_size": 500})}
+    return {t["name"] for t in Task.query_tasks(project_name=project, additional_return_fields=["name"], task_filter={"page_size": 500, "system_tags": ["-archived"]})}
 
 
 def push(job):
@@ -76,12 +76,12 @@ def push(job):
     t.connect({k: ("" if v is None else v) for k, v in job["hp"].items()}, name="hyperparameters")
     if job.get("final"):
         t.connect(job["final"], name="final eval")
+    t.mark_started(force=True)        # the server drops events sent to a task that never started (4 Oct: 76 empty imports)
     lg = t.get_logger()
     for it, title, series, v in job["pts"]:
         if isinstance(v, (int, float)) and not math.isnan(v):     # NaN: nothing finished yet
             lg.report_scalar(title, series, float(v), int(it))
-    lg.flush()
-    t.mark_started()
+    t.flush(wait_for_uploads=True)
     t.mark_completed()
     return t.get_output_log_web_page()
 
