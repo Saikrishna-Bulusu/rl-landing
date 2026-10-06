@@ -267,23 +267,46 @@ def evaluate(policy_fn, w10, n=1024, seed=0, fly=True, decide=True, t_max=T_MAX,
     st = jax.vmap(lambda k: reset(k, w10))(keys)
 
     def one(carry, k):
-        st = carry
+        st, acc = carry
         ks = jax.random.split(k, n * 2).reshape(n, 2, 2)
         obs = jax.vmap(obs_of)(st, ks[:, 0])
         act = policy_fn(obs, st)
         new, r, done = jax.vmap(lambda s, a, kk: step(s, a, kk, fly, decide, shield, hp_tau))(st, act, ks[:, 1])
+        # how it flies, counted only while in the air (6 Oct: the DOB landed in MJX with its push at the cap ~80% of the
+        # time, then landed hard in Gazebo; measure that before flying anything in Gazebo)
+        lv = (~st["done"]).astype(jnp.float32)
+        push, push0 = new["prev_act"][:, :2], st["prev_act"][:, :2]          # the applied push / A_FF, now and before
+        v0, v1 = st["vz_sent"], new["vz_sent"]
+        flip = ((v0 > 0.5) & (v1 < -0.3)) | ((v0 < -0.3) & (v1 > 0.5))
+        h = st["sim"]["d"].qpos[:, 2]
+        band = jnp.where(h > 8.0, 0, jnp.where(h > 6.0, 1, jnp.where(h > 2.0, 2, 3)))
+        rule_vz = obs[:, 10] * 3.0                                            # the rule's own vertical (obs holds cmd/3)
+        cat = jnp.where(rule_vz < -1.0, 0, jnp.where(rule_vz < -0.1, 1, 2))   # rule: fast down / slow down / hold
+        mode = jnp.where(decide, act[:, 2].astype(jnp.int32), 0)
+        acc = dict(live=acc["live"] + lv, cap=acc["cap"] + lv * (jnp.abs(push) > 0.97).any(-1),
+                   slew=acc["slew"] + lv * jnp.linalg.norm(push - push0, axis=-1) * A_FF, flip=acc["flip"] + lv * flip,
+                   msat=acc["msat"] + lv * (new["sim"]["w"] >= 0.995 * X.W_MAX).any(-1),
+                   picks=acc["picks"].at[band, cat, mode].add(lv))
         keep = lambda a, b: jnp.where(st["done"].reshape((-1,) + (1,) * (a.ndim - 1)), a, b)
         st = jax.tree_util.tree_map(keep, st, new)
-        return st, None
+        return (st, acc), None
 
     n_steps = int(t_max / DT_C) + 1
-    run = jax.jit(lambda s, ks: jax.lax.scan(one, s, ks)[0])
-    st = run(st, jax.random.split(jax.random.PRNGKey(seed + 1), n_steps))
+    z = jnp.zeros(n)
+    acc = dict(live=z, cap=z, slew=z, flip=z, msat=z, picks=jnp.zeros((4, 3, 5)))
+    run = jax.jit(lambda c, ks: jax.lax.scan(one, c, ks)[0])
+    st, acc = run((st, acc), jax.random.split(jax.random.PRNGKey(seed + 1), n_steps))
+    acc = {k: np.array(v) for k, v in acc.items()}
+    air = max(float(acc["live"].sum()), 1.0)
     out = np.array(st["outcome"])
     return dict(w10=float(w10), n=n, landed=float((out == 1).mean()), crashed=float((out == 2).mean()),
                 hard=float((out == 3).mean()), timeout=float(((out == 4) | (out == 0)).mean()),
                 miss_landed=float(np.median(np.array(st["miss"])[out == 1])) if (out == 1).any() else float("nan"),
                 t_mean=float(np.array(st["t"]).mean()),
+                t_land_median=float(np.median(np.array(st["t"])[out == 1])) if (out == 1).any() else float("nan"),
+                push_cap=float(acc["cap"].sum() / air), push_step=float(acc["slew"].sum() / air),
+                rev_per_s=float(acc["flip"].sum() / (air * DT_C)), motor_sat=float(acc["msat"].sum() / air),
+                picks=acc["picks"].round().astype(int).tolist(),   # [height >8, 6-8, 2-6, <2 m][rule: fast, slow, hold][mode]
                 first40=dict(outcome=out[:40].tolist(), miss=np.array(st["miss"])[:40].round(3).tolist(),
                              t=np.array(st["t"])[:40].round(2).tolist()))     # episode i = Gazebo's yard i
 

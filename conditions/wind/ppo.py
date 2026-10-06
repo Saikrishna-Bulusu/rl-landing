@@ -16,11 +16,14 @@ import argparse
 import json
 import math
 import os
+import sys
 import time
 
 import numpy as np
 
 os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
+if "--ladder" in sys.argv:                       # a ladder reports numbers: deterministic kernels (training stays fast)
+    os.environ.setdefault("XLA_FLAGS", "--xla_gpu_deterministic_ops=true")   # 6 Oct: default kernels flipped ~3 of 1,024 gusty flights between runs
 import jax
 import jax.numpy as jnp
 
@@ -234,16 +237,17 @@ def load(path):
     return p, dict(mean=jnp.array(z["rms_mean"]), var=jnp.array(z["rms_var"]), count=1.0), json.loads(str(z["meta"]))
 
 
-def greedy_policy(p, rms, flyer=None):
+def greedy_policy(p, rms, flyer=None, greedy=True):
+    """The policy as evaluate() calls it; greedy=False samples (the key is env 0's, which every step renews)."""
     def f(obs, st):
-        a_c, a_d = policy_act(p, rms, obs, jax.random.PRNGKey(0), greedy=True)
+        a_c, a_d = policy_act(p, rms, obs, jax.random.PRNGKey(0) if greedy else st["key"][0], greedy=greedy)
         if flyer is not None:
             a_c = dob_ff(flyer[1], obs) if flyer[0] == "dob" else flyer_mean(flyer, obs)
         return jnp.zeros((obs.shape[0], 3)).at[:, :2].set(a_c).at[:, 2].set(a_d.astype(jnp.float32))
     return f
 
 
-def load_policy(path):
+def load_policy(path, greedy=True):
     """A checkpoint as (greedy policy, fly, decide, shield); stage-2 checkpoints bring their flyer."""
     p, rms, meta = load(path)
     flyer = None
@@ -252,7 +256,7 @@ def load_policy(path):
     elif meta.get("flyer"):
         fp, frms, _ = load(meta["flyer"])
         flyer = (fp, frms)
-    return greedy_policy(p, rms, flyer), meta["fly"] or flyer is not None, meta["decide"], meta.get("shield", 0.0)
+    return greedy_policy(p, rms, flyer, greedy), meta["fly"] or flyer is not None, meta["decide"], meta.get("shield", 0.0)
 
 
 def hp_of(path):

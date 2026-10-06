@@ -18,6 +18,7 @@ import json
 import os
 
 os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
+os.environ.setdefault("XLA_FLAGS", "--xla_gpu_deterministic_ops=true")   # 6 Oct: default kernels flipped ~3 of 1,024 gusty flights between runs
 import jax.numpy as jnp
 
 import land_env as E
