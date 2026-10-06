@@ -57,6 +57,15 @@ CDA_H, CDA_V = 0.04, 0.05                   # m^2, body drag areas: an assumptio
                                             # 1-3 kg multirotors (Russell et al., NASA 2016); Gazebo's x500 had none
 W_HOVER = math.sqrt(MASS * G / 4 / KT)      # 861 rad/s
 U_HOVER = (W_HOVER - W_MIN) / (W_MAX - W_MIN)   # 0.836: PX4's hover throttle once its estimator has converged
+A_UP, A_DN = 1 - math.exp(-DT / TAU_UP), 1 - math.exp(-DT / TAU_DN)   # the motor lag per physics step
+# one drone (land_env's drone randomization, PLAN.md 2c), in the state as s["prm"]: body drag areas, then mass, thrust
+# coefficient and motor time constants as ratios to the above, and the offboard command's latency in physics steps
+PRM0 = jnp.array([CDA_H, CDA_V, 1.0, 1.0, 1.0, 0.0])
+PER_DRONE = False      # read at trace time (jit a fresh function after changing it: a cached program keeps the old value);
+                       # land_env turns it on with its drone randomization. Off, the drone runs on the
+                       # constants above, the program XLA compiles is the old one and earlier results repeat bit for bit
+                       # (6 Oct: with prm's 1.0s traced in their place, ~0.5% of gusty flights changed ending: XLA folds
+                       # constants differently, and the rate loop's derivative grows a last-digit difference)
 
 # ---- PX4 defaults (src/modules/mc_pos_control, mc_att_control, mc_rate_control; airframe 4001_gz_x500) ------------------
 VEL_P = jnp.array([1.8, 1.8, 4.0])
@@ -144,9 +153,9 @@ def bodyz_to_q(bz, yaw):
     return qfrom_rot(jnp.stack([bx, by, bz], axis=1))
 
 
-def position_control(v, vel_sp, acc_ff, vel_int, vdot):
+def position_control(v, vel_sp, acc_ff, vel_int, vdot, r_h=1.0):
     """PositionControl::_velocityControl + _accelerationControl, ENU. Returns the thrust vector (normalised, up),
-    the new integral."""
+    the new integral. r_h: the hover throttle PX4's estimator has converged to, over U_HOVER."""
     vel_sp = jnp.concatenate([vel_sp[:2] * jnp.minimum(1.0, VXY_MAX / jnp.maximum(jnp.linalg.norm(vel_sp[:2]), 1e-6)),
                               jnp.clip(vel_sp[2:], -VZ_DN, VZ_UP)])
     verr = vel_sp - v
@@ -157,7 +166,7 @@ def position_control(v, vel_sp, acc_ff, vel_int, vdot):
     ax = jnp.where(tilt > TILT_MAX, 1.0, 0.0)
     h = bz[:2] / jnp.maximum(jnp.linalg.norm(bz[:2]), 1e-9)
     bz = ax * jnp.array([h[0] * math.sin(TILT_MAX), h[1] * math.sin(TILT_MAX), math.cos(TILT_MAX)]) + (1 - ax) * bz
-    coll = jnp.maximum(U_HOVER * (G + acc_sp[2]) / G / bz[2], THR_MIN)
+    coll = jnp.maximum(U_HOVER * (G + acc_sp[2]) * r_h / G / bz[2], THR_MIN)
     thr = bz * coll
     # vertical priority with a horizontal margin
     thr_xy_n = jnp.linalg.norm(thr[:2])
@@ -167,7 +176,7 @@ def position_control(v, vel_sp, acc_ff, vel_int, vdot):
     thr = jnp.concatenate([thr_xy, thr_z[None]])
     # anti-windup: vertical at the thrust limits, horizontal by tracking (Rundqwist)
     ez = jnp.where(((thr_z <= THR_MIN) & (verr[2] <= 0)) | ((thr_z >= THR_MAX) & (verr[2] >= 0)), 0.0, verr[2])
-    acc_prod = thr_xy * (G / U_HOVER)
+    acc_prod = thr_xy * (G / U_HOVER) / r_h
     sat = jnp.sum(acc_sp[:2] ** 2) > jnp.sum(acc_prod ** 2)
     exy = jnp.where(sat, verr[:2] - 2.0 / VEL_P[0] * (acc_sp[:2] - acc_prod), verr[:2])
     vel_int = vel_int + VEL_I * jnp.concatenate([exy, ez[None]]) * DT
@@ -240,11 +249,12 @@ ROT3 = jnp.array(np.c_[ROTORS - [COM_X, 0.0], np.full(4, ROTOR_Z)])   # hubs fro
 SPIN_J = jnp.array(SPIN)
 
 
-def forces(q, v, om, w, wind, cda):
+def forces(q, v, om, w, wind, prm):
     """World-frame force and torque on the CoM: thrust, rotor reaction, propeller drag and rolling moment against the
     air (Gazebo's MulticopterMotorModel), body drag."""
     Rm = qrot(q)
-    T = KT * w ** 2                                    # gz-sim 8.15's motor model: no thrust loss with speed
+    T = KT * w ** 2 if prm is None else KT * prm[3] * w ** 2       # gz-sim 8.15's motor model: no thrust loss with speed
+    cda = jnp.array([CDA_H, CDA_V]) if prm is None else prm[:2]
     f_b = jnp.array([0.0, 0.0, T.sum()])
     tau_b = jnp.array([(ROT3[:, 1] * T).sum(), -(ROT3[:, 0] * T).sum(), -(SPIN_J * KM * T).sum()])
     v_hub = (v - wind)[None, :] + (Rm @ jnp.cross(om[None, :], ROT3).T).T     # air-relative, world
@@ -259,21 +269,23 @@ def forces(q, v, om, w, wind, cda):
     return Rm @ f_b + f_body, Rm @ tau_b + jnp.cross(Rm @ DRAG_AT, f_body)
 
 
-def init_state(pos, yaw=0.0, vel=(0.0, 0.0, 0.0)):
-    """One drone hovering (motors at hover, integrals at the hover solution) at pos, ENU."""
+def init_state(pos, yaw=0.0, vel=(0.0, 0.0, 0.0), prm=PRM0):
+    """One drone (prm: PRM0's layout) hovering (motors at hover, integrals at the hover solution) at pos, ENU."""
     d = mjx.make_data(MX)
     q = jnp.array([jnp.cos(yaw / 2), 0.0, 0.0, jnp.sin(yaw / 2)])
     d = d.replace(qpos=jnp.concatenate([jnp.asarray(pos, jnp.float32), q]),
                   qvel=jnp.concatenate([jnp.asarray(vel, jnp.float32), jnp.zeros(3)]))
     z3 = jnp.zeros(3)
-    return dict(d=d, w=jnp.full(4, W_HOVER), vel_int=z3, vdot=z3, rate_int=z3, racc=z3)
+    return dict(d=d, w=jnp.full(4, W_HOVER * jnp.sqrt(prm[2] / prm[3])), vel_int=z3, vdot=z3, rate_int=z3, racc=z3,
+                prm=jnp.asarray(prm, jnp.float32), sp=jnp.zeros((2, 6)))
 
 
-def physics_step(s, vel_sp, acc_ff, yaw_sp, wind, cda=jnp.array([CDA_H, CDA_V])):
+def physics_step(s, vel_sp, acc_ff, yaw_sp, wind):
     """PX4's loops, the motors, the forces, one MJX step (DT)."""
-    d = s["d"]
+    d, prm = s["d"], (s["prm"] if PER_DRONE else None)
     q, v, om = d.qpos[3:7], d.qvel[:3], d.qvel[3:6]
-    thr, vel_int = position_control(v, vel_sp, acc_ff, s["vel_int"], s["vdot"])
+    r_h = 1.0 if prm is None else 1.0 + (jnp.sqrt(prm[2] / prm[3]) - 1.0) * (W_HOVER / (W_HOVER - W_MIN))   # hover / U_HOVER
+    thr, vel_int = position_control(v, vel_sp, acc_ff, s["vel_int"], s["vdot"], r_h)
     coll = jnp.linalg.norm(thr)
     qd = bodyz_to_q(thr / jnp.maximum(coll, 1e-6), yaw_sp)
     rate_sp = attitude_control(q, qd)
@@ -282,21 +294,26 @@ def physics_step(s, vel_sp, acc_ff, yaw_sp, wind, cda=jnp.array([CDA_H, CDA_V]))
     u, unalloc = allocate(torque, coll)
     _, rate_int = rate_control(om, rate_sp, s["rate_int"], s["racc"], unalloc)
     w_cmd = W_MIN + (W_MAX - W_MIN) * u
-    w = s["w"] + (w_cmd - s["w"]) * jnp.where(w_cmd > s["w"], 1 - math.exp(-DT / TAU_UP), 1 - math.exp(-DT / TAU_DN))
-    F, Tq = forces(q, v, om, w, wind, cda)
-    d = d.replace(xfrc_applied=jnp.zeros((MJ.nbody, 6)).at[1].set(jnp.concatenate([F, Tq])))
+    a_up, a_dn = (A_UP, A_DN) if prm is None else (1 - (1 - A_UP) ** (1 / prm[4]), 1 - (1 - A_DN) ** (1 / prm[4]))   # lags x prm[4]
+    w = s["w"] + (w_cmd - s["w"]) * jnp.where(w_cmd > s["w"], a_up, a_dn)
+    F, Tq = forces(q, v, om, w, wind, prm)
+    wrench = jnp.concatenate([F, Tq]) if prm is None else jnp.concatenate([F, Tq]) / prm[2]   # mass x prm[2]: inertia scaled with it
+    d = d.replace(xfrc_applied=jnp.zeros((MJ.nbody, 6)).at[1].set(wrench))
     d = mjx.step(MX, d)
     a_v, a_r = 1 - math.exp(-2 * math.pi * LP_VDOT * DT), 1 - math.exp(-2 * math.pi * LP_RACC * DT)
     vdot = s["vdot"] + a_v * ((d.qvel[:3] - v) / DT - s["vdot"])
     racc = s["racc"] + a_r * ((d.qvel[3:6] - om) / DT - s["racc"])
-    return dict(d=d, w=w, vel_int=vel_int, vdot=vdot, rate_int=rate_int, racc=racc)
+    return dict(s, d=d, w=w, vel_int=vel_int, vdot=vdot, rate_int=rate_int, racc=racc)
 
 
-def control_step(s, vel_sp, acc_ff, yaw_sp, wind, cda=jnp.array([CDA_H, CDA_V])):
-    """One decision (N_SUB physics steps) with the setpoint held, as PX4 holds an offboard setpoint."""
-    def body(c, _):
-        return physics_step(c, vel_sp, acc_ff, yaw_sp, wind, cda), None
-    return jax.lax.scan(body, s, None, length=N_SUB)[0]
+def control_step(s, vel_sp, acc_ff, yaw_sp, wind):
+    """One decision (N_SUB physics steps) with the setpoint held, as PX4 holds an offboard setpoint. A command latency
+    of prm[5] physics steps (up to 2 decisions) keeps the earlier decisions' setpoints in force that long."""
+    sps = jnp.stack([jnp.concatenate([vel_sp, acc_ff]), s["sp"][0], s["sp"][1]])      # sent now, 1 and 2 decisions ago
+    def body(c, i):
+        sp = sps[jnp.clip(jnp.ceil((c["prm"][5] - i) / N_SUB), 0, 2).astype(jnp.int32)] if PER_DRONE else sps[0]   # arrived by step i
+        return physics_step(c, sp[:3], sp[3:], yaw_sp, wind), None
+    return dict(jax.lax.scan(body, s, jnp.arange(N_SUB))[0], sp=sps[:2])
 
 
 def rpy(q):
@@ -362,13 +379,13 @@ def check():
 def tilt_in_wind(speeds=(3, 7, 10, 12, 15, 18), cda=CDA_H):
     """Steady hover against a steady wind: tilt and throttle. cda=0 is Gazebo's x500 today (propeller drag only)."""
     step = jax.jit(control_step)
-    cd = jnp.array([cda, CDA_V if cda else 0.0])
+    prm = PRM0.at[:2].set(jnp.array([cda, CDA_V if cda else 0.0]))
     out = []
     for ws in speeds:
-        s = init_state((0.0, 0.0, 30.0))
+        s = init_state((0.0, 0.0, 30.0), prm=prm)
         wind = jnp.array([float(ws), 0.0, 0.0])
         for _ in range(int(20 / (DT * N_SUB))):
-            s = step(s, jnp.zeros(3), jnp.zeros(3), 0.0, wind, cd)
+            s = step(s, jnp.zeros(3), jnp.zeros(3), 0.0, wind)
         r = np.array(rpy(s["d"].qpos[3:7]))
         drift = float(np.linalg.norm(np.array(s["d"].qvel[:2])))
         out.append((ws, math.degrees(math.acos(math.cos(r[0]) * math.cos(r[1]))), float(s["w"].max()), drift))
@@ -405,6 +422,31 @@ def check_hold():
         assert abs(tilt_m - tilt_g) < 1.5 and abs(spd_m - spd_g) < 0.75, "the twin's wind limit no longer matches Gazebo's"
 
 
+def check_drone():
+    """The drone randomization (PER_DRONE): the corners of land_env's ranges still hover level in calm air, motors at
+    the hover throttle PX4's estimator converges to, and a 3 m/s step still arrives (latency only delays it)."""
+    global PER_DRONE
+    PER_DRONE = True
+    # a fresh function: jax.jit(control_step) would reuse check()'s program, traced with PER_DRONE off (6 Oct: the
+    # heavy drone flew as the nominal one). Flags are read at trace time; jit a new function after changing one.
+    step = jax.jit(lambda s, v, a, y, w: control_step(s, v, a, y, w))
+    for name, prm in (("nominal", PRM0), ("heavy, weak thrust", PRM0.at[2].set(1.1).at[3].set(0.9)),
+                      ("light, strong thrust", PRM0.at[2].set(0.9).at[3].set(1.1)), ("slow motors", PRM0.at[4].set(1.3)),
+                      ("80 ms command latency", PRM0.at[5].set(20.0)), ("draggy", PRM0.at[:2].set(PRM0[:2] * 2))):
+        s = init_state((0.0, 0.0, 30.0), prm=prm)
+        for _ in range(int(10 / (DT * N_SUB))):
+            s = step(s, jnp.zeros(3), jnp.zeros(3), 0.0, jnp.zeros(3))
+        u_h = (W_HOVER * math.sqrt(float(prm[2] / prm[3])) - W_MIN) / (W_MAX - W_MIN)
+        u = float(((s["w"] - W_MIN) / (W_MAX - W_MIN)).mean())
+        z = float(s["d"].qpos[2])
+        for _ in range(int(3 / (DT * N_SUB))):
+            s = step(s, jnp.array([3.0, 0.0, 0.0]), jnp.zeros(3), 0.0, jnp.zeros(3))
+        vx = float(s["d"].qvel[0])
+        print(f"{name:22s} hover: height {z:6.3f} m, motors {u:.3f} (expected {u_h:.3f}); 3 s after a 3 m/s step: {vx:.2f} m/s")
+        assert abs(z - 30.0) < 0.05 and abs(u - u_h) < 0.005 and vx > 2.7, f"{name}: the randomized drone does not fly as it should"
+    PER_DRONE = False
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
@@ -412,6 +454,7 @@ if __name__ == "__main__":
     if a.check:
         check()
         check_hold()
+        check_drone()
         for cda in (0.0, CDA_H):
             print(f"steady wind, body drag CdA {cda} m^2:",
                   "  ".join(f"{ws} m/s: tilt {tl:.1f} deg, top motor {wm:.0f} rad/s, drift {dr:.2f} m/s" for ws, tl, wm, dr in tilt_in_wind(cda=cda)))

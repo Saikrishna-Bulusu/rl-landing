@@ -30,6 +30,7 @@ COM_Z = 0.224                                     # CoM above the feet: MJX heig
 A_FF, MODES = 3.0, np.array([0.0, -1.5, -0.6, 0.0, 1.0])     # land_env.MODES: 0 = the rule's own
 N_HIST, HIST0 = 4, 25                              # land_env.N_HIST, land_env.HIST0 (asserted in --check-obs)
 TAU_LAT, A_MAX, K_LIN = 0.69, 1.5, 0.8
+GATE_SCALE, PATIENCE = 1.0, 1e9                    # land_env's tuned-rule knobs; --decider tuned sets runs/rule_tuned.json's choice
 YARDS = f"{R}/outputs/gazebo_wind/yards_s10000.json"
 
 
@@ -94,13 +95,18 @@ def gate(d_h, h, v_est):
     return np.array([float(hold), min(r_d, 3.0) / 3.0, min(r_v, 3.0) / 3.0])
 
 
-def rule_cmd(d_h, h, v_est):
+def rule_hold(d_h, h, v_est):
+    tol = (0.3 + 0.1 * max(h - 3.0, 0.0)) * GATE_SCALE
+    v_ok = (0.1 if h < 2.0 else 0.3) * GATE_SCALE
+    return h < 6.0 and (np.linalg.norm(d_h) > tol or np.linalg.norm(v_est[:2]) > v_ok)
+
+
+def rule_cmd(d_h, h, v_est, held=0.0):
+    """land_env.rule_cmd; held: seconds the gate has held (the tuned rule creeps down at 0.6 m/s after PATIENCE)."""
     near, over = np.linalg.norm(d_h) < 3.0, np.linalg.norm(d_h) < 2.0
     v_h = approach(d_h, v_est[:2], 2.5 if near else 5.0)
-    tol = 0.3 + 0.1 * max(h - 3.0, 0.0)
-    v_ok = 0.1 if h < 2.0 else 0.3
-    hold = h < 6.0 and (np.linalg.norm(d_h) > tol or np.linalg.norm(v_est[:2]) > v_ok)
-    vz = (0.0 if hold else (-2.5 if h > 8.0 else -0.8)) if over else 0.0
+    go = held > PATIENCE and np.linalg.norm(d_h) < PAD_R
+    vz = ((-0.6 if go else 0.0) if rule_hold(d_h, h, v_est) else (-2.5 if h > 8.0 else -0.8)) if over else 0.0
     return np.r_[v_h, vz]
 
 
@@ -119,24 +125,35 @@ def check_obs(n=200):
     import jax.numpy as jnp
     import land_env as E
     assert (N_HIST, HIST0) == (E.N_HIST, E.HIST0), "the numpy observation layout drifted from land_env"
-    worst = 0.0
+    global GATE_SCALE, PATIENCE
+    tuned = json.load(open(f"{HERE}/runs/rule_tuned.json"))["chosen"]
+    worst, crept = 0.0, 0
     for i in range(n):
+        GATE_SCALE, PATIENCE = (tuned["scale"], tuned["patience"]) if i % 2 else (1.0, 1e9)   # odd states: the tuned rule
+        E.GATE_SCALE, E.PATIENCE = GATE_SCALE, PATIENCE
+        held = float(np.random.default_rng(i + 2).uniform(0, 20))
         k = jax.random.split(jax.random.PRNGKey(i), 4)
         st = E.reset(k[0], 9.0)
         st = dict(st, prev_act=jax.random.normal(k[1], (7,)), hist=jax.random.normal(k[2], (4, 5)))
         p_est = np.array(st["sim"]["d"].qpos[:3]) + np.random.default_rng(i).normal(0, 3, 3) * np.array([1, 1, 0.3])
         p_est[2] = abs(p_est[2]) + 0.3
         v_est = np.random.default_rng(i + 1).normal(0, 1.5, 3)
-        cmd_j, _ = E.rule_cmd(jnp.array(-p_est[:2]), jnp.array(p_est[2]), jnp.array(v_est))
-        cmd_n = rule_cmd(-p_est[:2], p_est[2], v_est)
+        if i % 4 >= 2:                                        # low over the pad, slow: the gate and the creep decide
+            rng = np.random.default_rng(i + 3)
+            p_est, v_est = np.r_[rng.normal(0, 0.5, 2), rng.uniform(0.3, 7.0)], rng.normal(0, 0.25, 3)
+            crept += int(i % 2 == 1 and held > PATIENCE and np.linalg.norm(p_est[:2]) < PAD_R and rule_hold(-p_est[:2], p_est[2], v_est))
+        cmd_j, _ = E.rule_cmd(jnp.array(-p_est[:2]), jnp.array(p_est[2]), jnp.array(v_est), held)
+        cmd_n = rule_cmd(-p_est[:2], p_est[2], v_est, held)
         o_j = np.array(E.observe(st, jnp.array(p_est), jnp.array(v_est), cmd_j))
         y = {kk: np.array(vv).tolist() for kk, vv in st["yard"].items()}
         lean = np.array(E.X.qrot(st["sim"]["d"].qpos[3:7])[:2, 2])
         o_n = observe(y, p_est, v_est, lean, cmd_n, np.array(st["prev_act"]), np.array(st["hist"]))
         assert o_n.shape == o_j.shape == (E.OBS_DIM,), (o_n.shape, o_j.shape)
         worst = max(worst, float(np.abs(o_n - o_j).max()), float(np.abs(cmd_n - np.array(cmd_j)).max()))
+    GATE_SCALE, PATIENCE = E.GATE_SCALE, E.PATIENCE = 1.0, 1e9
     assert worst < 1e-4, f"numpy observation differs from land_env's by {worst}"
-    print(f"observation + rule command: numpy = land_env on {n} random states (worst {worst:.1e})")
+    assert crept > 0, "no state reached the tuned rule's creep: the check did not test it"
+    print(f"observation + rule command (plain and tuned, {crept} states creeping): numpy = land_env on {n} random states (worst {worst:.1e})")
 
 
 class DOB:
@@ -184,13 +201,14 @@ def lean_enu(roll, pitch, yaw):
 
 
 def main():
+    global GATE_SCALE, PATIENCE
     ap = argparse.ArgumentParser()
     ap.add_argument("--setup", action="store_true")
     ap.add_argument("--check-obs", action="store_true")
     ap.add_argument("--episodes", type=int, default=20)
     ap.add_argument("--episode", type=int)
     ap.add_argument("--w10", type=float, default=0.0)
-    ap.add_argument("--decider", default="rule")
+    ap.add_argument("--decider", default="rule", help="rule | tuned (the rule with rule_tuned.py's choice) | a runs/*.npz checkpoint")
     ap.add_argument("--out", default=f"{R}/outputs/gazebo_wind/ladder/flights.jsonl")
     ap.add_argument("--geo", action="store_true", help="gnss_denied/geofly.sh: GeoAnchor's GNSS-free cruise first, then the "
                     "lander from 30 m over our real pad (its yard from the survey), the pad marker's fixes to PX4")
@@ -216,7 +234,10 @@ def main():
         import geo_cruise as GC
         y = GC.logan_yard()                                   # the real pad's nearest house and tree
         print("yard", json.dumps(y), flush=True)
-    pol = None if a.decider == "rule" else Policy(a.decider)
+    if a.decider == "tuned":
+        c = json.load(open(f"{HERE}/runs/rule_tuned.json"))["chosen"]
+        GATE_SCALE, PATIENCE = c["scale"], c["patience"]
+    pol = None if a.decider in ("rule", "tuned") else Policy(a.decider)
     fly = pol is not None and (pol.meta.get("fly", True) or pol.flyer is not None)
     decide = pol is not None and pol.meta.get("decide", True)
     shield = 0.0 if pol is None else pol.meta.get("shield", 0.0)
@@ -238,7 +259,7 @@ def main():
     start = PAD + np.array(ep["start"][:2])
     t_pre = None
     cr = None
-    tag = "rule" if pol is None else os.path.basename(a.decider)[:-4]
+    tag = {"rule": "rule", "tuned": "tuned_rule"}.get(a.decider) or os.path.basename(a.decider)[:-4]
     if a.geo:                                                 # GeoAnchor's cruise: GNSS denied from the suburb on
         film = None
         if a.video:
@@ -279,7 +300,7 @@ def main():
     hist, prev_act = np.zeros((4, 5)), np.r_[0.0, 0.0, np.eye(5)[0]]
     mi.mark_ned, t_last = None, -1.0
     outcome, miss, min_clear, rows, g_prev, tilt_max = "timeout", float("nan"), 1e3, [], None, 0.0
-    v_est_prev, pending = None, False
+    v_est_prev, pending, held = None, False, 0.0
     obs_log = []
     while True:
         p = mi.pos()
@@ -301,7 +322,8 @@ def main():
         lean = lean_enu(mi.roll, mi.pitch, mi.yaw)
         if pending:                                           # land_env: history row = (v_est before, lean after)
             hist = np.vstack([hist[1:], np.r_[v_est_prev / 3, lean * 5]])
-        cmd = rule_cmd(-p_est[:2], p_est[2], v_est)
+        cmd = rule_cmd(-p_est[:2], p_est[2], v_est, held)
+        held = held + DT_C if rule_hold(-p_est[:2], p_est[2], v_est) else 0.0   # as land_env.step: after the command
         if pol is not None:
             ob = observe(y, p_est, v_est, lean, cmd, prev_act, hist)
             a_c, mode = pol(ob)

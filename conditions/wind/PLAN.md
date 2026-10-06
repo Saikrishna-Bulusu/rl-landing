@@ -137,6 +137,8 @@ W10 9 and 12 are unchanged (>= 98%). Learning's lead over the tuned rule at W10 
 but the learned deciders crash more (up to 8.4%); a motor is saturated 32-40% of their flying time at W10 18 (rules
 52-60%). Retraining on the corrected twin is Phase 3's control; the crashes are Phase 5's job.
 
+**Gate decision (Sai, 6 Oct):** continue with 2b and 2c as planned; nose-into-wind becomes Phase 3 candidate 6.
+
 Also fixed: `sitl.sh` passed a relative `SERVER_CONFIG` to gz, which runs in PX4's folder and silently found no
 config (no wind, no scene: "Waiting for Gazebo world"). Every queue script used absolute paths, so no earlier flight
 was affected.
@@ -151,6 +153,56 @@ was affected.
 4. Re-score rule, tuned rule, DOB and the chosen decider WITHOUT retraining: the robustness table.
 Gate: how brittle is today's decider? Gazebo smoke: the same yards as Phase 1, each flight 3 times.
 
+### Phase 2b-2c as built (6 Oct)
+
+2b. The gate's Gazebo smoke, Phase 1's six flights 3 times each (`queue/smoke_phase2.sh`, with `--log-obs`): 15 of 18
+    landed; all three failures are one case, yard 1 at W10 18 with decider s1 (hard, crashed, hard; hard in Phase 1).
+
+2c. `land_env.RAND` (empty = the Phase 0-2a environment, bit for bit: `evaluate()` outputs compared exactly):
+- "sense" (`sensors_new`), fitted to Gazebo's own errors (gz_windland --log-obs against truth). W10 9: pad bias
+  0.02-0.05 m, slow error sd 0.01-0.05 m over 0.2-1 s, velocity sd 0.06-0.12 m/s, no visible delay. W10 15-18 gate
+  flights: bias up to 0.37 m, sd up to 0.13 m over 1-10 s, velocity sd up to 0.29 m/s (the lean and the 5 Hz gimbal).
+  Per flight: bias sd 0.02-0.2 m, slow error 1-6 x (0.01 + 0.001 h) over 0.3-5 s, dropouts (~1 per 20 s, 0.5-3 s, the
+  estimate drifts), one-frame outliers (0.3-1 m, ~1 per 13 s), height bias and slow error, velocity noise 0.05-0.3 m/s,
+  0-120 ms delay. Advanced once per decision in step(), so the rule and the learner see the same estimate (as in
+  Gazebo; before, each drew its own white noise).
+- "drone" (`drone_new`, `x500_mjx.PER_DRONE`): mass and thrust coefficient x0.9-1.1, motor lag x0.7-1.3, body drag
+  x0.5-2, 0-80 ms command delay. PX4's hover throttle follows mass and thrust (heavy + weak hovers at 94%).
+- "gust": the mean wind turns up to 60 deg over 3-10 s, about once per 30 s. Gust moments are not added: since 2a
+  the drag acts 1.6 cm above the CoM, so gusts already twist the drone as in Gazebo.
+- Checks: `python conditions/wind/land_env.py --check-rand` (each group behaves as promised) and
+  `x500_mjx.py --check` (check_drone: every corner of the fleet hovers level at its expected throttle).
+- `evaluate()` takes a list of winds: one compile per list (about 14 s), about 3 s per wind.
+- The tuned rule now also flies in Gazebo (`gz_windland.py --decider tuned`, checked against land_env's).
+
+Robustness, without retraining (`robustness.py` -> `runs/robustness_2c.json`, ClearML "phase 2c"). Landed % at W10 18
+(the learned decider as the mean of its 3 seeds, crashed in brackets):
+
+| condition | rule | tuned rule | DOB 0.5 | learned decider |
+|---|---|---|---|---|
+| nominal | 2.6 | 41.0 | 42.9 | 84.6 (5.2) |
+| sensing | 0.8 | 41.4 | 20.3 | 78.2 (6.1) |
+| drone | 15.5 | 38.7 | 39.2 | 61.1 (4.3) |
+| gusts (wind turns) | 1.8 | 39.5 | 41.7 | 84.9 (5.5) |
+| all three | 3.9 | 37.2 | 24.4 | 55.4 (5.9) |
+
+At W10 15 under all three: rule 21.4, tuned 67.4, DOB 50.0, learned 79.4 (3.7 crashed); at W10 12 the learned
+deciders now crash 1.2-2.1% (0 nominal). Readings:
+- Sensing breaks the plain rule (W10 15: 65.5 -> 22.7; its strict gate waits on noisy estimates) and the DOB (it reads
+  the noisy velocities); the tuned rule shrugs it off; the learned decider loses about 6 points.
+- Turning wind changes nothing much.
+- Drone differences cost the learned decider 23 points, and it is physics, not fragility: by drone (seed 0, W10 18)
+  body drag x0.5-0.7 lands 94%, x1.4-2 lands 16%; hover throttle 0.74-0.80 lands 80%, 0.88-0.95 lands 32%; motor lag
+  and command delay (0-80 ms) change nothing. A draggier or heavier x500 cannot hold a gale; pushing on regardless is
+  where its crashes come from. Body drag, the one number nobody measured, is the biggest uncertainty again.
+- The learned decider stays best in every condition at W10 >= 12, but its lead over the tuned rule at W10 18 shrinks
+  from 44 to 18 points under all three.
+
+Gate (6 Oct): today's decider is not fragile to sensing, timing or turning wind; it is to a weaker drone, as any
+controller must be, but it crashes instead of giving up. For Phase 3: retrain in the randomized environment (the
+control), and let it see what it cannot see now (the DOB's push estimate, candidate 4, is a direct readout of the
+drone's drag). For Phase 5: abort when the drone cannot hold the wind.
+
 ## Phase 3: learner upgrades, one at a time (3 seeds each, same test flights, kept only if the paired gain > 0)
 
 1. The base retrained in the Phase 2 environment (the control).
@@ -158,6 +210,9 @@ Gate: how brittle is today's decider? Gazebo smoke: the same yards as Phase 1, e
 3. Penalties for thrust saturation and command slew (the 30 Sept pulsing failure).
 4. The DOB's wind estimate as 2 extra actor inputs.
 5. A pad- or wind-aligned frame for inputs and outputs.
+6. Nose into the wind (Sai, 6 Oct, from Phase 2a): the drone holds 26 m/s on the nose but 22 from a side, so yaw
+   the nose toward the estimated wind during the approach; first as a rule on top of the decider, then (if it pays)
+   as something the learner chooses.
 Gate: the final recipe. Gazebo smoke after each kept upgrade (2 yards x 2 winds), counting saturation and reversals
 before flying.
 

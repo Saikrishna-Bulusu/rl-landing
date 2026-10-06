@@ -156,6 +156,9 @@ The other diagnostics (all take a checkpoint; see each file's docstring):
 | `rate_check.py`, `latency_check.py` | the same with one delay at a time (special cases of `timing_check.py`) |
 | `cmd_replay.py <flight.csv> --yard 4 --w 9` | does MJX answer a Gazebo flight's vertical commands as Gazebo did |
 | `stray_check.py` | the Gazebo ladder's own 20 yards flown in MJX: tilt and worst stray, side by side (Phase 2a) |
+| `robustness.py` | every controller, no retraining, under per-flight sensing / drone / gust randomization (Phase 2c) |
+| `land_env.py --check-rand` | each randomization group behaves as promised (`land_env.RAND`; empty = Phases 0-2a exactly) |
+| `gz_windland.py --decider tuned` | the hand-tuned rule (`rule_tuned.py`'s choice) flown in Gazebo; `--check-obs` checks it against land_env |
 | `estimate_check.py runs/<ckpt>.npz --w 9` | is the decider fragile to height and vertical-speed estimate errors (Gazebo's estimator is noisier than MJX's) |
 | `overnight_report.py > queue/overnight_report.md` | the 26-27 Sept night: ladders per recipe and seed, Gazebo against rule |
 

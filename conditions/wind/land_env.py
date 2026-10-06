@@ -50,12 +50,16 @@ FLIP_R = 0.0                     # price of each climb<->descend reversal of the
 VZ_FAST = -2.5                   # the rule's descent above 8 m; PX4 caps descents at 1.5 m/s (x500_mjx.VZ_DN), so -1.5 flies the same
 GATE_SCALE = 1.0                 # tuned-rule baseline (6 Oct): the gate's centring and stillness limits times this
 PATIENCE = 1e9                   # tuned-rule baseline: seconds the gate may hold before the rule creeps down at 0.6 m/s over the pad
+RAND = frozenset()               # PLAN.md 2c, read at trace time: "sense" (sensing shaped like Gazebo's, randomized per flight),
+                                 # "drone" (mass, thrust, motor lag, body drag, command latency), "gust" (the mean wind turns).
+                                 # Empty: the environment of Phases 0-2a, bit for bit
 
 
 # ---- wind: gz_winddrag/WindDrag.cc, updated once per decision (statistically the same process) ---------------------------
 def wind_new(key, w10):
     th = jax.random.uniform(key, (), minval=0.0, maxval=2 * math.pi)
-    return dict(w10=w10, th=th, uvw=jnp.zeros(3), gt=jnp.array(-1.0), gT=jnp.array(1.0), gA=jnp.array(0.0), gth=th)
+    return dict(w10=w10, th=th, uvw=jnp.zeros(3), gt=jnp.array(-1.0), gT=jnp.array(1.0), gA=jnp.array(0.0), gth=th,
+                dt=jnp.array(-1.0), dT=jnp.array(1.0), dA=jnp.array(0.0), th0=th)
 
 
 def wind_step(ws, h, key):
@@ -80,9 +84,18 @@ def wind_step(ws, h, key):
     amp = jnp.where(gt >= 0, gA * 0.5 * (1 - jnp.cos(2 * math.pi * gt / gT)), 0.0)
     gt = jnp.where(gt >= 0, gt + DT_C, gt)
     gt = jnp.where(gt > gT, -1.0, gt)
+    dt, dT, dA, th0 = ws["dt"], ws["dT"], ws["dA"], ws["th0"]
+    if "gust" in RAND:            # the mean wind turns by up to 60 deg over 3-10 s, about once per 30 s, and stays turned
+        q = jax.random.uniform(k3, (3,))
+        turn = (dt < 0) & (w10 > 0) & (q[0] < DT_C / 30.0)
+        dt, dT, th0 = jnp.where(turn, 0.0, dt), jnp.where(turn, 3.0 + 7.0 * q[1], dT), jnp.where(turn, th, th0)
+        dA = jnp.where(turn, (q[2] - 0.5) * 2 * math.pi / 3, dA)
+        th = jnp.where(dt >= 0, th0 + dA * 0.5 * (1 - jnp.cos(math.pi * jnp.minimum(dt / dT, 1.0))), th)
+        dt = jnp.where(dt >= 0, dt + DT_C, dt)
+        dt = jnp.where(dt > dT, -1.0, dt)
     ea, ec = jnp.array([jnp.cos(th), jnp.sin(th), 0.0]), jnp.array([-jnp.sin(th), jnp.cos(th), 0.0])
     wind = ea * (wm + uvw[0]) + ec * uvw[1] + jnp.array([0.0, 0.0, uvw[2]]) + amp * jnp.array([jnp.cos(gth), jnp.sin(gth), 0.0])
-    return dict(w10=w10, th=th, uvw=uvw, gt=gt, gT=gT, gA=gA, gth=gth), wind
+    return dict(w10=w10, th=th, uvw=uvw, gt=gt, gT=gT, gA=gA, gth=gth, dt=dt, dT=dT, dA=dA, th0=th0), wind
 
 
 # ---- the yard ---------------------------------------------------------------------------------------------------------------------
@@ -155,19 +168,49 @@ def rule_cmd(d_h, h, v_est, held=0.0):
 
 
 # ---- the episode --------------------------------------------------------------------------------------------------------------------
+def drone_new(key):
+    """One drone of the randomized fleet (x500_mjx.PRM0's layout): body drag x0.5-2 (the biggest unknown,
+    papers/research/x500_wind_limit.md), mass and thrust coefficient +-10%, motor lag +-30%, command latency 0-80 ms."""
+    u = jax.random.uniform(key, (5,))
+    r_d = jnp.exp(math.log(0.5) + u[0] * math.log(4.0))
+    return jnp.array([X.CDA_H * r_d, X.CDA_V * r_d, 0.9 + 0.2 * u[1], 0.9 + 0.2 * u[2], 0.7 + 0.6 * u[3], jnp.floor(21 * u[4])])
+
+
+def sensors_new(key):
+    """One flight's sensing, shaped like Gazebo's (gz_windland --log-obs against truth, 6 Oct). W10 9: pad estimate bias
+    0.02-0.05 m, a slowly wandering error of sd 0.01-0.05 m lasting 0.2-1 s, velocity sd 0.06-0.12 m/s; the W10 15-18
+    gate flights (the drone leaning 30-40 deg, the gimbal lagging): bias up to 0.37 m, sd up to 0.13 m lasting 1-10 s,
+    velocity sd up to 0.29 m/s. Ranges here cover both, plus dropouts that let the estimate drift, rare one-frame
+    outliers, a height bias and slow error, and 0-120 ms of delay (Gazebo showed none at 40 ms resolution)."""
+    k = jax.random.split(key, 3)
+    u = jax.random.uniform(k[0], (10,))
+    return dict(b=jax.random.normal(k[1], (2,)) * (0.02 + 0.18 * u[0]), kp=jnp.exp(u[1] * math.log(6.0)),
+                tp=jnp.exp(math.log(0.3) + u[2] * math.log(5.0 / 0.3)),
+                sv=jnp.array([1.0, 1.0, 0.6]) * (0.05 + 0.25 * u[3]), tv=0.04 + 0.16 * u[4],
+                hb=0.05 * jax.random.normal(k[2], ()), sh=0.01 + 0.04 * u[5], th=0.5 + 2.5 * u[6],
+                lat=jnp.floor(4 * u[7]).astype(jnp.int32), rw=0.05 + 0.15 * u[8])
+
+
 def reset(key, w10):
     k = jax.random.split(key, 6)
     b = jax.random.uniform(k[0], (), minval=0, maxval=2 * math.pi)
     r0 = jax.random.uniform(k[1], (), minval=15.0, maxval=25.0)
     yaw = jax.random.uniform(k[2], (), minval=-math.pi, maxval=math.pi)
-    s = X.init_state(jnp.array([r0 * jnp.cos(b), r0 * jnp.sin(b), 30.0]), yaw=yaw)
+    p0 = jnp.array([r0 * jnp.cos(b), r0 * jnp.sin(b), 30.0])
+    prm = drone_new(jax.random.fold_in(k[5], 1)) if "drone" in RAND else X.PRM0      # new keys: the old draws stay as they were
+    s = X.init_state(p0, yaw=yaw, prm=prm)
     return dict(sim=s, yaw=yaw, wind=wind_new(k[3], w10), yard=yard_new(k[4]),
                 bias=0.05 * jax.random.normal(k[5], (2,)), t=jnp.array(0.0), key=k[5],
                 prev_act=jnp.zeros(7), hist=jnp.zeros((N_HIST, 5)), done=jnp.array(False), ff_slow=jnp.zeros(2),
-                outcome=jnp.array(0), miss=jnp.array(0.0), vz_sent=jnp.array(0.0), held=jnp.array(0.0))
+                outcome=jnp.array(0), miss=jnp.array(0.0), vz_sent=jnp.array(0.0), held=jnp.array(0.0),
+                sen=sensors_new(jax.random.fold_in(k[5], 2)), truth=jnp.tile(jnp.concatenate([p0, jnp.zeros(3)]), (4, 1)),
+                ep=jnp.zeros(2), ev=jnp.zeros(3), eh=jnp.array(0.0), drop=jnp.array(0.0), jump=jnp.zeros(2))
 
 
 def estimates(st, key):
+    if "sense" in RAND:            # the flight's own sensing (sensors_new), advanced once per decision in step(): the rule
+        e, tr = st["sen"], st["truth"][st["sen"]["lat"]]    # and the learner see the same estimate, as in Gazebo
+        return (tr[:3] + jnp.concatenate([e["b"] + st["ep"] + st["jump"], (e["hb"] + st["eh"])[None]]), tr[3:] + st["ev"])
     p, v = st["sim"]["d"].qpos[:3], st["sim"]["d"].qvel[:3]
     k1, k2 = jax.random.split(key)
     sd = 0.03 + 0.004 * p[2]
@@ -206,6 +249,7 @@ def shield_block(d_h, h, v_est, k):
 def step(st, act, key, fly=True, decide=True, shield=0.0, hp_tau=0.0):
     """One decision. act: (a_x, a_y in [-1, 1], mode logits... as an index in act[2]). Returns the new state, the reward,
     the observation. fly/decide off -> the rule's own choice for that part."""
+    X.PER_DRONE = "drone" in RAND                   # trace time: the physics reads each flight's drone (reset sampled it)
     k1, k2, k3 = jax.random.split(key, 3)
     p_est, v_est = estimates(st, k1)
     d_h = -p_est[:2]
@@ -245,7 +289,19 @@ def step(st, act, key, fly=True, decide=True, shield=0.0, hp_tau=0.0):
     hist = jnp.concatenate([st["hist"][1:], jnp.concatenate([v_est / 3, lean * 5])[None]], axis=0)
     prev = jnp.concatenate([a_ff / A_FF, jax.nn.one_hot(mode, 5)])
     st = dict(st, sim=sim, wind=ws, t=t, prev_act=prev, hist=hist, done=done, outcome=outcome, miss=miss, key=k3, ff_slow=ff_slow,
-              vz_sent=vz, held=held)
+              vz_sent=vz, held=held, truth=jnp.concatenate([jnp.concatenate([p, v])[None], st["truth"][:-1]], axis=0))
+    if "sense" in RAND:            # the flight's sensing errors move on once per decision (sensors_new for the shape)
+        e, q = st["sen"], jax.random.split(jax.random.fold_in(k1, 7), 2)   # new keys: the old draws stay as they were
+        n, u = jax.random.normal(q[0], (6,)), jax.random.uniform(q[1], (5,))
+        a_p, a_v, a_h = jnp.exp(-DT_C / e["tp"]), jnp.exp(-DT_C / e["tv"]), jnp.exp(-DT_C / e["th"])
+        lost = st["drop"] > 0                     # marker lost: the pad estimate drifts (random walk) until it is seen again
+        ep = jnp.where(lost, st["ep"] + e["rw"] * math.sqrt(DT_C) * n[:2],
+                       a_p * st["ep"] + e["kp"] * (0.01 + 0.001 * p[2]) * jnp.sqrt(1 - a_p ** 2) * n[:2])
+        drop = jnp.where(lost, st["drop"] - DT_C, jnp.where(u[0] < DT_C / 20.0, 0.5 + 2.5 * u[1], 0.0))   # ~1 per 20 s, 0.5-3 s
+        ang = 2 * math.pi * u[2]                    # a misread marker, one decision long, ~1 per 13 s
+        st = dict(st, ep=ep, drop=drop, ev=a_v * st["ev"] + e["sv"] * jnp.sqrt(1 - a_v ** 2) * n[2:5],
+                  eh=a_h * st["eh"] + e["sh"] * jnp.sqrt(1 - a_h ** 2) * n[5],
+                  jump=jnp.where(u[3] < 0.003, (0.3 + 0.7 * u[4]) * jnp.array([jnp.cos(ang), jnp.sin(ang)]), 0.0))
     return st, r, done
 
 
@@ -262,9 +318,10 @@ def rule_action(st, key):
 
 def evaluate(policy_fn, w10, n=1024, seed=0, fly=True, decide=True, t_max=T_MAX, shield=0.0, hp_tau=0.0):
     """n flights at wind w10 (paired: the same yards, starts and wind seeds for every policy). Returns outcome counts,
-    miss distances of landed flights, times."""
+    miss distances of landed flights, times. w10 may be a list: one compiled program then flies every wind, and a list
+    of results comes back (6 Oct: compiling took most of each call); module flags (RAND, GATE_SCALE...) must not change
+    during the call."""
     keys = jax.random.split(jax.random.PRNGKey(seed), n)
-    st = jax.vmap(lambda k: reset(k, w10))(keys)
 
     def one(carry, k):
         st, acc = carry
@@ -293,9 +350,15 @@ def evaluate(policy_fn, w10, n=1024, seed=0, fly=True, decide=True, t_max=T_MAX,
 
     n_steps = int(t_max / DT_C) + 1
     z = jnp.zeros(n)
-    acc = dict(live=z, cap=z, slew=z, flip=z, msat=z, picks=jnp.zeros((4, 3, 5)))
+    acc0 = dict(live=z, cap=z, slew=z, flip=z, msat=z, picks=jnp.zeros((4, 3, 5)))
     run = jax.jit(lambda c, ks: jax.lax.scan(one, c, ks)[0])
-    st, acc = run((st, acc), jax.random.split(jax.random.PRNGKey(seed + 1), n_steps))
+    res = [summary(*run((jax.vmap(lambda k: reset(k, w))(keys), acc0), jax.random.split(jax.random.PRNGKey(seed + 1), n_steps)), w, n)
+           for w in (w10 if isinstance(w10, (list, tuple)) else [w10])]
+    return res if isinstance(w10, (list, tuple)) else res[0]
+
+
+def summary(st, acc, w10, n):
+    """evaluate()'s numbers for one wind."""
     acc = {k: np.array(v) for k, v in acc.items()}
     air = max(float(acc["live"].sum()), 1.0)
     out = np.array(st["outcome"])
@@ -311,14 +374,65 @@ def evaluate(policy_fn, w10, n=1024, seed=0, fly=True, decide=True, t_max=T_MAX,
                              t=np.array(st["t"])[:40].round(2).tolist()))     # episode i = Gazebo's yard i
 
 
+def check_rand(n=1024, steps=2250):
+    """PLAN.md 2c, each randomization group alone, the rule flying 90 s at W10 15: the sensing errors span what Gazebo
+    showed (and the rule and the learner see one estimate), every drone differs and still lands, and the wind turns."""
+    global RAND
+    hold = jnp.zeros((n, 3))
+    for groups in (("sense",), ("drone",), ("gust",)):
+        RAND = frozenset(groups)
+        st = jax.vmap(lambda k: reset(k, 15.0))(jax.random.split(jax.random.PRNGKey(5), n))
+        th0 = st["wind"]["th"][:64]
+
+        def one(st, k):
+            ks = jax.random.split(k, n * 3).reshape(n, 3, 2)
+            pe, ve = jax.vmap(estimates)(st, ks[:, 0])
+            pe2, _ = jax.vmap(estimates)(st, ks[:, 2])
+            d = st["sim"]["d"]
+            err = jnp.concatenate([pe - d.qpos[:, :3], ve - d.qvel[:, :3]], 1)[:64]
+            new, _, _ = jax.vmap(lambda s, a, kk: step(s, a, kk, False, False))(st, hold, ks[:, 1])
+            keep = lambda a, b: jnp.where(st["done"].reshape((-1,) + (1,) * (a.ndim - 1)), a, b)
+            return jax.tree_util.tree_map(keep, st, new), (err, jnp.abs(pe - pe2).max(), st["drop"][:64] > 0,
+                                                           st["wind"]["th"][:64], st["done"][:64], d.qpos[:64, 2])
+        st, (err, same, lost, th, done, h) = jax.jit(lambda s, ks: jax.lax.scan(one, s, ks))(
+            st, jax.random.split(jax.random.PRNGKey(6), steps))
+        err, live, out = np.array(err), ~np.array(done), np.array(st["outcome"])
+        if "sense" in groups:
+            low = live & (np.array(h) > 2.0) & (np.array(h) < 20.0)
+            bias = np.array([np.hypot(*err[low[:, i], i, :2].mean(0)) for i in range(64) if low[:, i].sum() > 50])
+            vsd = np.array([err[live[:, i], i, 3:5].std() for i in range(64) if live[:, i].sum() > 50])
+            print(f"sense: per-flight pad bias 5/50/95%: {np.percentile(bias, [5, 50, 95]).round(3)} m; velocity sd "
+                  f"{np.percentile(vsd, [5, 50, 95]).round(3)} m/s; marker lost {100 * np.array(lost)[live].mean():.1f}% of the time; "
+                  f"rule and learner see the same estimate: {float(np.array(same).max()) == 0.0}")
+            assert float(np.array(same).max()) == 0.0, "the rule and the learner see different estimates"
+            assert bias.min() < 0.05 < 0.2 < bias.max(), "pad bias does not span Gazebo's 0.02-0.37 m"
+            assert vsd.min() < 0.1 < 0.25 < vsd.max(), "velocity error does not span Gazebo's 0.06-0.29 m/s"
+            assert 0.02 < np.array(lost)[live].mean() < 0.2, "dropouts are not about 1 per 20 s"
+        if "drone" in groups:
+            prm = np.array(st["sim"]["prm"])
+            print(f"drone: mass x {prm[:, 2].min():.2f}-{prm[:, 2].max():.2f}, thrust x {prm[:, 3].min():.2f}-{prm[:, 3].max():.2f}, "
+                  f"drag x {prm[:, 0].min() / X.CDA_H:.2f}-{prm[:, 0].max() / X.CDA_H:.2f}, latency {prm[:, 5].min() * 4:.0f}-"
+                  f"{prm[:, 5].max() * 4:.0f} ms; rule landed {100 * (out == 1).mean():.1f}%, crashed {100 * (out == 2).mean():.1f}% (nominal 65.5, 0.2)")
+            assert prm[:, 2].std() > 0.04 and prm[:, 5].max() >= 16, "the drones do not differ"
+            assert 0.2 < (out == 1).mean() < 0.95 and (out == 2).mean() < 0.05, "the randomized drones do not fly like x500s"
+        if "gust" in groups:
+            turned = np.abs(np.angle(np.exp(1j * (np.array(th) - np.array(th0)[None])))).max(0)
+            print(f"gust: flights whose mean wind turned more than 0.3 rad in 90 s: {100 * (turned > 0.3).mean():.0f}%")
+            assert (turned > 0.3).mean() > 0.5, "the wind does not turn"
+    RAND = frozenset()
+
+
 if __name__ == "__main__":
     import argparse, json, time
     ap = argparse.ArgumentParser()
     ap.add_argument("--rule-ladder", action="store_true", help="today's landing rule from calm to 18 m/s")
+    ap.add_argument("--check-rand", action="store_true", help="PLAN.md 2c: each randomization group behaves as promised")
     ap.add_argument("--n", type=int, default=1024)
     ap.add_argument("--seed", type=int, default=10_000, help="ppo.py evaluates on seed 10000: the same yards, starts, winds")
     ap.add_argument("--out", default=f"{X.R}/outputs/gazebo_wind/rule_ladder.json")
     a = ap.parse_args()
+    if a.check_rand:
+        check_rand()
     if a.rule_ladder:
         rule = lambda obs, st: jnp.tile(jnp.array([0.0, 0.0, 0.0]), (obs.shape[0], 1))
         res = []
