@@ -118,6 +118,17 @@ def flyer_mean(flyer, obs):
     return heads(fp, normalize(frms, obs))[0]
 
 
+def dob_ff(k, obs):
+    """The disturbance observer (no learning; 4 Oct research): the wind's push is the measured acceleration minus what the
+    tilt gives; push back k times it, in the flyer's units. Reads only the observation's last N_HIST (velocity, lean)."""
+    h = obs[..., E.HIST0:E.HIST0 + E.N_HIST * 5].reshape(obs.shape[:-1] + (E.N_HIST, 5))     # newest last
+    v = h[..., :2] * 3.0
+    a_meas = (v[..., -1, :] - v[..., 0, :]) / ((E.N_HIST - 1) * E.DT_C)
+    zh = h[..., -2:, 3:5].mean(-2) / 5.0                     # the horizontal part of the body's up axis
+    zz = jnp.sqrt(jnp.maximum(1.0 - (zh ** 2).sum(-1, keepdims=True), 0.25))
+    return jnp.clip(-k * (a_meas - 9.81 * zh / zz) / E.A_FF, -1.0, 1.0)
+
+
 def make_fns(n_env, t_roll, fly, decide, shield=0.0, flyer=None, hp_tau=0.0):
     fly_f, dec_f = (0.0 if flyer is not None else float(fly)), float(decide)
     vstep = jax.vmap(lambda s, a, k: E.step(s, a, k, fly, decide, shield, hp_tau))
@@ -133,7 +144,7 @@ def make_fns(n_env, t_roll, fly, decide, shield=0.0, flyer=None, hp_tau=0.0):
             ks = jax.random.split(k, 5)
             a_c, a_d = policy_act(p, rms, obs, ks[0])
             if flyer is not None:                      # the flyer's weights come in as an argument, not baked-in
-                a_c = flyer_mean(fl, obs)              # constants (those broke XLA's GPU fusion, 26 Sept)
+                a_c = dob_ff(fl, obs) if flyer[0] == "dob" else flyer_mean(fl, obs)   # constants (they broke XLA, 26 Sept)
             mean, logstd, logits = heads(p, normalize(rms, obs))
             lp = log_prob(mean, logstd, logits, a_c, a_d, fly_f, dec_f)
             val = mlp(p["v"], normalize(rms, obs))[:, 0]
@@ -227,7 +238,7 @@ def greedy_policy(p, rms, flyer=None):
     def f(obs, st):
         a_c, a_d = policy_act(p, rms, obs, jax.random.PRNGKey(0), greedy=True)
         if flyer is not None:
-            a_c = flyer_mean(flyer, obs)
+            a_c = dob_ff(flyer[1], obs) if flyer[0] == "dob" else flyer_mean(flyer, obs)
         return jnp.zeros((obs.shape[0], 3)).at[:, :2].set(a_c).at[:, 2].set(a_d.astype(jnp.float32))
     return f
 
@@ -236,7 +247,9 @@ def load_policy(path):
     """A checkpoint as (greedy policy, fly, decide, shield); stage-2 checkpoints bring their flyer."""
     p, rms, meta = load(path)
     flyer = None
-    if meta.get("flyer"):
+    if meta.get("flyer", "").startswith("dob"):
+        flyer = ("dob", float(meta["flyer"].split(":")[1]))
+    elif meta.get("flyer"):
         fp, frms, _ = load(meta["flyer"])
         flyer = (fp, frms)
     return greedy_policy(p, rms, flyer), meta["fly"] or flyer is not None, meta["decide"], meta.get("shield", 0.0)
@@ -245,7 +258,7 @@ def load_policy(path):
 def hp_of(path):
     """The high-pass time constant a checkpoint was trained with (a stage-2 checkpoint: its flyer's)."""
     meta = load(path)[2]
-    return meta.get("hp_tau", 0.0) or (hp_of(meta["flyer"]) if meta.get("flyer") else 0.0)
+    return meta.get("hp_tau", 0.0) or (hp_of(meta["flyer"]) if meta.get("flyer") and not meta["flyer"].startswith("dob") else 0.0)
 
 
 PPO_NAMES = ["total loss", "policy loss", "value loss", "entropy (deciding)", "approx KL", "stopped early (KL)"]   # update()'s vector
@@ -283,7 +296,7 @@ def main():
     ap.add_argument("--w-start", type=float, default=W_START, help="20 = no curriculum: the full range of wind from the start")
     ap.add_argument("--w-ok", type=float, default=W_OK, help="landed share in the top band before the wind rises")
     ap.add_argument("--shield", type=float, default=0.0, help="k > 0: no descent below 6 m beyond k x the rule's limits")
-    ap.add_argument("--flyer", help="stage 2: a flying-only checkpoint, frozen; only the deciding is trained")
+    ap.add_argument("--flyer", help="stage 2: a flying-only checkpoint, frozen, or dob[:k] (the disturbance observer); only the deciding is trained")
     ap.add_argument("--lr", type=float, default=LR, help="starting learning rate (annealed to a tenth)")
     ap.add_argument("--hp-tau", type=float, default=0.0, help="s > 0: the push's slow part removed (PX4's integral cancels it)")
     ap.add_argument("--crash-r", type=float, default=E.CRASH_R, help="reward for a crash (a lost drone)")
@@ -320,14 +333,19 @@ def main():
             task = None
             print("clearml unavailable, training without it:", e, flush=True)
     E.CRASH_R, E.HARD_R, E.FLIP_R, E.SHAPE_G = a.crash_r, a.hard_r, a.flip_r, a.shape_g    # read by land_env.step when traced
-    flyer = None
-    if a.flyer:
+    flyer, fl = None, 0.0
+    if a.flyer and a.flyer.startswith("dob"):                 # --flyer dob[:k]: the observer flies, no stage 1
+        a.flyer = f"dob:{float(a.flyer.split(':')[1]) if ':' in a.flyer else 1.0:g}"
+        flyer, fly = ("dob", float(a.flyer.split(":")[1])), True
+        fl = jnp.float32(flyer[1])
+    elif a.flyer:
         fp, frms, _ = load(a.flyer)
         flyer, fly = (fp, frms), True
+        fl = flyer
     os.makedirs(f"{HERE}/runs", exist_ok=True)
     base = f"{HERE}/runs/{a.tag}_s{a.seed}"
     log = open(base + ".jsonl", "w")
-    hp = a.hp_tau or (hp_of(a.flyer) if a.flyer else 0.0)
+    hp = a.hp_tau or (hp_of(a.flyer) if a.flyer and not a.flyer.startswith("dob") else 0.0)
     rollout, gae, update, vreset, vobs = make_fns(a.envs, a.steps, fly, decide, a.shield, flyer, hp)
     key = jax.random.PRNGKey(a.seed)
     key, k1, k2, k3 = jax.random.split(key, 4)
@@ -344,7 +362,7 @@ def main():
     for it in range(1, a.iters + 1):
         t_round = time.time()
         key, kr, ku = jax.random.split(key, 3)
-        st, obs, tr, last_v = rollout(p, rms, st, obs, kr, jnp.float32(w_cur), flyer if flyer is not None else 0.0)
+        st, obs, tr, last_v = rollout(p, rms, st, obs, kr, jnp.float32(w_cur), fl)
         adv, ret = gae(tr, last_v)
         lr = jnp.float32(a.lr * max(0.1, 1.0 - (it - 1) / a.iters))     # annealed to a tenth
         p, opt, info = update(p, opt, rms, tr, adv, ret, ku, lr)
@@ -372,7 +390,7 @@ def main():
             row["val"] = [E.evaluate(pol, float(w), n=512, seed=20_000, fly=fly, decide=decide, shield=a.shield, hp_tau=hp)["landed"] for w in (9, 12, 15, 18)]
             meta = dict(tag=a.tag, seed=a.seed, it=it, w_cur=w_cur, fly=fly, decide=decide, shield=a.shield, val=row["val"], hp_tau=a.hp_tau,
                         crash_r=a.crash_r, hard_r=a.hard_r, flip_r=a.flip_r, shape_g=a.shape_g,
-                        flyer=os.path.abspath(a.flyer) if a.flyer else None)
+                        flyer=(a.flyer if a.flyer.startswith("dob") else os.path.abspath(a.flyer)) if a.flyer else None)
             save(base + ".npz", p, rms, meta)
             save(f"{base}_it{it}.npz", p, rms, meta)
             if float(np.mean(row["val"])) > best_val:

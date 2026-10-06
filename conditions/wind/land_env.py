@@ -47,6 +47,9 @@ SHAPE_G = 0.997                  # the shaping's discount (ppo.py --shape-g). Be
 FLIP_R = 0.0                     # price of each climb<->descend reversal of the sent vertical command (ppo.py --flip-r). 30 Sept:
                                  # the hard -100 decider pulsed climb/descend at ~1.5 Hz, which held PX4 at its thrust limit;
                                  # in Gazebo that sank the drone (1.05 m/s against a +0.25 average command) instead of slowing it
+VZ_FAST = -2.5                   # the rule's descent above 8 m; PX4 caps descents at 1.5 m/s (x500_mjx.VZ_DN), so -1.5 flies the same
+GATE_SCALE = 1.0                 # tuned-rule baseline (6 Oct): the gate's centring and stillness limits times this
+PATIENCE = 1e9                   # tuned-rule baseline: seconds the gate may hold before the rule creeps down at 0.6 m/s over the pad
 
 
 # ---- wind: gz_winddrag/WindDrag.cc, updated once per decision (statistically the same process) ---------------------------
@@ -134,15 +137,20 @@ def gate(d_h, h, v_est):
     return jnp.array([hold * 1.0, jnp.minimum(r_d, 3.0) / 3.0, jnp.minimum(r_v, 3.0) / 3.0])
 
 
-def rule_cmd(d_h, h, v_est):
-    """The rule's velocity setpoint (ENU) and whether it is in the landing phase."""
+def rule_hold(d_h, h, v_est):
+    """The rule's landing gate: below 6 m, hold unless centred and still."""
+    tol = (0.3 + 0.1 * jnp.maximum(h - 3.0, 0.0)) * GATE_SCALE
+    v_ok = jnp.where(h < 2.0, 0.1, 0.3) * GATE_SCALE
+    return (h < 6.0) & ((jnp.linalg.norm(d_h) > tol) | (jnp.linalg.norm(v_est[:2]) > v_ok))
+
+
+def rule_cmd(d_h, h, v_est, held=0.0):
+    """The rule's velocity setpoint (ENU) and whether it is in the landing phase. held: seconds the gate has held."""
     near = jnp.linalg.norm(d_h) < 3.0
     over = jnp.linalg.norm(d_h) < 2.0
     v_h = approach(d_h, v_est[:2], jnp.where(near, 2.5, 5.0))
-    tol = 0.3 + 0.1 * jnp.maximum(h - 3.0, 0.0)
-    v_ok = jnp.where(h < 2.0, 0.1, 0.3)
-    hold = (h < 6.0) & ((jnp.linalg.norm(d_h) > tol) | (jnp.linalg.norm(v_est[:2]) > v_ok))
-    vz = jnp.where(over, jnp.where(hold, 0.0, jnp.where(h > 8.0, -2.5, -0.8)), 0.0)
+    go = (held > PATIENCE) & (jnp.linalg.norm(d_h) < PAD_R)                     # waited long enough: creep down over the pad
+    vz = jnp.where(over, jnp.where(rule_hold(d_h, h, v_est), jnp.where(go, -0.6, 0.0), jnp.where(h > 8.0, VZ_FAST, -0.8)), 0.0)
     return jnp.concatenate([v_h, vz[None]]), near
 
 
@@ -156,7 +164,7 @@ def reset(key, w10):
     return dict(sim=s, yaw=yaw, wind=wind_new(k[3], w10), yard=yard_new(k[4]),
                 bias=0.05 * jax.random.normal(k[5], (2,)), t=jnp.array(0.0), key=k[5],
                 prev_act=jnp.zeros(7), hist=jnp.zeros((N_HIST, 5)), done=jnp.array(False), ff_slow=jnp.zeros(2),
-                outcome=jnp.array(0), miss=jnp.array(0.0), vz_sent=jnp.array(0.0))
+                outcome=jnp.array(0), miss=jnp.array(0.0), vz_sent=jnp.array(0.0), held=jnp.array(0.0))
 
 
 def estimates(st, key):
@@ -184,7 +192,8 @@ def observe(st, p_est, v_est, cmd):
                             st["prev_act"], st["hist"].ravel(), jnp.tanh(-p[:2] / 0.5), gate(-p[:2], p[2], v_est)])
 
 
-OBS_DIM = 2 + 1 + 3 + 2 + 3 + 2 + 2 + 3 + 7 + N_HIST * 5 + 2 + 3
+HIST0 = 2 + 1 + 3 + 2 + 3 + 2 + 2 + 3 + 7            # the observation's index where the last N_HIST (v_est/3, lean*5) start
+OBS_DIM = HIST0 + N_HIST * 5 + 2 + 3
 
 
 def shield_block(d_h, h, v_est, k):
@@ -200,7 +209,8 @@ def step(st, act, key, fly=True, decide=True, shield=0.0, hp_tau=0.0):
     k1, k2, k3 = jax.random.split(key, 3)
     p_est, v_est = estimates(st, k1)
     d_h = -p_est[:2]
-    cmd, near = rule_cmd(d_h, p_est[2], v_est)
+    cmd, near = rule_cmd(d_h, p_est[2], v_est, st["held"])
+    held = jnp.where(rule_hold(d_h, p_est[2], v_est), st["held"] + DT_C, 0.0)
     # hp_tau > 0: the push's slow part is taken out (a first-order high-pass): PX4's velocity integral cancels any
     # steady push anyway (26 Sept: a fixed push of 0-3 m/s^2 changed nothing), so the learner's range goes to reacting
     raw = jnp.clip(act[:2], -2, 2)
@@ -235,13 +245,13 @@ def step(st, act, key, fly=True, decide=True, shield=0.0, hp_tau=0.0):
     hist = jnp.concatenate([st["hist"][1:], jnp.concatenate([v_est / 3, lean * 5])[None]], axis=0)
     prev = jnp.concatenate([a_ff / A_FF, jax.nn.one_hot(mode, 5)])
     st = dict(st, sim=sim, wind=ws, t=t, prev_act=prev, hist=hist, done=done, outcome=outcome, miss=miss, key=k3, ff_slow=ff_slow,
-              vz_sent=vz)
+              vz_sent=vz, held=held)
     return st, r, done
 
 
 def obs_of(st, key):
     p_est, v_est = estimates(st, key)
-    cmd, _ = rule_cmd(-p_est[:2], p_est[2], v_est)
+    cmd, _ = rule_cmd(-p_est[:2], p_est[2], v_est, st["held"])
     return observe(st, p_est, v_est, cmd)
 
 
