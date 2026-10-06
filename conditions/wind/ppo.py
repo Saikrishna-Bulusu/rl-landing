@@ -53,12 +53,12 @@ def mlp(ps, x):
     return x @ W + b
 
 
-def init_params(key):
+def init_params(key, n_in=E.OBS_DIM):
     k1, k2 = jax.random.split(key)
-    pi = mlp_init(k1, [E.OBS_DIM, 256, 256, 7])
+    pi = mlp_init(k1, [n_in, 256, 256, 7])
     W, b = pi[-1]
     pi[-1] = (W, b.at[2].set(4.0))            # the 'rule' option first (p ~ 0.93): the learner starts as the rule
-    return dict(pi=pi, logstd=jnp.full(2, -1.2), v=mlp_init(k2, [E.OBS_DIM, 256, 256, 1], last=1.0))
+    return dict(pi=pi, logstd=jnp.full(2, -1.2), v=mlp_init(k2, [n_in, 256, 256, 1], last=1.0))
 
 
 def heads(p, obs_n):
@@ -121,22 +121,38 @@ def flyer_mean(flyer, obs):
     return heads(fp, normalize(frms, obs))[0]
 
 
-def dob_ff(k, obs):
-    """The disturbance observer (no learning; 4 Oct research): the wind's push is the measured acceleration minus what the
-    tilt gives; push back k times it, in the flyer's units. Reads only the observation's last N_HIST (velocity, lean)."""
+def dob_parts(obs):
+    """The disturbance observer's readings from the observation's last N_HIST (velocity, lean): the measured horizontal
+    acceleration, and the body's up axis (its horizontal part, its vertical part)."""
     h = obs[..., E.HIST0:E.HIST0 + E.N_HIST * 5].reshape(obs.shape[:-1] + (E.N_HIST, 5))     # newest last
     v = h[..., :2] * 3.0
     a_meas = (v[..., -1, :] - v[..., 0, :]) / ((E.N_HIST - 1) * E.DT_C)
     zh = h[..., -2:, 3:5].mean(-2) / 5.0                     # the horizontal part of the body's up axis
     zz = jnp.sqrt(jnp.maximum(1.0 - (zh ** 2).sum(-1, keepdims=True), 0.25))
+    return a_meas, zh, zz
+
+
+def dob_ff(k, obs):
+    """The disturbance observer (no learning; 4 Oct research): the wind's push is the measured acceleration minus what the
+    tilt gives; push back k times it, in the flyer's units."""
+    a_meas, zh, zz = dob_parts(obs)
     return jnp.clip(-k * (a_meas - 9.81 * zh / zz) / E.A_FF, -1.0, 1.0)
 
 
-def make_fns(n_env, t_roll, fly, decide, shield=0.0, flyer=None, hp_tau=0.0):
+def with_dob(obs, wind_in=True):
+    """Phase 3, --dob-in (Sai, 6 Oct: first upgrade): the observation plus the DOB's estimate of the wind's push (2 inputs,
+    in A_FF units, unclipped up to +-3). It reads the drone's drag in the wind directly. wind_in=False puts zeros there:
+    Tasim & Sun's test, the same trained policy without its wind channel."""
+    a_meas, zh, zz = dob_parts(obs)
+    d = jnp.clip((a_meas - 9.81 * zh / zz) / E.A_FF, -3.0, 3.0)
+    return jnp.concatenate([obs, d if wind_in else jnp.zeros_like(d)], -1)
+
+
+def make_fns(n_env, t_roll, fly, decide, shield=0.0, flyer=None, hp_tau=0.0, dob_in=False):
     fly_f, dec_f = (0.0 if flyer is not None else float(fly)), float(decide)
     vstep = jax.vmap(lambda s, a, k: E.step(s, a, k, fly, decide, shield, hp_tau))
     vreset = jax.vmap(E.reset)
-    vobs = jax.vmap(E.obs_of)
+    vobs = (lambda st, ks: with_dob(jax.vmap(E.obs_of)(st, ks))) if dob_in else jax.vmap(E.obs_of)   # --dob-in: 2 more inputs
 
     def where_tree(c, a, b):
         return jax.tree_util.tree_map(lambda x, y: jnp.where(c.reshape((-1,) + (1,) * (x.ndim - 1)), x, y), a, b)
@@ -147,7 +163,7 @@ def make_fns(n_env, t_roll, fly, decide, shield=0.0, flyer=None, hp_tau=0.0):
             ks = jax.random.split(k, 5)
             a_c, a_d = policy_act(p, rms, obs, ks[0])
             if flyer is not None:                      # the flyer's weights come in as an argument, not baked-in
-                a_c = dob_ff(fl, obs) if flyer[0] == "dob" else flyer_mean(fl, obs)   # constants (they broke XLA, 26 Sept)
+                a_c = dob_ff(fl, obs) if flyer[0] == "dob" else flyer_mean(fl, obs[..., :E.OBS_DIM] if dob_in else obs)   # constants (they broke XLA, 26 Sept)
             mean, logstd, logits = heads(p, normalize(rms, obs))
             lp = log_prob(mean, logstd, logits, a_c, a_d, fly_f, dec_f)
             val = mlp(p["v"], normalize(rms, obs))[:, 0]
@@ -237,18 +253,22 @@ def load(path):
     return p, dict(mean=jnp.array(z["rms_mean"]), var=jnp.array(z["rms_var"]), count=1.0), json.loads(str(z["meta"]))
 
 
-def greedy_policy(p, rms, flyer=None, greedy=True):
-    """The policy as evaluate() calls it; greedy=False samples (the key is env 0's, which every step renews)."""
+def greedy_policy(p, rms, flyer=None, greedy=True, wind_in=True):
+    """The policy as evaluate() calls it; greedy=False samples (the key is env 0's, which every step renews). A policy
+    trained with --dob-in (its input 2 wider) gets the DOB's estimate, or zeros with wind_in=False."""
+    dob_in = p["pi"][0][0].shape[0] == E.OBS_DIM + 2
+
     def f(obs, st):
-        a_c, a_d = policy_act(p, rms, obs, jax.random.PRNGKey(0) if greedy else st["key"][0], greedy=greedy)
+        x = with_dob(obs, wind_in) if dob_in else obs
+        a_c, a_d = policy_act(p, rms, x, jax.random.PRNGKey(0) if greedy else st["key"][0], greedy=greedy)
         if flyer is not None:
             a_c = dob_ff(flyer[1], obs) if flyer[0] == "dob" else flyer_mean(flyer, obs)
         return jnp.zeros((obs.shape[0], 3)).at[:, :2].set(a_c).at[:, 2].set(a_d.astype(jnp.float32))
     return f
 
 
-def load_policy(path, greedy=True):
-    """A checkpoint as (greedy policy, fly, decide, shield); stage-2 checkpoints bring their flyer."""
+def load_policy(path, greedy=True, wind_in=True):
+    """A checkpoint as (greedy policy, fly, decide, shield); stage-2 checkpoints bring their flyer. wind_in: greedy_policy."""
     p, rms, meta = load(path)
     flyer = None
     fl = meta.get("flyer") or ""                            # flyer-only checkpoints store None
@@ -257,7 +277,7 @@ def load_policy(path, greedy=True):
     elif fl:
         fp, frms, _ = load(fl)
         flyer = (fp, frms)
-    return greedy_policy(p, rms, flyer, greedy), meta["fly"] or flyer is not None, meta["decide"], meta.get("shield", 0.0)
+    return greedy_policy(p, rms, flyer, greedy, wind_in), meta["fly"] or flyer is not None, meta["decide"], meta.get("shield", 0.0)
 
 
 def hp_of(path):
@@ -300,6 +320,8 @@ def main():
     ap.add_argument("--eval-every", type=int, default=100)
     ap.add_argument("--w-start", type=float, default=W_START, help="20 = no curriculum: the full range of wind from the start")
     ap.add_argument("--w-ok", type=float, default=W_OK, help="landed share in the top band before the wind rises")
+    ap.add_argument("--stuck", type=int, default=STUCK, help="rounds at one level before the wind rises anyway (7 Oct: randomized "
+                    "drones cannot reach 95%% in strong wind, and 150-round steps left the flyer at 12 m/s after 550 rounds)")
     ap.add_argument("--shield", type=float, default=0.0, help="k > 0: no descent below 6 m beyond k x the rule's limits")
     ap.add_argument("--flyer", help="stage 2: a flying-only checkpoint, frozen, or dob[:k] (the disturbance observer); only the deciding is trained")
     ap.add_argument("--lr", type=float, default=LR, help="starting learning rate (annealed to a tenth)")
@@ -311,7 +333,12 @@ def main():
     ap.add_argument("--log-test", action="store_true", help="also score the TEST yards at every eval (logging only, ~55%% of eval time)")
     ap.add_argument("--ladder", metavar="CKPT", help="score a checkpoint (or 'rule') on the full wind ladder, 1024 paired flights")
     ap.add_argument("--no-clearml", action="store_true", help="no live logging to ClearML (rl-landing/wind)")
+    ap.add_argument("--rand", default="", help="PLAN.md 2c's per-flight randomization for training and validation: "
+                    "sense,drone,gust or all (empty: none, the Phase 0-2a environment)")
+    ap.add_argument("--dob-in", action="store_true", help="Phase 3: the DOB's estimate of the wind's push as 2 more inputs (with_dob)")
     a = ap.parse_args()
+    E.RAND = frozenset(("sense", "drone", "gust") if a.rand == "all" else [g for g in a.rand.split(",") if g])
+    assert E.RAND <= {"sense", "drone", "gust"}, f"unknown --rand group in {a.rand!r}"
     if a.ladder:
         if a.ladder == "rule":
             pol, fly, decide = (lambda obs, st: jnp.zeros((obs.shape[0], 3))), False, False
@@ -330,7 +357,10 @@ def main():
     if not a.no_clearml:
         try:
             from clearml import Task
+            # always a new record: by default ClearML reuses the last unfinished task of the same name (7 Oct: an archived,
+            # stopped one, which refused writes, so a run trained unlogged)
             task = Task.init(project_name="rl-landing/wind", task_name=f"{a.tag}_s{a.seed}", auto_connect_frameworks=False,
+                             reuse_last_task_id=False,
                              tags=[n for n, on in (("fly", fly), ("decide", decide), ("flyer", bool(a.flyer))) if on])
             task.connect(vars(a))
             print("ClearML:", task.get_output_log_web_page(), flush=True)
@@ -351,17 +381,17 @@ def main():
     base = f"{HERE}/runs/{a.tag}_s{a.seed}"
     log = open(base + ".jsonl", "w")
     hp = a.hp_tau or (hp_of(a.flyer) if a.flyer and not a.flyer.startswith("dob") else 0.0)
-    rollout, gae, update, vreset, vobs = make_fns(a.envs, a.steps, fly, decide, a.shield, flyer, hp)
+    rollout, gae, update, vreset, vobs = make_fns(a.envs, a.steps, fly, decide, a.shield, flyer, hp, a.dob_in)
     key = jax.random.PRNGKey(a.seed)
     key, k1, k2, k3 = jax.random.split(key, 4)
-    p = init_params(k1)
+    p = init_params(k1, E.OBS_DIM + 2 if a.dob_in else E.OBS_DIM)
     opt = adam_init(p)
     w_cur, stuck, band_oc, best_val = a.w_start, 0, [], -1.0
     w10 = jax.vmap(draw_w10, in_axes=(0, None))(jax.random.split(k2, a.envs), w_cur)
     st = vreset(jax.random.split(k3, a.envs), w10)
     key, k = jax.random.split(key)
     obs = vobs(st, jax.random.split(k, a.envs))
-    rms = dict(mean=jnp.zeros(E.OBS_DIM), var=jnp.ones(E.OBS_DIM), count=1e-4)
+    rms = dict(mean=jnp.zeros(obs.shape[-1]), var=jnp.ones(obs.shape[-1]), count=1e-4)
     rms = rms_update(rms, obs)
     t0 = time.time()
     for it in range(1, a.iters + 1):
@@ -371,7 +401,7 @@ def main():
         adv, ret = gae(tr, last_v)
         lr = jnp.float32(a.lr * max(0.1, 1.0 - (it - 1) / a.iters))     # annealed to a tenth
         p, opt, info = update(p, opt, rms, tr, adv, ret, ku, lr)
-        rms = rms_update(rms, tr["obs"].reshape(-1, E.OBS_DIM))
+        rms = rms_update(rms, tr["obs"].reshape(-1, obs.shape[-1]))
         done = np.array(tr["done"]).ravel()
         oc, wv = np.array(tr["outcome"]).ravel()[done], np.array(tr["w10"]).ravel()[done]
         band = wv >= w_cur - 3.0
@@ -384,7 +414,7 @@ def main():
                    std=[float(x) for x in np.exp(np.array(p["logstd"]))], wall=round(time.time() - t0, 1))
         t_round = time.time() - t_round
         stuck += 1
-        if stuck >= MIN_ROUNDS and ((succ == succ and succ >= a.w_ok) or stuck >= STUCK) and w_cur < W_TOP:
+        if stuck >= MIN_ROUNDS and ((succ == succ and succ >= a.w_ok) or stuck >= a.stuck) and w_cur < W_TOP:
             row["advance"] = "landed" if succ == succ and succ >= a.w_ok else "stuck"
             w_cur, stuck, band_oc = min(W_TOP, w_cur + W_STEP), 0, []
         if it % a.eval_every == 0 or it == a.iters:
@@ -394,7 +424,7 @@ def main():
             # choose on VALIDATION yards (seed 20000), never on the test yards above
             row["val"] = [E.evaluate(pol, float(w), n=512, seed=20_000, fly=fly, decide=decide, shield=a.shield, hp_tau=hp)["landed"] for w in (9, 12, 15, 18)]
             meta = dict(tag=a.tag, seed=a.seed, it=it, w_cur=w_cur, fly=fly, decide=decide, shield=a.shield, val=row["val"], hp_tau=a.hp_tau,
-                        crash_r=a.crash_r, hard_r=a.hard_r, flip_r=a.flip_r, shape_g=a.shape_g,
+                        crash_r=a.crash_r, hard_r=a.hard_r, flip_r=a.flip_r, shape_g=a.shape_g, rand=sorted(E.RAND), dob_in=a.dob_in,
                         flyer=(a.flyer if a.flyer.startswith("dob") else os.path.abspath(a.flyer)) if a.flyer else None)
             save(base + ".npz", p, rms, meta)
             save(f"{base}_it{it}.npz", p, rms, meta)

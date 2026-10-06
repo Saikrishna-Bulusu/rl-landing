@@ -216,6 +216,19 @@ drone's drag). For Phase 5: abort when the drone cannot hold the wind.
 Gate: the final recipe. Gazebo smoke after each kept upgrade (2 yards x 2 winds), counting saturation and reversals
 before flying.
 
+### Phase 3 as run (from 7 Oct; Sai: "Phase 3 as planned, DOB first")
+
+- `ppo.py --rand all` trains and validates in the Phase 2 world; checkpoints record `rand` (and `dob_in`).
+- The control (`queue/phase3_base.sh`): the paper's recipe, flyer `fly_rand` then deciders `base_rand` s0-s2. One
+  change was forced: with randomized drones the curriculum's 95% bar is out of reach in strong wind (some drones
+  cannot hold it), and with 150-round steps the first flyer was still at 12 m/s after 550 rounds (the paper's reached
+  20 by 500). Now `--w-ok 0.8 --stuck 40`: the wind rises at 80% landed or after 40 stalled rounds.
+- Upgrade 1 (`queue/phase3_dobin.sh`): `--dob-in`, the DOB's estimate of the wind's push as 2 more decider inputs
+  (`ppo.with_dob`, mirrored in gz_windland and checked by `--check-obs`), same frozen flyer, seeds 0-2.
+- `phase3_compare.py`: every arm on the test flights in both worlds; the upgrade is kept only if its paired gain over
+  the control is above zero (bootstrap 95% interval over flights, seeds averaged per flight); plus Tasim & Sun's split
+  (the same policy with its wind input zeroed, `load_policy(wind_in=False)`).
+
 ## Phase 4: architecture ablation (Sai: not satisfied with the common default)
 
 Width 64/128/256/512, depth 1-3, history length 0/4/8/16, tanh vs ReLU, history MLP vs GRU; 2-3 seeds each; ClearML

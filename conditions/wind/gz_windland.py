@@ -124,6 +124,7 @@ def check_obs(n=200):
     import jax
     import jax.numpy as jnp
     import land_env as E
+    import ppo as P
     assert (N_HIST, HIST0) == (E.N_HIST, E.HIST0), "the numpy observation layout drifted from land_env"
     global GATE_SCALE, PATIENCE
     tuned = json.load(open(f"{HERE}/runs/rule_tuned.json"))["chosen"]
@@ -150,6 +151,8 @@ def check_obs(n=200):
         o_n = observe(y, p_est, v_est, lean, cmd_n, np.array(st["prev_act"]), np.array(st["hist"]))
         assert o_n.shape == o_j.shape == (E.OBS_DIM,), (o_n.shape, o_j.shape)
         worst = max(worst, float(np.abs(o_n - o_j).max()), float(np.abs(cmd_n - np.array(cmd_j)).max()))
+        dob_j = np.array(P.with_dob(jnp.array(o_j)))[-2:]                       # --dob-in's two inputs
+        worst = max(worst, float(np.abs(np.clip(dob_push(o_n), -3.0, 3.0) - dob_j).max()))
     GATE_SCALE, PATIENCE = E.GATE_SCALE, E.PATIENCE = 1.0, 1e9
     assert worst < 1e-4, f"numpy observation differs from land_env's by {worst}"
     assert crept > 0, "no state reached the tuned rule's creep: the check did not test it"
@@ -164,12 +167,17 @@ class DOB:
         self.k, self.meta = k, {"hp_tau": 0.0}           # read like a stage-1 checkpoint's meta: no high-pass
 
     def __call__(self, obs):
-        h = np.asarray(obs[HIST0:HIST0 + N_HIST * 5]).reshape(N_HIST, 5)
-        v = h[:, :2] * 3.0
-        a_meas = (v[-1] - v[0]) / ((N_HIST - 1) * DT_C)
-        zh = h[-2:, 3:5].mean(0) / 5.0
-        zz = np.sqrt(max(1.0 - float((zh ** 2).sum()), 0.25))
-        return np.clip(-self.k * (a_meas - 9.81 * zh / zz) / A_FF, -1.0, 1.0), 0
+        return np.clip(-self.k * dob_push(obs), -1.0, 1.0), 0
+
+
+def dob_push(obs):
+    """ppo.dob_parts in numpy: the wind's push, measured acceleration minus what the tilt gives, in A_FF units."""
+    h = np.asarray(obs[HIST0:HIST0 + N_HIST * 5]).reshape(N_HIST, 5)
+    v = h[:, :2] * 3.0
+    a_meas = (v[-1] - v[0]) / ((N_HIST - 1) * DT_C)
+    zh = h[-2:, 3:5].mean(0) / 5.0
+    zz = np.sqrt(max(1.0 - float((zh ** 2).sum()), 0.25))
+    return (a_meas - 9.81 * zh / zz) / A_FF
 
 
 class Policy:
@@ -184,6 +192,8 @@ class Policy:
         self.flyer = DOB(float(fl.split(":")[1])) if fl and fl.startswith("dob") else (Policy(fl) if fl else None)
 
     def __call__(self, obs):
+        if self.pi[0][0].shape[0] == len(obs) + 2:                # trained with --dob-in: ppo.with_dob
+            obs = np.r_[obs, np.clip(dob_push(obs), -3.0, 3.0)]
         x = np.clip((obs - self.mean) / np.sqrt(self.var + 1e-8), -10, 10)
         for W, b in self.pi[:-1]:
             x = np.tanh(x @ W + b)

@@ -316,11 +316,11 @@ def rule_action(st, key):
     return jnp.array([0.0, 0.0, 0.0])
 
 
-def evaluate(policy_fn, w10, n=1024, seed=0, fly=True, decide=True, t_max=T_MAX, shield=0.0, hp_tau=0.0):
+def evaluate(policy_fn, w10, n=1024, seed=0, fly=True, decide=True, t_max=T_MAX, shield=0.0, hp_tau=0.0, per_flight=False):
     """n flights at wind w10 (paired: the same yards, starts and wind seeds for every policy). Returns outcome counts,
     miss distances of landed flights, times. w10 may be a list: one compiled program then flies every wind, and a list
     of results comes back (6 Oct: compiling took most of each call); module flags (RAND, GATE_SCALE...) must not change
-    during the call."""
+    during the call. per_flight: also every flight's outcome (paired statistics, Phase 3)."""
     keys = jax.random.split(jax.random.PRNGKey(seed), n)
 
     def one(carry, k):
@@ -352,12 +352,12 @@ def evaluate(policy_fn, w10, n=1024, seed=0, fly=True, decide=True, t_max=T_MAX,
     z = jnp.zeros(n)
     acc0 = dict(live=z, cap=z, slew=z, flip=z, msat=z, picks=jnp.zeros((4, 3, 5)))
     run = jax.jit(lambda c, ks: jax.lax.scan(one, c, ks)[0])
-    res = [summary(*run((jax.vmap(lambda k: reset(k, w))(keys), acc0), jax.random.split(jax.random.PRNGKey(seed + 1), n_steps)), w, n)
+    res = [summary(*run((jax.vmap(lambda k: reset(k, w))(keys), acc0), jax.random.split(jax.random.PRNGKey(seed + 1), n_steps)), w, n, per_flight)
            for w in (w10 if isinstance(w10, (list, tuple)) else [w10])]
     return res if isinstance(w10, (list, tuple)) else res[0]
 
 
-def summary(st, acc, w10, n):
+def summary(st, acc, w10, n, per_flight=False):
     """evaluate()'s numbers for one wind."""
     acc = {k: np.array(v) for k, v in acc.items()}
     air = max(float(acc["live"].sum()), 1.0)
@@ -371,7 +371,8 @@ def summary(st, acc, w10, n):
                 rev_per_s=float(acc["flip"].sum() / (air * DT_C)), motor_sat=float(acc["msat"].sum() / air),
                 picks=acc["picks"].round().astype(int).tolist(),   # [height >8, 6-8, 2-6, <2 m][rule: fast, slow, hold][mode]
                 first40=dict(outcome=out[:40].tolist(), miss=np.array(st["miss"])[:40].round(3).tolist(),
-                             t=np.array(st["t"])[:40].round(2).tolist()))     # episode i = Gazebo's yard i
+                             t=np.array(st["t"])[:40].round(2).tolist()),    # episode i = Gazebo's yard i
+                **({"outcome_all": out.tolist()} if per_flight else {}))
 
 
 def check_rand(n=1024, steps=2250):
