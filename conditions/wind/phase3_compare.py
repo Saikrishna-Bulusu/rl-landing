@@ -38,7 +38,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 R = os.path.dirname(os.path.dirname(HERE))
 WINDS = [9.0, 12.0, 15.0, 18.0, 20.0]
 CONDS = {"randomized": ("sense", "drone", "gust"), "nominal": ()}
-WARM, WARM_P = "warm_leash03", "warmp_leash03"      # the leash chosen on validation flights (queue/phase3_warm.sh, seed 0)
+WARM, WARM_P = "warm_leash0", "warmp_leash0"        # leash 0 won on validation reward (runs/phase3_leash.json): a leash
+                                                     # of 0.1-1 held the decider near its start (W10 18 damaging 27 -> 23-25%)
 
 
 def arms():
@@ -63,6 +64,7 @@ def ci(d, rng=np.random.default_rng(0), n_boot=10_000):
 
 
 def main():
+    E.CRASH_R, E.HARD_R, E.SHAPE_G = -100.0, -100.0, 0.9998   # the reward column at the paper's training prices
     res, per = {}, {}
     for cname, groups in CONDS.items():
         E.RAND = frozenset(groups)
@@ -72,12 +74,15 @@ def main():
             runs = [E.evaluate(pol, WINDS, n=1024, seed=10_000, fly=fly, decide=dec, shield=sh, per_flight=True) for pol, fly, dec, sh in pols]
             E.GATE_SCALE, E.PATIENCE = 1.0, 1e9
             out = np.array([[r["outcome_all"] for r in rows] for rows in runs])          # seed x wind x flight
-            fast = np.array([[r["fast_all"] for r in rows] for rows in runs])
+            sink, slide = (np.array([[r[k] for r in rows] for rows in runs]) for k in ("sink_all", "slide_all"))
+            fast = sink | slide
             per[cname][name] = out
             pct = lambda m: [round(100 * float(m[:, i].mean()), 1) for i in range(len(WINDS))]
             res[cname][name] = dict(landed=pct(out == 1), crashed=pct(out == 2), hard=pct(out == 3), too_fast=pct(fast),
+                                    slid=pct(slide), sank_not_sliding=pct(sink & ~slide),     # 7 Oct: in a gale most are slides
                                     gentle_off_pad=pct((out == 3) & ~fast), gave_up=pct((out == 4) | (out == 0)),
-                                    damaging=pct((out == 2) | (out == 3)))
+                                    damaging=pct((out == 2) | (out == 3)),
+                                    reward=[round(float(np.mean([rows[i]["ret_mean"] for rows in runs])), 2) for i in range(len(WINDS))])
             print(f"{cname:10s} {name:30s} landed " + " ".join(f"{v:5.1f}" for v in res[cname][name]["landed"])
                   + "   damaging " + " ".join(f"{v:4.1f}" for v in res[cname][name]["damaging"])
                   + "   too fast " + " ".join(f"{v:4.1f}" for v in res[cname][name]["too_fast"]), flush=True)
@@ -124,7 +129,7 @@ def main():
                       auto_connect_frameworks=False, auto_connect_arg_parser=False)
         lg = t.get_logger()
         for cname in CONDS:
-            for k in ("landed", "damaging", "too_fast", "gave_up"):
+            for k in ("landed", "damaging", "slid", "gave_up", "reward"):
                 lg.report_table(f"{k} % ({cname} world)", "all arms", iteration=0, table_plot=[["arm"] + [f"W10 {w:g}" for w in WINDS]]
                                 + [[n] + r[k] for n, r in res[cname].items() if n != "paired"])
             lg.report_table(f"paired differences, points, 95% CI ({cname} world)", "paired", iteration=0,

@@ -382,7 +382,8 @@ def summary(st, acc, w10, n, per_flight=False):
     air = max(float(acc["live"].sum()), 1.0)
     out = np.array(st["outcome"])
     v = np.array(st["sim"]["d"].qvel[:, :3])                 # frozen at touchdown
-    fast = (out == 3) & ((-v[:, 2] >= V_SINK_OK) | (np.hypot(v[:, 0], v[:, 1]) >= V_SLIDE_OK))
+    sink, slide = (out == 3) & (-v[:, 2] >= V_SINK_OK), (out == 3) & (np.hypot(v[:, 0], v[:, 1]) >= V_SLIDE_OK)
+    fast = sink | slide
     return dict(w10=float(w10), n=n, landed=float((out == 1).mean()), crashed=float((out == 2).mean()),
                 hard=float((out == 3).mean()), timeout=float(((out == 4) | (out == 0)).mean()),
                 hard_fast=float(fast.mean()),                # of the hard ones, too fast (the rest: gentle, off the pad)
@@ -395,7 +396,7 @@ def summary(st, acc, w10, n, per_flight=False):
                 ret_mean=float(acc["ret"].mean()),                 # a flight's summed reward at the prices traced (CRASH_R...)
                 first40=dict(outcome=out[:40].tolist(), miss=np.array(st["miss"])[:40].round(3).tolist(),
                              t=np.array(st["t"])[:40].round(2).tolist()),    # episode i = Gazebo's yard i
-                **({"outcome_all": out.tolist(), "fast_all": fast.tolist()} if per_flight else {}))
+                **({"outcome_all": out.tolist(), "sink_all": sink.tolist(), "slide_all": slide.tolist()} if per_flight else {}))
 
 
 def check_rand(n=1024, steps=2250):
