@@ -231,6 +231,29 @@ before flying.
 - `phase3_compare.py`: every arm on the test flights in both worlds; the upgrade is kept only if its paired gain over
   the control is above zero (bootstrap 95% interval over flights, seeds averaged per flight); plus Tasim & Sun's split
   (the same policy with its wind input zeroed, `load_policy(wind_in=False)`).
+- First results (7 Oct, validation in the randomized world, W10 18): the control's gale landing peaks at round 100-200
+  (18-29%) and falls as the curriculum enters strong wind (6-16% at round 600); its seed-0 best checkpoint is round 100.
+  On the test flights it is worse than the paper decider (trained in the nominal world): W10 15 landed 52.9 vs 80.1,
+  hard 26.8 vs 11.9; W10 18 27.8 vs 56.8. Neither flyer is the cause (in the randomized world fly_s0 and fly_rand land
+  like the rule: the rule's gate is the bottleneck). The DOB-input deciders follow the control's curve (W10 18: 26-27% at
+  round 100, falling after): the input does not fix training. Reading: in strong wind many randomized flights cannot be
+  won (draggy, weak drones; biased pad estimates) and the critic cannot tell which, so the advantages are noise. Next:
+  the privileged critic (candidate 2, moved up), `queue/phase3_priv.sh`.
+- Paired comparison (`phase3_compare.py` -> `runs/phase3_dobin.json`, ClearML "phase 3: upgrades against the
+  retrained control"; 1,024 test flights, 3 seeds per arm averaged per flight, bootstrap 95% intervals). Randomized
+  world, landed % at W10 15 / 18 (damaging = hard + crashed at W10 18):
+  hand-tuned rule 67.4 / 37.2 (3.7); paper decider 79.4 / 55.4 (23.8); control 49.2 / 21.2 (12.7); + DOB input
+  49.8 / 22.0 (16.2); + privileged critic 62.7 / 34.2 (5.1). The paper decider's damaging touchdowns are mostly too
+  fast (seed 0: 17.4% too fast, 3.3% gentle but off the pad, 5.0% crashed): trained on exact height and one drone, it
+  comes down hard when the height is off or the drone is weak.
+  - DOB input: NOT kept. Paired gain over the control within +-1 point at every wind (intervals include 0); Tasim &
+    Sun's split: wind channel on minus off = -0.1 to -1.6 points; the policy's whole gain over the rule (+4 to +30) is
+    without it. The push is already in the observation's history; spelling it out adds nothing.
+  - Privileged critic: KEPT. Paired gain +6.4 / +13.4 / +13.1 / +9.2 points at W10 12 / 15 / 18 / 20 (all intervals
+    above 0), crashes down 0.2-0.7 points; in the nominal world +12.2 / +15.9 at W10 15 / 18. Validation now rises
+    through training instead of collapsing.
+  - Still: the randomized-trained recipe lands less than the hand-tuned rule in a gale (34.2 vs 37.2) and far less
+    than the paper decider in the nominal world (35.7 vs 84.6 at W10 18): it learned to give up (61% timeouts).
 
 ## Phase 4: architecture ablation (Sai: not satisfied with the common default)
 
