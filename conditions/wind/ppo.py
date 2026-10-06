@@ -214,7 +214,8 @@ def save(path, p, rms, meta):
 
 
 def load(path):
-    z = np.load(path)
+    # a stage-2 checkpoint names its flyer by absolute path; the 5 Oct reorganization moved wind/runs to conditions/wind/runs
+    z = np.load(path if os.path.exists(path) else os.path.join(HERE, "runs", os.path.basename(path)))
     n = len([k for k in z.files if k.startswith("pi_W")])
     m = len([k for k in z.files if k.startswith("v_W")])
     p = dict(pi=[(jnp.array(z[f"pi_W{i}"]), jnp.array(z[f"pi_b{i}"])) for i in range(n)], logstd=jnp.array(z["logstd"]),

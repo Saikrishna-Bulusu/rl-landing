@@ -141,7 +141,7 @@ class Policy:
     """A ppo.py checkpoint's greedy action, in numpy."""
 
     def __init__(self, path):
-        z = np.load(path)
+        z = np.load(path if os.path.exists(path) else os.path.join(HERE, "runs", os.path.basename(path)))   # flyer paths predate the reorg
         self.pi = [(z[f"pi_W{i}"], z[f"pi_b{i}"]) for i in range(len([k for k in z.files if k.startswith("pi_W")]))]
         self.mean, self.var = z["rms_mean"], z["rms_var"]
         self.meta = json.loads(str(z["meta"]))
