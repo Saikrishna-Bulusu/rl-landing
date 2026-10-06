@@ -1,7 +1,7 @@
 """Put past training logs into ClearML (history projects). Idempotent: a task whose name already exists in its project is skipped.
   python clearml_import.py [--dry-run] [--only wind|fast_sim]
 Wind scalars mirror conditions/wind/ppo.py's clearml_log (kept in step by hand: importing ppo would pull in jax)."""
-import argparse, glob, json, math, os
+import argparse, glob, json, math, multiprocessing as mp, os
 import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -69,21 +69,33 @@ def existing(project):
     return {t["name"] for t in Task.query_tasks(project_name=project, additional_return_fields=["name"], task_filter={"page_size": 500, "system_tags": ["-archived"]})}
 
 
-def push(job):
+def _push(job, q):
     from clearml import Task
-    t = Task.create(project_name=job["project"], task_name=job["name"], task_type=Task.TaskTypes.training)
+    # Task.init, like a live run: Task.create + report_scalar truncated long runs (6 Oct: 30-70 of 600-1,000 points)
+    t = Task.init(project_name=job["project"], task_name=job["name"], reuse_last_task_id=False, auto_connect_frameworks=False,
+                  auto_connect_arg_parser=False, auto_connect_streams=False, auto_resource_monitoring=False)
     t.add_tags(job["tags"])
     t.connect({k: ("" if v is None else v) for k, v in job["hp"].items()}, name="hyperparameters")
     if job.get("final"):
         t.connect(job["final"], name="final eval")
-    t.mark_started(force=True)        # the server drops events sent to a task that never started (4 Oct: 76 empty imports)
     lg = t.get_logger()
     for it, title, series, v in job["pts"]:
         if isinstance(v, (int, float)) and not math.isnan(v):     # NaN: nothing finished yet
             lg.report_scalar(title, series, float(v), int(it))
-    t.flush(wait_for_uploads=True)
-    t.mark_completed()
-    return t.get_output_log_web_page()
+    q.put(t.get_output_log_web_page())
+    t.close()                         # waits until every report is sent
+
+
+def push(job):
+    """One run per child process (Task.init works once per process); a run that hangs is stopped after 15 min."""
+    ctx = mp.get_context("spawn")
+    q = ctx.Queue()
+    p = ctx.Process(target=_push, args=(job, q))
+    p.start(); p.join(900)
+    if p.is_alive():
+        p.terminate(); p.join()
+        raise TimeoutError(f"{job['name']}: no answer from ClearML in 15 min")
+    return q.get() if not q.empty() else "(no url)"
 
 
 def main():
@@ -102,7 +114,9 @@ def main():
                 continue
             if job["project"] not in seen:
                 seen[job["project"]] = existing(job["project"])
-            if job["name"] in seen.get(job["project"], ()):
+            if job["project"] == WIND and "live" not in seen:
+                seen["live"] = existing("rl-landing/wind")           # runs logged live by ppo.py are not history
+            if job["name"] in seen.get(job["project"], ()) or (job["project"] == WIND and job["name"] in seen["live"]):
                 print(f"skip {src}: task '{job['name']}' already in {job['project']}")
                 continue
             if a.dry_run:
