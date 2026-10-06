@@ -149,7 +149,7 @@ def with_dob(obs, wind_in=True):
     return jnp.concatenate([obs, d if wind_in else jnp.zeros_like(d)], -1)
 
 
-def make_fns(n_env, t_roll, fly, decide, shield=0.0, flyer=None, hp_tau=0.0, dob_in=False, priv=False):
+def make_fns(n_env, t_roll, fly, decide, shield=0.0, flyer=None, hp_tau=0.0, dob_in=False, priv=False, anchor=0.0):
     fly_f, dec_f = (0.0 if flyer is not None else float(fly)), float(decide)
     vstep = jax.vmap(lambda s, a, k: E.step(s, a, k, fly, decide, shield, hp_tau))
     vreset = jax.vmap(E.reset)
@@ -195,7 +195,7 @@ def make_fns(n_env, t_roll, fly, decide, shield=0.0, flyer=None, hp_tau=0.0, dob
                               reverse=True)
         return adv, adv + tr["val"]
 
-    def loss(p, rms, b):
+    def loss(p, rms, b, p0=None):
         on = normalize(rms, b["obs"])
         mean, logstd, logits = heads(p, on)
         lp = log_prob(mean, logstd, logits, b["a_c"], b["a_d"], fly_f, dec_f)
@@ -207,9 +207,13 @@ def make_fns(n_env, t_roll, fly, decide, shield=0.0, flyer=None, hp_tau=0.0, dob
         vl = 0.5 * jnp.maximum((v - b["ret"]) ** 2, (vc - b["ret"]) ** 2).mean()
         ent = -(jax.nn.softmax(logits) * jax.nn.log_softmax(logits)).sum(-1).mean() * dec_f
         kl = ((ratio - 1) - (lp - b["lp"])).mean()
-        return pg + VF * vl - ENT * ent, (pg, vl, ent, kl)
+        kla = 0.0                                  # --anchor: KL(start || now) of the deciding, per decision
+        if anchor:
+            lg0 = jax.nn.log_softmax(heads(p0, on)[2])
+            kla = (jnp.exp(lg0) * (lg0 - jax.nn.log_softmax(logits))).sum(-1).mean() * dec_f
+        return pg + VF * vl - ENT * ent + anchor * kla, (pg, vl, ent, kl, kla)
 
-    def update(p, opt, rms, tr, adv, ret, key, lr, epochs=4, n_mb=8):
+    def update(p, opt, rms, tr, adv, ret, key, lr, actor_on=1.0, p0=None, epochs=4, n_mb=8):
         flat = lambda x: x.reshape((-1,) + x.shape[2:])
         data = dict(obs=flat(tr["obs"]), a_c=flat(tr["a_c"]), a_d=flat(tr["a_d"]), lp=flat(tr["lp"]),
                     val=flat(tr["val"]), adv=flat(adv), ret=flat(ret))
@@ -224,7 +228,8 @@ def make_fns(n_env, t_roll, fly, decide, shield=0.0, flyer=None, hp_tau=0.0, dob
                 p, opt, stop = carry
                 idx = jax.lax.dynamic_slice(perm, (i * mb,), (mb,))
                 b = jax.tree_util.tree_map(lambda x: x[idx], data)
-                (l, aux), g = jax.value_and_grad(loss, has_aux=True)(p, rms, b)
+                (l, aux), g = jax.value_and_grad(loss, has_aux=True)(p, rms, b, p0)
+                g = dict(g, pi=jax.tree_util.tree_map(lambda x: x * actor_on, g["pi"]), logstd=g["logstd"] * actor_on)   # --critic-warmup
                 stop = stop | (aux[3] > 1.5 * KL_TARGET)      # moved far enough this round: no more steps
                 p2, opt2 = adam(p, g, opt, lr)
                 keep = lambda a, b_: jax.tree_util.tree_map(lambda x, y: jnp.where(stop, x, y), a, b_)
@@ -232,7 +237,8 @@ def make_fns(n_env, t_roll, fly, decide, shield=0.0, flyer=None, hp_tau=0.0, dob
             (p, opt, stop), info = jax.lax.scan(mbstep, (p, opt, stop), jnp.arange(n_mb))
             return (p, opt, stop), info.mean(0)
         (p, opt, stop), info = jax.lax.scan(epoch, (p, opt, jnp.array(False)), jax.random.split(key, epochs))
-        return p, opt, jnp.concatenate([info.mean(0), stop[None].astype(jnp.float32)])
+        m = info.mean(0)                                  # stop stays 6th (jsonl readers); the anchor's KL after it
+        return p, opt, jnp.concatenate([m[:5], stop[None].astype(jnp.float32), m[5:]])
 
     return jax.jit(rollout), jax.jit(gae), jax.jit(update), vreset, vobs
 
@@ -293,7 +299,8 @@ def hp_of(path):
     return meta.get("hp_tau", 0.0) or (hp_of(meta["flyer"]) if meta.get("flyer") and not meta["flyer"].startswith("dob") else 0.0)
 
 
-PPO_NAMES = ["total loss", "policy loss", "value loss", "entropy (deciding)", "approx KL", "stopped early (KL)"]   # update()'s vector
+PPO_NAMES = ["total loss", "policy loss", "value loss", "entropy (deciding)", "approx KL", "stopped early (KL)",
+             "KL to the start (--anchor)"]   # update()'s vector
 
 
 def clearml_log(task, row, n_dec, dt):
@@ -307,6 +314,7 @@ def clearml_log(task, row, n_dec, dt):
         pts += [("policy std", n, v) for n, v in zip(("x", "y"), row["std"])]
         if "val" in row:
             pts += [("validation landed", f"W{w}", v) for w, v in zip((9, 12, 15, 18), row["val"])]
+            pts += [("validation damaging (hard + crashed)", f"W{w}", v) for w, v in zip((9, 12, 15, 18), row.get("val_damaging", []))]
         pts += [("test-yard landed", f"W{e['w10']:.0f}", e["landed"]) for e in row.get("eval", [])]
         for t, sname, v in pts:
             if v == v:                                           # NaN: nothing finished yet
@@ -344,6 +352,12 @@ def main():
                     "sense,drone,gust or all (empty: none, the Phase 0-2a environment)")
     ap.add_argument("--dob-in", action="store_true", help="Phase 3: the DOB's estimate of the wind's push as 2 more inputs (with_dob)")
     ap.add_argument("--priv-critic", action="store_true", help="Phase 3: the critic also sees land_env.privileged (training only)")
+    ap.add_argument("--init", help="Phase 3 warm start: begin from this checkpoint's actor (e.g. the paper decider); the critic starts fresh")
+    ap.add_argument("--critic-warmup", type=int, default=0, help="rounds at the start in which only the critic learns (the actor held)")
+    ap.add_argument("--anchor", type=float, default=0.0, help="with --init: price of the deciding's KL from the starting actor, per "
+                    "decision (7 Oct: unleashed, the warm start unlearned landing everywhere in ~30 rounds, then relearned)")
+    ap.add_argument("--offpad-r", type=float, default=None, help="price of a gentle touchdown off the pad (land_env.OFFPAD_R; "
+                    "default: the --hard-r price, as before); too fast keeps --hard-r")
     a = ap.parse_args()
     E.RAND = frozenset(("sense", "drone", "gust") if a.rand == "all" else [g for g in a.rand.split(",") if g])
     assert E.RAND <= {"sense", "drone", "gust"}, f"unknown --rand group in {a.rand!r}"
@@ -376,6 +390,7 @@ def main():
             task = None
             print("clearml unavailable, training without it:", e, flush=True)
     E.CRASH_R, E.HARD_R, E.FLIP_R, E.SHAPE_G = a.crash_r, a.hard_r, a.flip_r, a.shape_g    # read by land_env.step when traced
+    E.OFFPAD_R = a.offpad_r
     flyer, fl = None, 0.0
     if a.flyer and a.flyer.startswith("dob"):                 # --flyer dob[:k]: the observer flies, no stage 1
         a.flyer = f"dob:{float(a.flyer.split(':')[1]) if ':' in a.flyer else 1.0:g}"
@@ -389,7 +404,8 @@ def main():
     base = f"{HERE}/runs/{a.tag}_s{a.seed}"
     log = open(base + ".jsonl", "w")
     hp = a.hp_tau or (hp_of(a.flyer) if a.flyer and not a.flyer.startswith("dob") else 0.0)
-    rollout, gae, update, vreset, vobs = make_fns(a.envs, a.steps, fly, decide, a.shield, flyer, hp, a.dob_in, a.priv_critic)
+    rollout, gae, update, vreset, vobs = make_fns(a.envs, a.steps, fly, decide, a.shield, flyer, hp, a.dob_in, a.priv_critic,
+                                                  a.anchor if a.init else 0.0)
     key = jax.random.PRNGKey(a.seed)
     key, k1, k2, k3 = jax.random.split(key, 4)
     n_a = E.OBS_DIM + 2 if a.dob_in else E.OBS_DIM
@@ -401,7 +417,16 @@ def main():
     key, k = jax.random.split(key)
     obs = vobs(st, jax.random.split(k, a.envs))
     rms = dict(mean=jnp.zeros(obs.shape[-1]), var=jnp.ones(obs.shape[-1]), count=1e-4)
-    rms = rms_update(rms, obs)
+    pin, p0 = (lambda r: r), None
+    if a.init:                                   # --init: the actor (and its input statistics) from a trained checkpoint
+        ip, irms, _ = load(a.init)
+        assert ip["pi"][0][0].shape == p["pi"][0][0].shape, "--init: the checkpoint's actor takes other inputs"
+        n_i = irms["mean"].shape[0]
+        p = p0 = dict(p, pi=ip["pi"], logstd=ip["logstd"])
+        # the actor's input statistics stay the checkpoint's exactly; the critic's extra inputs learn theirs as usual
+        # (7 Oct: count=1e8 froze those too, at the first states' spread: 'marker lost', never at reset, read as 10)
+        pin = lambda r: dict(r, mean=r["mean"].at[:n_i].set(irms["mean"]), var=r["var"].at[:n_i].set(irms["var"]))
+    rms = pin(rms_update(rms, obs))
     t0 = time.time()
     for it in range(1, a.iters + 1):
         t_round = time.time()
@@ -409,8 +434,11 @@ def main():
         st, obs, tr, last_v = rollout(p, rms, st, obs, kr, jnp.float32(w_cur), fl)
         adv, ret = gae(tr, last_v)
         lr = jnp.float32(a.lr * max(0.1, 1.0 - (it - 1) / a.iters))     # annealed to a tenth
-        p, opt, info = update(p, opt, rms, tr, adv, ret, ku, lr)
-        rms = rms_update(rms, tr["obs"].reshape(-1, obs.shape[-1]))
+        if a.critic_warmup and it == a.critic_warmup + 1:
+            opt = adam_init(p)        # a fresh Adam for the released actor: its step count ran on through the warm-up, so the
+            # bias correction shrank while its moments stayed 0 (7 Oct: steps 2-5x lr for ~100 rounds)
+        p, opt, info = update(p, opt, rms, tr, adv, ret, ku, lr, jnp.float32(it > a.critic_warmup), p0)
+        rms = pin(rms_update(rms, tr["obs"].reshape(-1, obs.shape[-1])))
         done = np.array(tr["done"]).ravel()
         oc, wv = np.array(tr["outcome"]).ravel()[done], np.array(tr["w10"]).ravel()[done]
         band = wv >= w_cur - 3.0
@@ -431,9 +459,11 @@ def main():
             if a.log_test:                                    # the test yards: logged, never used to choose
                 row["eval"] = [E.evaluate(pol, float(w), n=512, seed=10_000, fly=fly, decide=decide, shield=a.shield, hp_tau=hp) for w in (0, 9, 12, 15, 18)]
             # choose on VALIDATION yards (seed 20000), never on the test yards above
-            row["val"] = [E.evaluate(pol, float(w), n=512, seed=20_000, fly=fly, decide=decide, shield=a.shield, hp_tau=hp)["landed"] for w in (9, 12, 15, 18)]
+            vals = [E.evaluate(pol, float(w), n=512, seed=20_000, fly=fly, decide=decide, shield=a.shield, hp_tau=hp) for w in (9, 12, 15, 18)]
+            row["val"] = [v["landed"] for v in vals]
+            row["val_damaging"] = [v["crashed"] + v["hard"] for v in vals]       # logged; the choice is on landed
             meta = dict(tag=a.tag, seed=a.seed, it=it, w_cur=w_cur, fly=fly, decide=decide, shield=a.shield, val=row["val"], hp_tau=a.hp_tau,
-                        crash_r=a.crash_r, hard_r=a.hard_r, flip_r=a.flip_r, shape_g=a.shape_g, rand=sorted(E.RAND), dob_in=a.dob_in, priv_critic=a.priv_critic,
+                        crash_r=a.crash_r, hard_r=a.hard_r, flip_r=a.flip_r, shape_g=a.shape_g, rand=sorted(E.RAND), dob_in=a.dob_in, priv_critic=a.priv_critic, init=a.init, offpad_r=a.offpad_r, anchor=a.anchor,
                         flyer=(a.flyer if a.flyer.startswith("dob") else os.path.abspath(a.flyer)) if a.flyer else None)
             save(base + ".npz", p, rms, meta)
             save(f"{base}_it{it}.npz", p, rms, meta)
@@ -447,7 +477,7 @@ def main():
         if it % 10 == 0 or "val" in row:
             print(f"it {it} W {w_cur:.0f} band {succ:.2f} landed {row['landed']:.2f} crash {row['crashed']:.3f} "
                   f"timeout {row['timeout']:.2f} ret {row['ret']:.1f} std {row['std'][0]:.2f} {row['wall']:.0f}s"
-                  + (" eval " + " ".join(f"{e['w10']:.0f}:{e['landed']:.2f}" for e in row.get("eval", [])) + " val " + " ".join(f"{v:.2f}" for v in row["val"])
+                  + (" eval " + " ".join(f"{e['w10']:.0f}:{e['landed']:.2f}" for e in row.get("eval", [])) + " val " + " ".join(f"{v:.2f}" for v in row["val"]) + " dmg " + " ".join(f"{v:.2f}" for v in row["val_damaging"])
                      + (" BEST" if row.get("best") else "") if "val" in row else ""), flush=True)
     if task and os.path.exists(base + "_best.npz"):
         task.upload_artifact("best checkpoint", base + "_best.npz")

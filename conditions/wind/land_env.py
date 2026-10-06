@@ -41,6 +41,8 @@ MODES = jnp.array([0.0, -1.5, -0.6, 0.0, 1.0])  # the deciding head: 0 = the rul
 TAU_LAT, A_MAX, K_LIN = 0.69, 1.5, 0.8     # px4_mission
 N_HIST = 4
 CRASH_R, HARD_R = -15.0, -10.0   # a crash's price (ppo.py --crash-r): a lost drone costs far more than a failed delivery
+OFFPAD_R = None                  # price of a GENTLE touchdown off the pad (ppo.py --offpad-r; Sai, 7 Oct: re-price the outcomes);
+                                 # None = HARD_R, one price for every hard touchdown, as before. Too fast always costs HARD_R
 SHAPE_G = 0.997                  # the shaping's discount (ppo.py --shape-g). Below the learner's (0.9998) it leaks
                                  # +0.0003 (d + 0.3 h) per step, which beats the 0.002 time cost away from the pad: hovering
                                  # at the start pays ~+15 over 90 s, as much as a landing (30 Sept, flip-priced runs hovered)
@@ -274,7 +276,8 @@ def step(st, act, key, fly=True, decide=True, shield=0.0, hp_tau=0.0):
     miss = jnp.linalg.norm(p[:2])
     down = p[2] <= Z_TOUCH
     hit = (jnp.minimum(dh, dtr) < R_DRONE) | (tilt > 1.2)
-    ok = down & (miss <= PAD_R) & (-v[2] < V_SINK_OK) & (jnp.linalg.norm(v[:2]) < V_SLIDE_OK)
+    fast = (-v[2] >= V_SINK_OK) | (jnp.linalg.norm(v[:2]) >= V_SLIDE_OK)          # touchdown too fast: the damaging kind
+    ok = down & (miss <= PAD_R) & ~fast
     timeout = t >= T_MAX
     outcome = jnp.where(hit, 2, jnp.where(ok, 1, jnp.where(down, 3, jnp.where(timeout, 4, 0))))   # 1 landed 2 crash 3 hard/off 4 timeout
     done = outcome > 0
@@ -284,7 +287,8 @@ def step(st, act, key, fly=True, decide=True, shield=0.0, hp_tau=0.0):
     # a hard or off-pad touchdown is a failed delivery that may break something: as bad as missing the chance; a crash
     # worse; giving up (timeout) returns the parcel safely
     r = r + jnp.where(outcome == 1, 10.0 + 5.0 * (1 - miss / PAD_R), 0.0) + jnp.where(outcome == 2, CRASH_R, 0.0) \
-        + jnp.where(outcome == 3, HARD_R, 0.0) + jnp.where(outcome == 4, -5.0, 0.0) - FLIP_R * flip
+        + jnp.where(outcome == 3, HARD_R if OFFPAD_R is None else jnp.where(fast, HARD_R, OFFPAD_R), 0.0) \
+        + jnp.where(outcome == 4, -5.0, 0.0) - FLIP_R * flip
     lean = X.qrot(sim["d"].qpos[3:7])[:2, 2]
     hist = jnp.concatenate([st["hist"][1:], jnp.concatenate([v_est / 3, lean * 5])[None]], axis=0)
     prev = jnp.concatenate([a_ff / A_FF, jax.nn.one_hot(mode, 5)])
@@ -358,14 +362,14 @@ def evaluate(policy_fn, w10, n=1024, seed=0, fly=True, decide=True, t_max=T_MAX,
         acc = dict(live=acc["live"] + lv, cap=acc["cap"] + lv * (jnp.abs(push) > 0.97).any(-1),
                    slew=acc["slew"] + lv * jnp.linalg.norm(push - push0, axis=-1) * A_FF, flip=acc["flip"] + lv * flip,
                    msat=acc["msat"] + lv * (new["sim"]["w"] >= 0.995 * X.W_MAX).any(-1),
-                   picks=acc["picks"].at[band, cat, mode].add(lv))
+                   picks=acc["picks"].at[band, cat, mode].add(lv), ret=acc["ret"] + lv * r)
         keep = lambda a, b: jnp.where(st["done"].reshape((-1,) + (1,) * (a.ndim - 1)), a, b)
         st = jax.tree_util.tree_map(keep, st, new)
         return (st, acc), None
 
     n_steps = int(t_max / DT_C) + 1
     z = jnp.zeros(n)
-    acc0 = dict(live=z, cap=z, slew=z, flip=z, msat=z, picks=jnp.zeros((4, 3, 5)))
+    acc0 = dict(live=z, cap=z, slew=z, flip=z, msat=z, picks=jnp.zeros((4, 3, 5)), ret=z)
     run = jax.jit(lambda c, ks: jax.lax.scan(one, c, ks)[0])
     res = [summary(*run((jax.vmap(lambda k: reset(k, w))(keys), acc0), jax.random.split(jax.random.PRNGKey(seed + 1), n_steps)), w, n, per_flight)
            for w in (w10 if isinstance(w10, (list, tuple)) else [w10])]
@@ -377,17 +381,21 @@ def summary(st, acc, w10, n, per_flight=False):
     acc = {k: np.array(v) for k, v in acc.items()}
     air = max(float(acc["live"].sum()), 1.0)
     out = np.array(st["outcome"])
+    v = np.array(st["sim"]["d"].qvel[:, :3])                 # frozen at touchdown
+    fast = (out == 3) & ((-v[:, 2] >= V_SINK_OK) | (np.hypot(v[:, 0], v[:, 1]) >= V_SLIDE_OK))
     return dict(w10=float(w10), n=n, landed=float((out == 1).mean()), crashed=float((out == 2).mean()),
                 hard=float((out == 3).mean()), timeout=float(((out == 4) | (out == 0)).mean()),
+                hard_fast=float(fast.mean()),                # of the hard ones, too fast (the rest: gentle, off the pad)
                 miss_landed=float(np.median(np.array(st["miss"])[out == 1])) if (out == 1).any() else float("nan"),
                 t_mean=float(np.array(st["t"]).mean()),
                 t_land_median=float(np.median(np.array(st["t"])[out == 1])) if (out == 1).any() else float("nan"),
                 push_cap=float(acc["cap"].sum() / air), push_step=float(acc["slew"].sum() / air),
                 rev_per_s=float(acc["flip"].sum() / (air * DT_C)), motor_sat=float(acc["msat"].sum() / air),
                 picks=acc["picks"].round().astype(int).tolist(),   # [height >8, 6-8, 2-6, <2 m][rule: fast, slow, hold][mode]
+                ret_mean=float(acc["ret"].mean()),                 # a flight's summed reward at the prices traced (CRASH_R...)
                 first40=dict(outcome=out[:40].tolist(), miss=np.array(st["miss"])[:40].round(3).tolist(),
                              t=np.array(st["t"])[:40].round(2).tolist()),    # episode i = Gazebo's yard i
-                **({"outcome_all": out.tolist()} if per_flight else {}))
+                **({"outcome_all": out.tolist(), "fast_all": fast.tolist()} if per_flight else {}))
 
 
 def check_rand(n=1024, steps=2250):
