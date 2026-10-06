@@ -21,8 +21,19 @@ Landed % on the test flights (crashed % at 18 / 20 m/s):
 | DOB + PPO decider, 3 seeds (`--flyer dob:1.0`) | 100 | 100 | 99.7-99.8 | 92.5-95.9 | 67.9-75.8 | 1.9-2.1 / 7.5-9.7 |
 
 Learning adds +12 to +20 points at W10 18 over the best no-learning arm and +50 to +70 at 20, at the price of more
-crashes there. Gate: choose the base (DOB or learned flyer) after the Gazebo smoke (`smoke_phase0`: rule, paper decider
-s0, DOB decider s0 on yards 0-1 at W10 18).
+crashes there.
+
+Gazebo smoke (`smoke_phase0`, yards 0-1 at W10 18; MJX on the same yards in brackets): rule timeout 2/2 (MJX timeout,
+but Gazebo drifts 224-282 m downwind while MJX hovers: the known 30 Sept gap); paper decider s0 landed 2/2, 0.35 and
+0.12 m (MJX landed, 0.53 and 0.62 m; 30 Sept Gazebo 0.45 and 0.24 m: the move changed nothing); DOB decider s0 HARD
+2/2: on the pad but sliding 0.90 m/s, and 11.9 m off at 2.86 m/s sink, 51 deg tilt, 0.43 m from an obstacle (MJX
+landed both in ~29 s). Mechanism: the DOB's push sits at its 3 m/s^2 cap 78-86% of the time in BOTH simulators and
+changes 3-8x more per step than the learned flyer's (cap 20-55%); MJX tolerates it, PX4 in Gazebo does not (the 30 Sept
+lesson again: a gain built on an actuator at its limit does not transfer).
+
+**Gate decision (Sai, 6 Oct): build on the learned flyer + decider.** The DOB returns in Phase 2: smoothed, gain 0.5,
+under realistic sensing, re-flown in Gazebo before reconsidering. New rule for every gate: before any Gazebo flight,
+the candidate's push-at-cap duty and step-to-step change are measured in MJX and compared with the paper decider's.
 
 ## Phase 1: clean the interface (no heavy GPU)
 

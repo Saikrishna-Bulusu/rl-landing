@@ -36,7 +36,7 @@ Order matters: the repo must stop moving before anything else edits code. `[ ]` 
 
 ## Phase 5: wind, the agreed plan (6 Oct): see conditions/wind/PLAN.md
 - [x] 5.0 Baselines (Phase 0): tuned rule 75.7%, DOB 80.6%, paper decider 93.9-96.2%, DOB + decider 92.5-95.9% at W10 18
-- [~] 5.0b Gazebo smoke for Phase 0 (rule, paper decider s0, DOB decider s0; yards 0-1, W10 18)
+- [x] 5.0b Gazebo smoke for Phase 0: rule 0/2 (timeouts), paper decider 2/2 landed, DOB decider 0/2 (hard: push at its cap 85%). Base = learned flyer + decider (Sai)
 - [ ] 5.1 Phase 1: clean the interface (rule asks 1.5, pick table, greedy vs sampled, new metrics, W10 22)
 - [ ] 5.2 Phase 2: realism in MJX (sensors, drone randomization, gusts) + robustness table
 - [ ] 5.3 Phase 3: privileged critic, saturation/slew penalties, DOB input, aligned frame (one at a time, 3 seeds)
