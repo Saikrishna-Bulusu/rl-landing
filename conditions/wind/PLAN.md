@@ -45,15 +45,44 @@ the candidate's push-at-cap duty and step-to-step change are measured in MJX and
    after a gust; an out-of-training wind (W10 22).
 Gate: no drift, metrics in place. Gazebo smoke: the chosen base on 2 yards x W10 15 and 18.
 
-## Phase 2: make MJX harder and more honest
+### Phase 1 results (6 Oct; `phase1_eval.py`, `runs/phase1.json`, `outputs/wind/phase1.png`)
 
+- Greedy beats sampled for every seed (W10 18: 93.8-96.2 vs 90.4-94.9%; W10 20: 77-86 vs 62-66%; sampling adds 1.0-1.3
+  climb/descend reversals per s). Greedy stays.
+- Twin drift negligible: "down 1.5" below 6 m in at most 2.5% of decisions; "hold" vs "rule's own" stable (0-1%).
+- Seed s1 pulses (0.69 reversals/s at W10 18 vs s0 0.13, s2 0.29) and crashes most (3.0% at 18, 11.1% at 20).
+- Beyond training (W10 22): learned deciders crash 6-18% where the rules time out (<= 0.1% crashed): Phase 5 needs an
+  abort for winds past the drone's limit.
+- The decider descends while still approaching (rule holding height: 70% down 0.6, 26% down 1.5) and creeps down at
+  0.6 m/s through the closed gate below 6 m (~55%): faster landings (38 vs 79 s), and the risk near obstacles.
+- Gazebo smoke (`smoke_phase1`): s0 landed yards 2-3 at W10 15 and yard 2 at 18 (agreeing with MJX); s0 CRASHED on
+  yard 3 at 18 (8.9 m off, 0.34 m from an obstacle, tilt 47.5 deg) where MJX lands and where Gazebo itself LANDED on
+  30 Sept (0.70 m): one Gazebo flight at 18 m/s is one draw of a chaotic process, not a repeatable result. s1 landed
+  yard 0, hard on yard 1 (12.3 m off, tilt 55.9 deg); it did not pulse in Gazebo (0.03-0.05/s). Every Gazebo failure so
+  far (paper deciders and DOB) is a blow-away toward an obstacle with tilt past 45 deg; on 30 Sept 15 of 20 Gazebo
+  flights at 18 m/s exceeded 45 deg (median 46.4), which MJX's emulated PX4 never does. MJX is more forgiving than PX4
+  in Gazebo in strong gusts (96% vs 90% landed at W10 18).
+
+**Gate decisions (Sai, 6 Oct):** the 1.5 m/s fix folds into Phase 3's retraining; Phase 2 becomes: close the
+MJX-Gazebo gap first, every Gazebo smoke flight flown 3 times from now on, then the planned randomization.
+
+## Phase 2: make MJX honest, then harder
+
+2a. Close the MJX-Gazebo gap at 18 m/s first (Sai, 6 Oct). Measure the gap with matched tests that remove chance: a
+    wind step at hover (steady wind switched on, no gusts) in both simulators at several speeds, comparing peak tilt,
+    stray and recovery; then the gust response. Find the cause by switching one candidate at a time in MJX (PX4's
+    controller fed estimated rather than true states, where drag and rotor forces act relative to the centre of mass,
+    the tilt limit on the setpoint vs the actual attitude, motor saturation and desaturation) until MJX reproduces
+    Gazebo's tilt past 45 deg and its blow-aways. Re-check the paper decider in the corrected MJX.
+2b. Gazebo spread: every smoke flight flown 3 times from now on.
+2c. Then randomize as planned:
 1. Sensors: the marker read at a camera rate (~15 Hz) and held between frames, latency 40-120 ms, bursts of dropouts,
    rare outliers; rangefinder noise.
 2. The drone per flight: mass +-10%, body drag x0.5-2 (the biggest unknown: `papers/research/x500_wind_limit.md`),
    thrust coefficient +-10%, motor lag +-30%, command latency 0-80 ms.
 3. Gusts: direction-change events, gust moments.
 4. Re-score rule, tuned rule, DOB and the chosen decider WITHOUT retraining: the robustness table.
-Gate: how brittle is today's decider? Gazebo smoke: the same yards as Phase 1, to compare.
+Gate: how brittle is today's decider? Gazebo smoke: the same yards as Phase 1, each flight 3 times.
 
 ## Phase 3: learner upgrades, one at a time (3 seeds each, same test flights, kept only if the paired gain > 0)
 
