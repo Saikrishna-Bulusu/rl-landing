@@ -10,7 +10,7 @@ Order matters: the repo must stop moving before anything else edits code. `[ ]` 
 - [x] 1.2 New folder layout, local and GitHub: magpie, wind, dynamic obstacles, static obstacles (crane, A*), all conditions together, mix-and-match, dashboard (+ shared code, GNSS-denied, papers, archive)
 - [x] 1.3 Fix every import and path the move breaks; prove it with the self-checks
 - [x] 1.4 One README per condition (how to run it alone) + one for running all conditions + one for mix-and-match
-- [~] 1.5 Push to GitHub (Sai: push once every check passes)
+- [x] 1.5 Push to GitHub (pushed 6 Oct, 813f472)
 
 ## Phase 2: see the training (items 4, 15)
 - [x] 2.1 ClearML in every trainer (wind `ppo.py`, suburb `urban_rl.py`): curves, settings, checkpoints
@@ -35,7 +35,7 @@ Order matters: the repo must stop moving before anything else edits code. `[ ]` 
 - [ ] 4.2 Wind-only paper (other conditions become their own papers later)
 
 ## Phase 5: wind, next (Sai decides the order)
-- [~] 5.1 Longer training check: the paper's decider recipe for 1,500 rounds, validation every 50, live in ClearML (running 6 Oct)
+- [x] 5.1 Longer training check (6 Oct, seed 0, 1,500 rounds, 26.7 min): validation flat from round ~450; test 1,024 flights: W12 99.4 vs 98.2, W15 98.3 vs 98.6, W18 95.1 vs 96.2, W20 90.2 vs 85.8 (paper). Needs 3 seeds before claiming W20
 - [ ] 5.2 Identical-options check: (rule choice, learner choice, height) table on the test flights; mask twins if it drifts
 - [ ] 5.3 Critic warm-up for wind (actor frozen as the rule for the first N rounds); does the early dip go away?
 - [ ] 5.4 Network ablation (Sai, 6 Oct: not satisfied with the default): width 64/128/256/512, depth 1-3, tanh vs ReLU,
