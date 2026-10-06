@@ -28,15 +28,19 @@ cat /sys/class/power_supply/A*/online
 
 Expect: no other job on the GPU, 10+ GB free RAM, `1` for AC power.
 
-2. Check the MJX drone against PX4 in Gazebo's recorded step responses (~10 s, no Gazebo needed):
+2. Check the MJX drone against PX4 in Gazebo's recorded step responses and steady-wind holds (~2 min, no Gazebo needed):
 
 ```bash
 $P conditions/wind/x500_mjx.py --check
 ```
 
 Expect: ten rows (N/E/U steps, then 8 m/s north), Gazebo and MJX 10/63/90% times within ~0.05 s of each other and
-tilt within ~2 deg (the table in section 1), then two "steady wind" lines (tilt in 3-12 m/s wind, without and with body
-drag). It reads `outputs/gazebo_wind/steps/steps.npz`. If that file is missing, one Gazebo flight records it:
+tilt within ~2 deg (the table in section 1); then one row per Gazebo hold (steady 20-26 m/s at 30 m, the wind from
+different sides): lean within 1.5 deg and drift within 0.75 m/s, or it stops with an AssertionError (PLAN.md Phase 2a:
+the twin was 3-5 m/s too strong before 6 Oct); then two "steady wind" lines (tilt in 3-18 m/s wind, without and with
+body drag). It reads `outputs/gazebo_wind/steps/steps.npz` and `outputs/gazebo_wind/hold/u*.npz`. If the steps are
+missing, one Gazebo flight records them (a hold: `--hover 60 --alt 30` with a `gz_wind.py --turbulence 0 --gust-rate 0`
+config as `SERVER_CONFIG`, `OUT=hold/u24_<tag>`):
 
 ```bash
 OUT=steps ./shared/px4_gazebo/sitl.sh /usr/bin/python3 -u shared/px4_gazebo/px4_steps.py --out outputs/gazebo_wind/steps/steps.csv
@@ -151,6 +155,7 @@ The other diagnostics (all take a checkpoint; see each file's docstring):
 | `timing_check.py runs/<ckpt>.npz --w 9 18` | does it chatter (climb/descend reversals) when Gazebo's two delays come together |
 | `rate_check.py`, `latency_check.py` | the same with one delay at a time (special cases of `timing_check.py`) |
 | `cmd_replay.py <flight.csv> --yard 4 --w 9` | does MJX answer a Gazebo flight's vertical commands as Gazebo did |
+| `stray_check.py` | the Gazebo ladder's own 20 yards flown in MJX: tilt and worst stray, side by side (Phase 2a) |
 | `estimate_check.py runs/<ckpt>.npz --w 9` | is the decider fragile to height and vertical-speed estimate errors (Gazebo's estimator is noisier than MJX's) |
 | `overnight_report.py > queue/overnight_report.md` | the 26-27 Sept night: ladders per recipe and seed, Gazebo against rule |
 
@@ -205,9 +210,11 @@ Landed of 20 in Gazebo (`outputs/gazebo_wind/ladder_rule/flights.jsonl`, same ya
 | `stage2_c100h100g` s0 | 20 | 18 | 19 | 18 |
 
 New on 4 Oct, not in the ACRA paper (`papers/research/wind_algorithm_options.md`): a 15-line disturbance-observer
-feed-forward (no learning) lands 80.6% at W10 18, against the learned flyer's 44-55%. And our model holds about 26 m/s
-of steady wind at the drone; PX4's 45 deg tilt limit binds first (`papers/research/x500_wind_limit.md`; the body drag
-CdA 0.04 m^2 is assumed, no published rating exists).
+feed-forward (no learning) lands 80.6% at W10 18, against the learned flyer's 44-55%. How much steady wind the drone
+holds depends on where it comes from (6 Oct, Gazebo and the corrected MJX agree): 26 m/s on the nose, 25 on a front
+arm or from behind, 22 from a side, 21-23 on a back arm; a motor saturates before PX4's 45 deg tilt limit except on
+the nose (PLAN.md Phase 2a; `papers/research/x500_wind_limit.md` predates this; the body drag CdA 0.04 m^2 is assumed,
+no published rating exists).
 
 ## Speed (RTX 5070 Laptop; MJX decisions per second, one decision = 0.04 s of every drone)
 

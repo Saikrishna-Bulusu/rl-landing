@@ -1,5 +1,12 @@
 # How much wind can the x500 take?
 
+> **Correction, 6 Oct 2026 (conditions/wind/PLAN.md, Phase 2a).** The numbers below came from an MJX twin that pushed
+> the body drag at the centre of mass. Gazebo pushes it at the body plate, 1.6 cm higher, and the centre of mass sits
+> 3.4 mm ahead of the rotor centre. With both copied, MJX matches PX4 in Gazebo motor by motor, and the steady limit
+> depends on where the wind comes from: 26 m/s on the nose, 25 on a front arm or from behind, 22 from a side, 21-23
+> on a back arm. Below 26 m/s it is a motor running out (one saturates, PX4 trims thrust), not the 45 deg tilt cap.
+> Checked in Gazebo at four directions. The "about 26 m/s" headline holds only for wind on the nose.
+
 ## The answer in one sentence
 
 In our simulator, the x500 (2.58 kg with the camera rig) can hold its position against a steady wind of up to about 26 m/s at the drone (about 95 km/h), but only because we ASSUMED a body-drag number; nobody measured it, no real x500 was tested, and neither Holybro nor PX4 publishes a wind rating. Once gusts are included, the practical limit at 30 m height is a mean wind at the drone of roughly 20 m/s, which is W10 = 15 m/s. At W10 = 18 and 20 m/s the drone is past its limit at 30 m but fine near the ground.

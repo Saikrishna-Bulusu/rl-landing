@@ -59,9 +59,10 @@ Gate: no drift, metrics in place. Gazebo smoke: the chosen base on 2 yards x W10
   yard 3 at 18 (8.9 m off, 0.34 m from an obstacle, tilt 47.5 deg) where MJX lands and where Gazebo itself LANDED on
   30 Sept (0.70 m): one Gazebo flight at 18 m/s is one draw of a chaotic process, not a repeatable result. s1 landed
   yard 0, hard on yard 1 (12.3 m off, tilt 55.9 deg); it did not pulse in Gazebo (0.03-0.05/s). Every Gazebo failure so
-  far (paper deciders and DOB) is a blow-away toward an obstacle with tilt past 45 deg; on 30 Sept 15 of 20 Gazebo
-  flights at 18 m/s exceeded 45 deg (median 46.4), which MJX's emulated PX4 never does. MJX is more forgiving than PX4
-  in Gazebo in strong gusts (96% vs 90% landed at W10 18).
+  far (paper deciders and DOB) is a blow-away toward an obstacle with tilt past 45 deg. Tilt past 45 deg alone is NOT
+  the gap (corrected 6 Oct: MJX also exceeds it in 86-95% of its W10 18 flights, median 45.8-46.0, peak 48.2 deg;
+  Gazebo 30 Sept median 46.4): the gap is the TAIL, Gazebo's failures reach 47.5-56 deg and drift 9-12 m, MJX never
+  passes 48.2 deg. MJX is more forgiving than PX4 in Gazebo in strong gusts (96% vs 90% landed at W10 18).
 
 **Gate decisions (Sai, 6 Oct):** the 1.5 m/s fix folds into Phase 3's retraining; Phase 2 becomes: close the
 MJX-Gazebo gap first, every Gazebo smoke flight flown 3 times from now on, then the planned randomization.
@@ -73,7 +74,73 @@ MJX-Gazebo gap first, every Gazebo smoke flight flown 3 times from now on, then 
     stray and recovery; then the gust response. Find the cause by switching one candidate at a time in MJX (PX4's
     controller fed estimated rather than true states, where drag and rotor forces act relative to the centre of mass,
     the tilt limit on the setpoint vs the actual attitude, motor saturation and desaturation) until MJX reproduces
-    Gazebo's tilt past 45 deg and its blow-aways. Re-check the paper decider in the corrected MJX.
+    Gazebo's tail of large tilts (past ~48 deg) and its blow-aways. Re-check the paper decider in the corrected MJX.
+### Phase 2a results (6 Oct; `x500_mjx.py --check` runs `check_hold()`; Gazebo holds in `outputs/gazebo_wind/hold/`)
+
+Matched test: steady wind at 30 m, no turbulence or gusts, velocity setpoint 0 (`px4_steps.py --hover 60 --alt 30`
+under gz_winddrag; `sitl.sh KEEP_ULG=1` keeps PX4's log). Lean and drift over the last 30 s:
+
+| wind at 30 m | comes from (deg off the nose) | Gazebo | MJX before the fix | MJX after |
+|---|---|---|---|---|
+| 20 m/s | 230 (back-right arm) | 31.7 deg, 0.07 m/s | 31.6, 0 | 31.6, 0 |
+| 22 m/s | 230 | 36.1, 0.10 | 35.9, 0 | 35.9, 0 |
+| 24 m/s | 227 | 37.7, **1.50** (blown away) | 40.2, 0 | 37.3, **1.28** |
+| 26 m/s | 223 | 38.9, **3.09** | 44.2, 0 | 38.0, **2.93** |
+| 24 m/s | 89 (left side) | 36.6, **1.57** | | 36.5, **1.64** |
+| 24 m/s | 320 / 49 (front arms) | 39.9, 0.11 | | 40.2, 0 |
+| 26 m/s | 356 (nose) | 43.9, 0.15 | | 44.2, 0 |
+
+The four motor commands now match PX4's own log within 0.003 at three wind directions.
+
+Cause, found by elimination: not the heading alone, not gz-sim 8.15's motor model (its source has no thrust loss with
+speed, that was gazebo-classic, and its unsigned rolling moment was already copied), not the hover throttle (calm
+hover collective 0.836 in both). It was where forces act: gz_winddrag pushes the body drag at base_link's CoM
+(`Link::AddWorldForce`), 1.6 cm ABOVE the whole drone's CoM because the gimbal hangs below, and the CoM sits 3.4 mm
+ahead of the rotor centre (the SDF masses and a calm hover's front-back motor split, +0.0099 per motor, agree; the
+6.8 mm noted on 30 Sept was wrong). MJX had both at the CoM. Fixed: `COM_X`, `DRAG_AT`; the unused `TQ_BODY` and
+`SPEED_LOSS` knobs are gone.
+
+What it means: the drone's steady wind limit depends on where the wind comes from, in both simulators. MJX, all
+eight directions: nose 26 m/s, front arms and behind 25, sides 22, back arms 21-23. Side winds cost through yaw: the
+drag acts 3.4 mm behind the CoM, propellers have little yaw authority, and PX4 cuts thrust to keep its heading.
+Facing the wind is a cheap candidate upgrade (Phase 3 or 5).
+
+End to end, the same 20 test yards flown in the Gazebo ladder (30 Sept) and in MJX, worst stray from the pad after
+first reaching it, median / worst flight (`stray_check.py`):
+
+| arm, wind | Gazebo | MJX before the fix | MJX after |
+|---|---|---|---|
+| rule, W10 15 | 2.0 / 29 m | 2.0 / 12 m | 2.0 / 34 m |
+| rule, W10 18 | 3.4 / 286 m | 2.0 / 20 m | 4.0 / 325 m |
+| paper decider s0, W10 15 | 2.0 / 7.3 m | 2.0 / 2.0 m | 2.0 / 5.2 m |
+| paper decider s0, W10 18 | 2.0 / 36 m | 2.0 / 8.7 m | 2.0 / 40 m |
+
+The tail the old twin could not produce (blow-aways) is now there, in the same flights. Gap closed.
+
+Flight by flight on those yards (rule, paper decider s0, stage2_c100 s0, fly_hp_s0 at W10 15 and 18; 158 Gazebo
+flights): Gazebo landed 107, the old twin 120, the corrected twin 110. The same ending in both simulators: 127 -> 125
+of 158. Single flights near the limit stay a coin toss (Gazebo itself did not repeat yard 3 between 30 Sept and
+6 Oct), which is what 2b's three repeats are for; the twin's totals are now right where they were optimistic.
+
+The paper decider re-scored on the corrected twin (same 1,024 test flights per wind, `runs/twin_fix_6oct.json`),
+landed % (crashed %), old twin -> corrected:
+
+| arm | W10 15 | W10 18 | W10 20 |
+|---|---|---|---|
+| rule | 77.7 -> 65.5 | 5.6 -> 2.6 | 0 -> 0 |
+| tuned rule | 99.6 -> 95.0 | 75.7 -> 41.0 | 14.5 -> 5.1 |
+| paper decider s0 | 98.6 -> 98.8 | 96.2 (1.0) -> 88.2 (4.3) | 85.8 (6.5) -> 58.4 (8.8) |
+| paper decider s1 | 99.3 -> 97.9 (0.9) | 93.9 (2.7) -> 81.9 (8.4) | 76.8 (11.4) -> 50.9 (15.4) |
+| paper decider s2 | 98.7 -> 98.2 (0.6) | 96.1 (0.9) -> 83.8 (2.8) | 78.3 (3.7) -> 50.0 (5.0) |
+
+W10 9 and 12 are unchanged (>= 98%). Learning's lead over the tuned rule at W10 18 grows from ~20 to 41-47 points,
+but the learned deciders crash more (up to 8.4%); a motor is saturated 32-40% of their flying time at W10 18 (rules
+52-60%). Retraining on the corrected twin is Phase 3's control; the crashes are Phase 5's job.
+
+Also fixed: `sitl.sh` passed a relative `SERVER_CONFIG` to gz, which runs in PX4's folder and silently found no
+config (no wind, no scene: "Waiting for Gazebo world"). Every queue script used absolute paths, so no earlier flight
+was affected.
+
 2b. Gazebo spread: every smoke flight flown 3 times from now on.
 2c. Then randomize as planned:
 1. Sensors: the marker read at a camera rate (~15 Hz) and held between frames, latency 40-120 ms, bursts of dropouts,

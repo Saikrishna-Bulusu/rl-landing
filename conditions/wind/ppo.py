@@ -251,10 +251,11 @@ def load_policy(path, greedy=True):
     """A checkpoint as (greedy policy, fly, decide, shield); stage-2 checkpoints bring their flyer."""
     p, rms, meta = load(path)
     flyer = None
-    if meta.get("flyer", "").startswith("dob"):
-        flyer = ("dob", float(meta["flyer"].split(":")[1]))
-    elif meta.get("flyer"):
-        fp, frms, _ = load(meta["flyer"])
+    fl = meta.get("flyer") or ""                            # flyer-only checkpoints store None
+    if fl.startswith("dob"):
+        flyer = ("dob", float(fl.split(":")[1]))
+    elif fl:
+        fp, frms, _ = load(fl)
         flyer = (fp, frms)
     return greedy_policy(p, rms, flyer, greedy), meta["fly"] or flyer is not None, meta["decide"], meta.get("shield", 0.0)
 

@@ -5,7 +5,8 @@ thousands of drones at once on the GPU: where the wind learners train (Sai, 26 S
 increasing wind conditions", MuJoCo MJX, everything on the GPU).
 
 The drone is PX4's Gazebo model, not a guess:
-  airframe  x500_base + gimbal + rig v2's camera link: 2.584 kg, CoM 1.6 cm below base_link, composite inertia
+  airframe  x500_base + gimbal + rig v2's camera link: 2.584 kg, CoM 1.6 cm below base_link and 3.4 mm ahead of the
+            rotor centre (the gimbal hangs forward), composite inertia
   motors    Gazebo's MulticopterMotorModel: thrust 8.54858e-6 w^2, w = 150 + 850 u rad/s (SIM_GZ_EC_MIN/MAX),
             first-order lag 12.5 ms up / 25 ms down, propeller drag 8.06428e-5 |w| v_perp, rolling moment 1e-6 |w| v_perp
   PX4       PositionControl (velocity PID -> thrust vector, tilt limit, thrust margin, anti-windup), bodyzToAttitude,
@@ -14,9 +15,11 @@ The drone is PX4's Gazebo model, not a guess:
             desaturation with airmode off); default gains (the x500 airframe sets only MPC_THR_HOVER, and the hover
             thrust estimator converges to the true hover throttle, used here)
   wind      mean + Dryden-like turbulence (MIL-F-8785C low altitude) + random 1-cosine gusts; it pushes through the
-            propeller drag (as in Gazebo) and body drag 0.5 rho CdA |v| v (Gazebo had none: gz_weather.py)
+            propeller drag (as in Gazebo) and body drag 0.5 rho CdA |v| v (Gazebo had none: gz_weather.py), pushed where
+            gz_winddrag pushes it, at base_link's origin, 1.6 cm above the CoM
 Frames: world ENU, body FLU (MuJoCo's); PX4's NED/FRD laws are written here in ENU/FLU, the allocation in FRD.
-Checked against PX4 in Gazebo (shared/px4_gazebo/px4_steps.py, truth + sim time):  python conditions/wind/x500_mjx.py --check
+Checked against PX4 in Gazebo (shared/px4_gazebo/px4_steps.py, truth + sim time; step responses, then the steady-wind
+limit):  python conditions/wind/x500_mjx.py --check
 """
 import argparse
 import math
@@ -41,6 +44,9 @@ MASS = 2.5843
 INERTIA = (0.0291, 0.0291, 0.0444)          # about the CoM: base + rotors + gimbal (4 x 0.1 kg below) + rig link
 ROTORS = np.array([[0.174, -0.174], [-0.174, 0.174], [0.174, 0.174], [-0.174, -0.174]])   # FLU, rotor_0..3
 ROTOR_Z = 0.076                             # hubs above the CoM
+COM_X = 0.0034                              # m, the CoM ahead of the rotor centre: the SDFs' masses, and a calm Gazebo
+                                            # hover's front-back motor split (+0.0099 each, 6 Oct) agree
+DRAG_AT = np.array([-COM_X, 0.0, 0.016])    # FLU from the CoM: base_link's origin, where gz_winddrag pushes the body drag
 SPIN = np.array([1.0, 1.0, -1.0, -1.0])     # ccw, ccw, cw, cw
 KT, KM = 8.54858e-06, 0.016
 W_MIN, W_MAX = 150.0, 1000.0
@@ -49,10 +55,6 @@ C_RD, C_RM = 8.06428e-05, 1e-06
 RHO = 1.225
 CDA_H, CDA_V = 0.04, 0.05                   # m^2, body drag areas: an assumption, the range wind tunnels report for
                                             # 1-3 kg multirotors (Russell et al., NASA 2016); Gazebo's x500 had none
-SPEED_LOSS = 0.0                            # 1/(m/s): thrust x (1 - SPEED_LOSS |v|), gz-sim MulticopterMotorModel's
-                                            # "scale down force linearly with forward speed" (1/25); 0 = off (cmd_replay.py)
-TQ_BODY = jnp.zeros(3)                      # N m, FLU: a steady body torque the rotors must hold (Gazebo's CoM sits 6.8 mm
-                                            # ahead of the rotor centre and the gimbal holds its camera: +y = nose down); 0 = off
 W_HOVER = math.sqrt(MASS * G / 4 / KT)      # 861 rad/s
 U_HOVER = (W_HOVER - W_MIN) / (W_MAX - W_MIN)   # 0.836: PX4's hover throttle once its estimator has converged
 
@@ -234,7 +236,7 @@ XML = f"""<mujoco model="x500_rigv2"><option timestep="{DT}" gravity="0 0 -{G}"/
 <inertial pos="0 0 0" mass="{MASS}" diaginertia="{INERTIA[0]} {INERTIA[1]} {INERTIA[2]}"/></body></worldbody></mujoco>"""
 MJ = mujoco.MjModel.from_xml_string(XML)
 MX = mjx.put_model(MJ)
-ROT3 = jnp.array(np.c_[ROTORS, np.full(4, ROTOR_Z)])
+ROT3 = jnp.array(np.c_[ROTORS - [COM_X, 0.0], np.full(4, ROTOR_Z)])   # hubs from the CoM
 SPIN_J = jnp.array(SPIN)
 
 
@@ -242,9 +244,9 @@ def forces(q, v, om, w, wind, cda):
     """World-frame force and torque on the CoM: thrust, rotor reaction, propeller drag and rolling moment against the
     air (Gazebo's MulticopterMotorModel), body drag."""
     Rm = qrot(q)
-    T = KT * w ** 2 * jnp.clip(1.0 - SPEED_LOSS * jnp.linalg.norm(v), 0.0, 1.0)
+    T = KT * w ** 2                                    # gz-sim 8.15's motor model: no thrust loss with speed
     f_b = jnp.array([0.0, 0.0, T.sum()])
-    tau_b = jnp.array([(ROT3[:, 1] * T).sum(), -(ROT3[:, 0] * T).sum(), -(SPIN_J * KM * T).sum()]) + TQ_BODY
+    tau_b = jnp.array([(ROT3[:, 1] * T).sum(), -(ROT3[:, 0] * T).sum(), -(SPIN_J * KM * T).sum()])
     v_hub = (v - wind)[None, :] + (Rm @ jnp.cross(om[None, :], ROT3).T).T     # air-relative, world
     vb = v_hub @ Rm                                                          # -> body
     perp = vb.at[:, 2].set(0.0)
@@ -254,7 +256,7 @@ def forces(q, v, om, w, wind, cda):
     vr = v - wind
     f_body = -0.5 * RHO * jnp.array([cda[0] * jnp.linalg.norm(vr[:2]) * vr[0], cda[0] * jnp.linalg.norm(vr[:2]) * vr[1],
                                      cda[1] * jnp.abs(vr[2]) * vr[2]])
-    return Rm @ f_b + f_body, Rm @ tau_b
+    return Rm @ f_b + f_body, Rm @ tau_b + jnp.cross(Rm @ DRAG_AT, f_body)
 
 
 def init_state(pos, yaw=0.0, vel=(0.0, 0.0, 0.0)):
@@ -373,12 +375,43 @@ def tilt_in_wind(speeds=(3, 7, 10, 12, 15, 18), cda=CDA_H):
     return out
 
 
+def check_hold():
+    """Steady wind at 30 m, velocity setpoint 0, at the heading PX4 held: PX4 in Gazebo (outputs/gazebo_wind/hold/u*.npz,
+    px4_steps.py --hover 60 --alt 30 under gz_winddrag with turbulence and gusts off, 6 Oct; u<U>[_tag].npz, the wind
+    direction as logged) vs this model. Near 21-26 m/s, by where the wind comes from, a motor saturates and the drone is
+    blown away: lean and drift must match there (6 Oct: MJX held 44 deg and 0 m/s at 26 m/s until the body drag was
+    pushed where Gazebo pushes it and the CoM put where it is)."""
+    import glob
+    step = jax.jit(lambda s, w, yaw: control_step(s, jnp.zeros(3), jnp.zeros(3), yaw, w))
+    prof = lambda h: math.log(max(h, 1.0) / 0.3) / math.log(10 / 0.3)
+    for f in sorted(glob.glob(f"{R}/outputs/gazebo_wind/hold/u*.npz")):
+        U, gz = float(os.path.basename(f)[1:3]), np.load(f)
+        g, wl = gz["truth"], gz["wind"][len(gz["wind"]) // 2:]
+        th = math.atan2(wl[:, 2].mean(), wl[:, 1].mean())                     # the wind blows toward th, ENU
+        t0 = g[np.argmax(g[:, 3] >= 29.5), 0]                                 # the climb ends, the 60 s hover starts
+        late = g[(g[:, 0] > t0 + 30) & (g[:, 0] < t0 + 60)]
+        w_, x_, y_, z_ = late[:, 4:8].T
+        yaw = float(np.arctan2(2 * (w_ * z_ + x_ * y_), 1 - 2 * (y_ * y_ + z_ * z_)).mean())
+        tilt_g = float(np.degrees(np.arccos(np.clip(1 - 2 * (x_ ** 2 + y_ ** 2), -1, 1))).mean())
+        spd_g = float(np.hypot(*(late[-1, 1:3] - late[0, 1:3])) / (late[-1, 0] - late[0, 0]))
+        s, rows = init_state(jnp.array([0.0, 0.0, 30.0]), yaw=yaw), []
+        for k in range(int(60 / (DT * N_SUB))):
+            s = step(s, U / prof(30.0) * prof(float(s["d"].qpos[2])) * jnp.array([math.cos(th), math.sin(th), 0.0]), yaw)
+            rows.append((*np.array(s["d"].qpos[:2]), float(qrot(s["d"].qpos[3:7])[2, 2])))
+        r = np.array(rows[len(rows) // 2:])
+        tilt_m, spd_m = float(np.degrees(np.arccos(np.clip(r[:, 2], -1, 1))).mean()), float(np.hypot(*(r[-1, :2] - r[0, :2])) / 30)
+        print(f"steady {U:.0f} m/s at 30 m from {(math.degrees(th - yaw) + 180) % 360:3.0f} deg off the nose (left +): Gazebo tilt {tilt_g:4.1f} deg, drift {spd_g:4.2f} m/s"
+              f"   MJX tilt {tilt_m:4.1f} deg, drift {spd_m:4.2f} m/s")
+        assert abs(tilt_m - tilt_g) < 1.5 and abs(spd_m - spd_g) < 0.75, "the twin's wind limit no longer matches Gazebo's"
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
     a = ap.parse_args()
     if a.check:
         check()
+        check_hold()
         for cda in (0.0, CDA_H):
             print(f"steady wind, body drag CdA {cda} m^2:",
                   "  ".join(f"{ws} m/s: tilt {tl:.1f} deg, top motor {wm:.0f} rad/s, drift {dr:.2f} m/s" for ws, tl, wm, dr in tilt_in_wind(cda=cda)))
