@@ -28,6 +28,7 @@ T_MAX = 90.0
 PAD_R, R_DRONE, V_SINK_OK, V_SLIDE_OK = 0.75, 0.35, 1.0, 0.5
 COM_Z = 0.224                                     # CoM above the feet: MJX heights are the CoM's
 A_FF, MODES = 3.0, np.array([0.0, -1.5, -0.6, 0.0, 1.0])     # land_env.MODES: 0 = the rule's own
+N_HIST, HIST0 = 4, 25                              # land_env.N_HIST, land_env.HIST0 (asserted in --check-obs)
 TAU_LAT, A_MAX, K_LIN = 0.69, 1.5, 0.8
 YARDS = f"{R}/outputs/gazebo_wind/yards_s10000.json"
 
@@ -117,6 +118,7 @@ def check_obs(n=200):
     import jax
     import jax.numpy as jnp
     import land_env as E
+    assert (N_HIST, HIST0) == (E.N_HIST, E.HIST0), "the numpy observation layout drifted from land_env"
     worst = 0.0
     for i in range(n):
         k = jax.random.split(jax.random.PRNGKey(i), 4)
@@ -137,6 +139,22 @@ def check_obs(n=200):
     print(f"observation + rule command: numpy = land_env on {n} random states (worst {worst:.1e})")
 
 
+class DOB:
+    """The disturbance observer as a frozen flyer, in numpy (ppo.dob_ff): the wind's push from the observation's last
+    N_HIST (velocity, lean), pushed back k times."""
+
+    def __init__(self, k):
+        self.k = k
+
+    def __call__(self, obs):
+        h = np.asarray(obs[HIST0:HIST0 + N_HIST * 5]).reshape(N_HIST, 5)
+        v = h[:, :2] * 3.0
+        a_meas = (v[-1] - v[0]) / ((N_HIST - 1) * DT_C)
+        zh = h[-2:, 3:5].mean(0) / 5.0
+        zz = np.sqrt(max(1.0 - float((zh ** 2).sum()), 0.25))
+        return np.clip(-self.k * (a_meas - 9.81 * zh / zz) / A_FF, -1.0, 1.0), 0
+
+
 class Policy:
     """A ppo.py checkpoint's greedy action, in numpy."""
 
@@ -145,7 +163,8 @@ class Policy:
         self.pi = [(z[f"pi_W{i}"], z[f"pi_b{i}"]) for i in range(len([k for k in z.files if k.startswith("pi_W")]))]
         self.mean, self.var = z["rms_mean"], z["rms_var"]
         self.meta = json.loads(str(z["meta"]))
-        self.flyer = Policy(self.meta["flyer"]) if self.meta.get("flyer") else None     # stage 2: its frozen flyer
+        fl = self.meta.get("flyer")                                                 # stage 2: its frozen flyer
+        self.flyer = DOB(float(fl.split(":")[1])) if fl and fl.startswith("dob") else (Policy(fl) if fl else None)
 
     def __call__(self, obs):
         x = np.clip((obs - self.mean) / np.sqrt(self.var + 1e-8), -10, 10)

@@ -34,12 +34,13 @@ Order matters: the repo must stop moving before anything else edits code. `[ ]` 
 - [~] 4.1 Sharper Figure 3 (the Logan map): drawn (scratchpad world_v2.py), to fold into shared/fast_sim/paper_figs.py
 - [ ] 4.2 Wind-only paper (other conditions become their own papers later)
 
-## Phase 5: wind, next (Sai decides the order)
-- [x] 5.1 Longer training check (6 Oct, seed 0, 1,500 rounds, 26.7 min): validation flat from round ~450; test 1,024 flights: W12 99.4 vs 98.2, W15 98.3 vs 98.6, W18 95.1 vs 96.2, W20 90.2 vs 85.8 (paper). Needs 3 seeds before claiming W20
-- [ ] 5.2 Identical-options check: (rule choice, learner choice, height) table on the test flights; mask twins if it drifts
-- [ ] 5.3 Critic warm-up for wind (actor frozen as the rule for the first N rounds); does the early dip go away?
-- [ ] 5.4 Network ablation (Sai, 6 Oct: not satisfied with the default): width 64/128/256/512, depth 1-3, tanh vs ReLU,
-      history length 0/2/4/8/16
-- [ ] 5.5 The algorithm experiment (papers/research/wind_algorithm_options.md): PPO decider on the disturbance observer,
-      and a Q-learning challenger at equal wall-clock
-- [ ] 5.6 Greedy vs sampled at test time for the paper's decider
+## Phase 5: wind, the agreed plan (6 Oct): see conditions/wind/PLAN.md
+- [x] 5.0 Baselines (Phase 0): tuned rule 75.7%, DOB 80.6%, paper decider 93.9-96.2%, DOB + decider 92.5-95.9% at W10 18
+- [~] 5.0b Gazebo smoke for Phase 0 (rule, paper decider s0, DOB decider s0; yards 0-1, W10 18)
+- [ ] 5.1 Phase 1: clean the interface (rule asks 1.5, pick table, greedy vs sampled, new metrics, W10 22)
+- [ ] 5.2 Phase 2: realism in MJX (sensors, drone randomization, gusts) + robustness table
+- [ ] 5.3 Phase 3: privileged critic, saturation/slew penalties, DOB input, aligned frame (one at a time, 3 seeds)
+- [ ] 5.4 Phase 4: architecture ablation (width, depth, history, tanh/ReLU, GRU)
+- [ ] 5.5 Phase 5: safety filter + hard cases
+- [ ] 5.6 Phase 6: full Gazebo ladder; Phase 7: the wind paper
+- [x] Longer training check (1,500 rounds, seed 0): flat after ~450 at 15-18 m/s, +4.4 at 20 m/s (one seed)
