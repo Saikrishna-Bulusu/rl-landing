@@ -144,7 +144,7 @@ class DOB:
     N_HIST (velocity, lean), pushed back k times."""
 
     def __init__(self, k):
-        self.k = k
+        self.k, self.meta = k, {"hp_tau": 0.0}           # read like a stage-1 checkpoint's meta: no high-pass
 
     def __call__(self, obs):
         h = np.asarray(obs[HIST0:HIST0 + N_HIST * 5]).reshape(N_HIST, 5)
