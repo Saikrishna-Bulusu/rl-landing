@@ -191,6 +191,25 @@ Other recipes tried (queue chains below): `stage2_c300` (crash -300), `stage2_c1
 shaping: it pulsed climb/descend at PX4's thrust limit and sank in Gazebo), `stage2_c100h100f02[g]` (a price 0.2 on each
 reversal), `stage2hp_c100` (on the filtered flyer: worse).
 
+## Runs in ClearML (readable names since 9 Oct)
+
+ClearML shows a run as `<kind> · <the one thing that changed, in words> · <world> · run <n>` (kind: flyer, decider,
+RESULT, CHECK, VIDEO, FILES, TEST; run n = `_s<n-1>`), with a status tag: best, kept, control, dropped, superseded,
+check, test. Files on disk keep their short tags; every task's description starts with them. New runs:
+`ppo.py --name "decider v2 · v1 fine-tuned · realistic world"` (the run number is added).
+
+| files (`--tag`) | ClearML name | tag |
+|---|---|---|
+| `warm_leash0` | decider v2 · v1 fine-tuned · realistic world | best |
+| `stage2_c100h100g` | decider v1 · nominal world | kept |
+| `fly` / `fly_rand` | flyer v1 · nominal world / flyer · realistic world | kept |
+| `base_rand` | decider from scratch · realistic world | control |
+| `priv_rand` | decider from scratch + privileged critic · realistic world | kept |
+| `dobin_rand` | decider from scratch + wind-estimate input · realistic world | dropped |
+| `warm_rand`, `warm_leash01/03/1`, `warmp_leash0` | decider v2 first try (collapsed) / leash test 0.1, 0.3, 1.0 / + cheap gentle miss (−10) | dropped |
+| `stage2_c100`, `_c300`, `_c100h100`, `_c100h100f02[g]`, `stage2hp_c100` | decider price test: crash −100 / −300 / + hard −100 / + switch price 0.2 [+ shaping fix] / on the filtered flyer | dropped |
+| `fly_hp`, `fly95`, `both*`, `sh2`, `old_both*` | flyer, filtered push / 95% curriculum / flyer + decider together (first tries) | dropped |
+
 ## Results (MJX ladder, 1,024 paired flights per wind; Gazebo, 20 yards per wind)
 
 Landed % (MJX), the crashed share in brackets where it matters:

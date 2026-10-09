@@ -87,7 +87,7 @@ def main():
 
     try:
         from clearml import Task
-        t = Task.init(project_name="rl-landing/wind", task_name="phase 1: how each arm flies", reuse_last_task_id=False,
+        t = Task.init(project_name="rl-landing/wind", task_name="CHECK · how each decider flies (push at its limit, switching)", reuse_last_task_id=False,
                       auto_connect_frameworks=False, auto_connect_arg_parser=False)
         lg = t.get_logger()
         for k in ("landed", "crashed", "push_cap", "push_step", "rev_per_s", "motor_sat"):

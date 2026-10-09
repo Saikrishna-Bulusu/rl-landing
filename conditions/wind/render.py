@@ -272,7 +272,7 @@ def main():
         paths.append((w, path, res))
     if a.clearml:
         from clearml import Task
-        task = Task.init(project_name="rl-landing/wind", task_name="environment video: rule vs learner", reuse_last_task_id=False)
+        task = Task.init(project_name="rl-landing/wind", task_name="VIDEO · rule vs learner", reuse_last_task_id=False)
         lg = task.get_logger()
         for w, path, res in paths:
             lg.report_media("environment video", f"W10 {w:g} m/s, yard {ep}", iteration=int(w), local_path=path)

@@ -348,6 +348,8 @@ def main():
     ap.add_argument("--log-test", action="store_true", help="also score the TEST yards at every eval (logging only, ~55%% of eval time)")
     ap.add_argument("--ladder", metavar="CKPT", help="score a checkpoint (or 'rule') on the full wind ladder, 1024 paired flights")
     ap.add_argument("--no-clearml", action="store_true", help="no live logging to ClearML (rl-landing/wind)")
+    ap.add_argument("--name", help="ClearML name in words, e.g. 'decider v2 · v1 fine-tuned · realistic world' (' · run <seed+1>' is "
+                    "added; the files keep --tag). Default <tag>_s<seed>. Convention: README 'Runs in ClearML'")
     ap.add_argument("--rand", default="", help="PLAN.md 2c's per-flight randomization for training and validation: "
                     "sense,drone,gust or all (empty: none, the Phase 0-2a environment)")
     ap.add_argument("--dob-in", action="store_true", help="Phase 3: the DOB's estimate of the wind's push as 2 more inputs (with_dob)")
@@ -381,10 +383,12 @@ def main():
             from clearml import Task
             # always a new record: by default ClearML reuses the last unfinished task of the same name (7 Oct: an archived,
             # stopped one, which refused writes, so a run trained unlogged)
-            task = Task.init(project_name="rl-landing/wind", task_name=f"{a.tag}_s{a.seed}", auto_connect_frameworks=False,
+            task = Task.init(project_name="rl-landing/wind", task_name=f"{a.name} · run {a.seed + 1}" if a.name else f"{a.tag}_s{a.seed}",
+                             auto_connect_frameworks=False,
                              reuse_last_task_id=False,
                              tags=[n for n, on in (("fly", fly), ("decide", decide), ("flyer", bool(a.flyer))) if on])
             task.connect(vars(a))
+            task.set_comment(f"files on disk: {a.tag}_s{a.seed}")
             print("ClearML:", task.get_output_log_web_page(), flush=True)
         except Exception as e:
             task = None

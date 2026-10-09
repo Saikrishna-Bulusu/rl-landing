@@ -125,7 +125,7 @@ def main():
 
     try:
         from clearml import Task
-        t = Task.init(project_name="rl-landing/wind", task_name="phase 3: every arm, paired (landed and damaging)", reuse_last_task_id=False,
+        t = Task.init(project_name="rl-landing/wind", task_name="RESULT · every decider on the same test flights", reuse_last_task_id=False,
                       auto_connect_frameworks=False, auto_connect_arg_parser=False)
         lg = t.get_logger()
         for cname in CONDS:

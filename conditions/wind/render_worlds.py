@@ -214,7 +214,7 @@ def main():
     print(f"yard {e}: {res} -> {path} ({n} frames), stills and {path[:-4]}.png")
     if a.clearml:
         from clearml import Task
-        task = Task.init(project_name="rl-landing/wind", task_name=f"worlds video: Gazebo vs fast sim nominal vs realistic ({a.w10:g} m/s)",
+        task = Task.init(project_name="rl-landing/wind", task_name=f"VIDEO · Gazebo vs nominal vs realistic world, {a.w10:g} m/s",
                          reuse_last_task_id=False, auto_connect_frameworks=False, auto_connect_arg_parser=False)
         lg = task.get_logger()
         lg.report_media("worlds video", f"{a.w10:g} m/s, yard {e}", iteration=0, local_path=path)

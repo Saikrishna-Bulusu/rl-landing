@@ -69,7 +69,7 @@ def main():
 
     try:
         from clearml import Task
-        t = Task.init(project_name="rl-landing/wind", task_name="baselines 6 Oct: what learning adds", reuse_last_task_id=False,
+        t = Task.init(project_name="rl-landing/wind", task_name="RESULT · baselines: what learning adds", reuse_last_task_id=False,
                       auto_connect_frameworks=False, auto_connect_arg_parser=False)
         lg = t.get_logger()
         for k in KEYS:
